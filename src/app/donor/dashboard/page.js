@@ -15,6 +15,8 @@ import {
   CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import StripeProvider from './components/StripeProvider';
+import StripePaymentForm from './components/StripePaymentForm';
 
 export default function DonorDashboard() {
   const [stats, setStats] = useState([]);
@@ -269,12 +271,13 @@ export default function DonorDashboard() {
   }
 
   return (
-    <motion.div
-      variants={containerVariants}
-      initial="hidden"
-      animate="visible"
-      className="space-y-6"
-    >
+    <StripeProvider>
+      <motion.div
+        variants={containerVariants}
+        initial="hidden"
+        animate="visible"
+        className="space-y-6"
+      >
       {/* Welcome Section */}
       <motion.div variants={itemVariants} className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
@@ -432,7 +435,7 @@ export default function DonorDashboard() {
               </div>
 
               {!paymentStatus && (
-                <form onSubmit={handlePaymentSubmit} className="space-y-4">
+                <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Donation Amount *
@@ -497,31 +500,45 @@ export default function DonorDashboard() {
                     </div>
                   )}
 
-                  <div className="flex space-x-3 pt-2">
-                    <button
-                      type="button"
-                      onClick={closePaymentModal}
-                      className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
-                      disabled={paymentLoading}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={paymentLoading}
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {paymentLoading ? (
-                        <div className="flex items-center justify-center space-x-2">
-                          <Loader2 className="w-4 h-4 animate-spin" />
-                          <span>Processing...</span>
-                        </div>
-                      ) : (
-                        'Process Payment'
-                      )}
-                    </button>
-                  </div>
-                </form>
+                  {paymentForm.amount && paymentForm.organization_id && (
+                    <div className="pt-4 border-t border-gray-200">
+                      <StripePaymentForm
+                        amount={paymentForm.amount}
+                        organization={organizations.find(org => org.id == paymentForm.organization_id)}
+                        message={paymentForm.message}
+                        onSuccess={(paymentIntent) => {
+                          setPaymentStatus('success');
+                          setPaymentResult(paymentIntent);
+                          // Refresh dashboard data after successful payment
+                          fetchDashboardData();
+                        }}
+                        onError={(errorMessage) => {
+                          setError(errorMessage);
+                        }}
+                        onCancel={closePaymentModal}
+                      />
+                    </div>
+                  )}
+
+                  {(!paymentForm.amount || !paymentForm.organization_id) && (
+                    <div className="flex space-x-3 pt-2">
+                      <button
+                        type="button"
+                        onClick={closePaymentModal}
+                        className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="button"
+                        disabled={!paymentForm.amount || !paymentForm.organization_id}
+                        className="flex-1 bg-gray-400 text-white py-3 px-4 rounded-xl font-semibold cursor-not-allowed transition-all duration-200"
+                      >
+                        Fill in details to continue
+                      </button>
+                    </div>
+                  )}
+                </div>
               )}
 
               {paymentStatus === 'processing' && (
@@ -595,6 +612,7 @@ export default function DonorDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
-    </motion.div>
+      </motion.div>
+    </StripeProvider>
   );
 }
