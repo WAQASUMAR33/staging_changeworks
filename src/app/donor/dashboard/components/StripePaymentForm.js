@@ -10,14 +10,18 @@ const CARD_ELEMENT_OPTIONS = {
     base: {
       fontSize: '16px',
       color: '#424770',
+      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
+      fontSmoothing: 'antialiased',
       '::placeholder': {
         color: '#aab7c4',
       },
     },
     invalid: {
       color: '#9e2146',
+      iconColor: '#9e2146',
     },
   },
+  hidePostalCode: false,
 };
 
 export default function StripePaymentForm({ 
@@ -33,6 +37,14 @@ export default function StripePaymentForm({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [paymentStatus, setPaymentStatus] = useState(''); // 'processing', 'success', 'error'
+
+  // Debug: Log Stripe and Elements status
+  console.log('StripePaymentForm render:', { 
+    stripe: !!stripe, 
+    elements: !!elements,
+    amount,
+    organization: organization?.name 
+  });
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -212,7 +224,13 @@ export default function StripePaymentForm({
           Card Information
         </label>
         <div className="p-4 border-2 border-gray-200 rounded-xl focus-within:border-blue-500 transition-colors duration-200">
-          <CardElement options={CARD_ELEMENT_OPTIONS} />
+          {elements ? (
+            <CardElement options={CARD_ELEMENT_OPTIONS} />
+          ) : (
+            <div className="text-gray-500 text-sm">
+              Loading payment form...
+            </div>
+          )}
         </div>
       </div>
 
