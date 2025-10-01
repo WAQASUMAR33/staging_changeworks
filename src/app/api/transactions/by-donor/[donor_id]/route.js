@@ -46,16 +46,12 @@ export async function GET(request, { params }) {
       }, { status: 404 });
     }
 
-    // Get URL parameters for filtering and pagination
+    // Get URL parameters for filtering
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
     const status = searchParams.get('status'); // completed, pending, failed
     const method = searchParams.get('method'); // stripe, plaid
     const startDate = searchParams.get('start_date');
     const endDate = searchParams.get('end_date');
-    
-    const skip = (page - 1) * limit;
 
     // Build where clause
     let whereClause = {
@@ -81,37 +77,30 @@ export async function GET(request, { params }) {
       }
     }
 
-    // Get transactions with pagination
-    const [transactions, totalCount] = await Promise.all([
-      prisma.saveTrRecord.findMany({
-        where: whereClause,
-        skip,
-        take: limit,
-        include: {
-          donor: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true
-            }
-          },
-          organization: {
-            select: {
-              id: true,
-              name: true,
-              email: true
-            }
+    // Get all transactions (no pagination)
+    const transactions = await prisma.saveTrRecord.findMany({
+      where: whereClause,
+      include: {
+        donor: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true
           }
         },
-        orderBy: {
-          created_at: 'desc'
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
         }
-      }),
-      prisma.saveTrRecord.count({
-        where: whereClause
-      })
-    ]);
+      },
+      orderBy: {
+        created_at: 'desc'
+      }
+    });
 
     // Format transaction data
     const formattedTransactions = transactions.map(txn => {
@@ -145,7 +134,7 @@ export async function GET(request, { params }) {
 
     // Calculate summary statistics
     const summary = {
-      total_transactions: totalCount,
+      total_transactions: transactions.length,
       completed_transactions: transactions.filter(t => t.pay_status === 'completed').length,
       pending_transactions: transactions.filter(t => t.pay_status === 'pending').length,
       failed_transactions: transactions.filter(t => t.pay_status === 'failed').length,
@@ -160,21 +149,7 @@ export async function GET(request, { params }) {
       success: true,
       donor: donor,
       transactions: formattedTransactions,
-      pagination: {
-        page: page,
-        limit: limit,
-        total: totalCount,
-        pages: Math.ceil(totalCount / limit),
-        has_next: page * limit < totalCount,
-        has_prev: page > 1
-      },
-      summary: summary,
-      filters_applied: {
-        status: status || 'all',
-        method: method || 'all',
-        start_date: startDate || null,
-        end_date: endDate || null
-      }
+      summary: summary
     });
 
   } catch (error) {
