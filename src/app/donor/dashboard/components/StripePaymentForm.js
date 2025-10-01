@@ -126,6 +126,35 @@ export default function StripePaymentForm({
           // Don't throw error here as the payment was successful, just the confirmation failed
         }
 
+        // Also create a record in the DonorTransaction table
+        console.log('Creating DonorTransaction record for payment intent:', paymentIntent.id);
+        
+        const donorTransactionResponse = await fetch('/api/donor_transactions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            donor_id: user.id,
+            organization_id: parseInt(organization.id),
+            status: 'completed',
+            amount: parseFloat(amount),
+            currency: 'USD',
+            receipt_url: paymentIntent.receipt_url || null,
+            trnx_id: paymentIntent.id,
+            transaction_type: 'donation',
+            payment_method: 'credit_card',
+          }),
+        });
+
+        const donorTransactionData = await donorTransactionResponse.json();
+        console.log('DonorTransaction creation response:', donorTransactionData);
+        
+        if (!donorTransactionData.message) {
+          console.error('DonorTransaction creation failed:', donorTransactionData.error);
+          // Don't throw error here as the payment was successful, just the record creation failed
+        }
+
         onSuccess(paymentIntent);
       } else {
         throw new Error('Payment was not successful');
