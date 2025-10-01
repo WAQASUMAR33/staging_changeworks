@@ -92,6 +92,22 @@ export default function DonorDashboard() {
     }
   };
 
+  // Quick action handlers
+  const handleStripePayment = () => {
+    // Redirect to Stripe payment page or open payment modal
+    window.open('/donor/payment', '_blank');
+  };
+
+  const handleStripeSubscription = () => {
+    // Redirect to subscription management page
+    window.open('/donor/subscriptions', '_blank');
+  };
+
+  const handlePlaidIntegration = () => {
+    // Redirect to Plaid integration page
+    window.open('/donor/plaid-connect', '_blank');
+  };
+
   useEffect(() => {
     fetchDashboardData();
   }, []);
@@ -228,33 +244,42 @@ export default function DonorDashboard() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
           <div className="space-y-3">
-            <button className="w-full flex items-center space-x-3 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors duration-200 text-left">
+            <button 
+              onClick={handleStripePayment}
+              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors duration-200 text-left"
+            >
               <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <Heart className="w-4 h-4 text-white" />
+                <DollarSign className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Make a Donation</p>
-                <p className="text-xs text-gray-500">Support your favorite cause</p>
+                <p className="text-sm font-medium text-gray-900">Stripe Payment</p>
+                <p className="text-xs text-gray-500">Make a one-time donation</p>
               </div>
             </button>
             
-            <button className="w-full flex items-center space-x-3 p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors duration-200 text-left">
+            <button 
+              onClick={handleStripeSubscription}
+              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors duration-200 text-left"
+            >
               <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
                 <TrendingUp className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">View Impact Report</p>
-                <p className="text-xs text-gray-500">See how your donations help</p>
+                <p className="text-sm font-medium text-gray-900">Stripe Subscription</p>
+                <p className="text-xs text-gray-500">Set up recurring donations</p>
               </div>
             </button>
             
-            <button className="w-full flex items-center space-x-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors duration-200 text-left">
+            <button 
+              onClick={handlePlaidIntegration}
+              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors duration-200 text-left"
+            >
               <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                <Calendar className="w-4 h-4 text-white" />
+                <Target className="w-4 h-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-medium text-gray-900">Manage Subscriptions</p>
-                <p className="text-xs text-gray-500">Update recurring donations</p>
+                <p className="text-sm font-medium text-gray-900">Plaid Integration</p>
+                <p className="text-xs text-gray-500">Connect your bank account</p>
               </div>
             </button>
           </div>
