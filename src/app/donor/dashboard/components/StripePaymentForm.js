@@ -104,21 +104,38 @@ export default function StripePaymentForm({
       if (paymentIntent.status === 'succeeded') {
         setPaymentStatus('success');
         
-        // Confirm payment using existing API
-        const confirmResponse = await fetch('/api/payments/confirm', {
+        // Save transaction record using the correct API
+        const transactionResponse = await fetch('/api/transactions', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            payment_intent_id: paymentIntent.id,
+            trx_id: paymentIntent.id,
+            trx_date: new Date().toISOString(),
+            trx_amount: parseFloat(amount),
+            trx_method: 'stripe',
+            trx_donor_id: user.id,
+            trx_organization_id: parseInt(organization.id),
+            pay_status: 'completed',
+            trx_recipt_url: paymentIntent.receipt_url || null,
+            trx_details: JSON.stringify({
+              payment_intent_id: paymentIntent.id,
+              description: message || `Donation to ${organization.name}`,
+              stripe_metadata: {
+                payment_intent_id: paymentIntent.id,
+                amount: paymentIntent.amount,
+                currency: paymentIntent.currency,
+                status: paymentIntent.status
+              }
+            })
           }),
         });
 
-        const confirmData = await confirmResponse.json();
+        const transactionData = await transactionResponse.json();
         
-        if (!confirmData.success) {
-          console.error('Payment confirmation failed:', confirmData.error);
+        if (!transactionData.success) {
+          console.error('Transaction save failed:', transactionData.error);
         }
 
         onSuccess(paymentIntent);
