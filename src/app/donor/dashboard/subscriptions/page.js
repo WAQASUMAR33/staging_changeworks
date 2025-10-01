@@ -400,7 +400,7 @@ export default function DonorSubscriptionsPage() {
           <div className="p-8 text-center">
             <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Subscriptions Found</h3>
-            <p className="text-gray-600 mb-4">You don't have any active subscriptions yet.</p>
+            <p className="text-gray-600 mb-4">You don&apos;t have any active subscriptions yet.</p>
             <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
               Create Your First Subscription
             </button>

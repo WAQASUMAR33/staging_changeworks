@@ -13,7 +13,8 @@ import {
   Loader2,
   AlertCircle,
   BarChart3,
-  PieChart
+  PieChart,
+  Building2
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 

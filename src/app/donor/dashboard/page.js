@@ -156,7 +156,7 @@ export default function DonorDashboard() {
           <div>
             <h2 className="text-2xl font-bold mb-2">Your Impact Dashboard</h2>
             <p className="text-blue-100">
-              Track your donations, manage subscriptions, and see the difference you're making
+              Track your donations, manage subscriptions, and see the difference you&apos;re making
             </p>
           </div>
           <div className="hidden md:block">
