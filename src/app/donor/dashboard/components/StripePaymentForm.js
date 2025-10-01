@@ -37,10 +37,7 @@ export default function StripePaymentForm({
   const handleSubmit = async (event) => {
     event.preventDefault();
 
-    console.log('Stripe Payment Form Submit:', { stripe: !!stripe, elements: !!elements });
-
     if (!stripe || !elements) {
-      console.error('Stripe or Elements not available:', { stripe: !!stripe, elements: !!elements });
       setError('Payment system not ready. Please try again.');
       return;
     }
@@ -52,7 +49,6 @@ export default function StripePaymentForm({
     try {
       // Get donor info from localStorage
       const user = JSON.parse(localStorage.getItem('user') || '{}');
-      console.log('User from localStorage:', user);
       if (!user.id) {
         throw new Error('Please log in to make a payment');
       }

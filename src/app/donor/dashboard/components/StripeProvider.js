@@ -6,11 +6,6 @@ import { Elements } from '@stripe/react-stripe-js';
 // Initialize Stripe with your publishable key
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
 
-// Debug: Log the publishable key (remove in production)
-if (typeof window !== 'undefined') {
-  console.log('Stripe Publishable Key:', process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY);
-}
-
 export default function StripeProvider({ children }) {
   return (
     <Elements stripe={stripePromise}>
