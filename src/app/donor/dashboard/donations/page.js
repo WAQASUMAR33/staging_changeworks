@@ -34,7 +34,11 @@ export default function DonorDonationsPage() {
         return;
       }
 
-      const response = await fetch('/api/donor/donations', {
+      // Decode token to get donor ID
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const donorId = payload.id;
+
+      const response = await fetch(`/api/transactions/by-donor/${donorId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -44,8 +48,8 @@ export default function DonorDonationsPage() {
       const data = await response.json();
       
       if (data.success) {
-        setDonations(data.donations || []);
-        setFilteredDonations(data.donations || []);
+        setDonations(data.transactions || []);
+        setFilteredDonations(data.transactions || []);
       } else {
         setError(data.error || 'Failed to load donations');
       }
@@ -77,21 +81,21 @@ export default function DonorDonationsPage() {
     switch (filterPeriod) {
       case 'today':
         filtered = filtered.filter(donation => {
-          const donationDate = new Date(donation.createdAt);
+          const donationDate = new Date(donation.created_at);
           return donationDate.toDateString() === now.toDateString();
         });
         break;
       case 'week':
         const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(donation => new Date(donation.createdAt) >= weekAgo);
+        filtered = filtered.filter(donation => new Date(donation.created_at) >= weekAgo);
         break;
       case 'month':
         const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(donation => new Date(donation.createdAt) >= monthAgo);
+        filtered = filtered.filter(donation => new Date(donation.created_at) >= monthAgo);
         break;
       case 'year':
         const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(donation => new Date(donation.createdAt) >= yearAgo);
+        filtered = filtered.filter(donation => new Date(donation.created_at) >= yearAgo);
         break;
     }
 
@@ -217,7 +221,7 @@ export default function DonorDonationsPage() {
                 {formatAmount(
                   donations
                     .filter(donation => {
-                      const donationDate = new Date(donation.createdAt);
+                      const donationDate = new Date(donation.created_at);
                       const now = new Date();
                       return donationDate.getMonth() === now.getMonth() && 
                              donationDate.getFullYear() === now.getFullYear();
@@ -337,7 +341,7 @@ export default function DonorDonationsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-gray-900">
-                        {formatDate(donation.createdAt)}
+                        {formatDate(donation.created_at)}
                       </p>
                     </td>
                     <td className="px-6 py-4">
@@ -416,7 +420,7 @@ export default function DonorDonationsPage() {
                 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
-                  <p className="text-gray-900">{formatDate(selectedDonation.createdAt)}</p>
+                  <p className="text-gray-900">{formatDate(selectedDonation.created_at)}</p>
                 </div>
                 
                 <div>
