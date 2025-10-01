@@ -284,7 +284,7 @@ export default function LoginPage() {
                 variants={itemVariants}
                 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent"
               >
-                Sign In
+                Donor Login
               </motion.h2>
               
               <motion.p 
