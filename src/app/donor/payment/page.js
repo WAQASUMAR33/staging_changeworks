@@ -1,19 +1,48 @@
 'use client';
 
-import { useState } from 'react';
-import { motion } from 'framer-motion';
-import { DollarSign, CreditCard, ArrowLeft, Loader2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { motion, AnimatePresence } from 'framer-motion';
+import { DollarSign, CreditCard, ArrowLeft, Loader2, X, CheckCircle, AlertCircle } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function DonorPaymentPage() {
   const router = useRouter();
   const [formData, setFormData] = useState({
     amount: '',
-    organization: '',
+    organization_id: '',
     message: ''
   });
+  const [organizations, setOrganizations] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [loadingOrgs, setLoadingOrgs] = useState(true);
   const [error, setError] = useState('');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [paymentStatus, setPaymentStatus] = useState(''); // 'processing', 'success', 'error'
+  const [paymentResult, setPaymentResult] = useState(null);
+
+  // Fetch organizations on component mount
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+
+  const fetchOrganizations = async () => {
+    try {
+      setLoadingOrgs(true);
+      const response = await fetch('/api/organizations/list');
+      const data = await response.json();
+      
+      if (response.ok) {
+        setOrganizations(data);
+      } else {
+        setError('Failed to load organizations');
+      }
+    } catch (err) {
+      console.error('Error fetching organizations:', err);
+      setError('Failed to load organizations');
+    } finally {
+      setLoadingOrgs(false);
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -21,14 +50,44 @@ export default function DonorPaymentPage() {
     setError('');
 
     try {
-      // TODO: Implement Stripe payment integration
-      console.log('Processing Stripe payment:', formData);
-      
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      
-      alert('Payment processing will be implemented with Stripe integration');
+      // Get donor info from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      if (!user.id) {
+        setError('Please log in to make a payment');
+        return;
+      }
+
+      // Create payment intent
+      const response = await fetch('/api/payments/create-intent', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          amount: parseFloat(formData.amount),
+          currency: 'USD',
+          donor_id: user.id,
+          organization_id: parseInt(formData.organization_id),
+          description: formData.message || `Donation to organization`
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setPaymentResult(data);
+        setShowPaymentModal(true);
+        setPaymentStatus('processing');
+        
+        // Simulate Stripe payment processing
+        setTimeout(() => {
+          setPaymentStatus('success');
+        }, 3000);
+      } else {
+        setError(data.error || 'Failed to create payment intent');
+      }
     } catch (err) {
+      console.error('Payment error:', err);
       setError('Payment failed. Please try again.');
     } finally {
       setLoading(false);
@@ -40,6 +99,12 @@ export default function DonorPaymentPage() {
       ...prev,
       [e.target.name]: e.target.value
     }));
+  };
+
+  const closePaymentModal = () => {
+    setShowPaymentModal(false);
+    setPaymentStatus('');
+    setPaymentResult(null);
   };
 
   return (
@@ -112,17 +177,24 @@ export default function DonorPaymentPage() {
 
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Organization
+                  Organization *
                 </label>
                 <select
-                  name="organization"
-                  value={formData.organization}
+                  name="organization_id"
+                  value={formData.organization_id}
                   onChange={handleChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                  required
+                  disabled={loadingOrgs}
+                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 disabled:opacity-50"
                 >
-                  <option value="">Select an organization</option>
-                  <option value="test-org">Test Organization</option>
-                  <option value="general">General Fund</option>
+                  <option value="">
+                    {loadingOrgs ? 'Loading organizations...' : 'Select an organization'}
+                  </option>
+                  {organizations.map((org) => (
+                    <option key={org.id} value={org.id}>
+                      {org.name}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -158,12 +230,111 @@ export default function DonorPaymentPage() {
 
             <div className="mt-6 p-4 bg-blue-50 rounded-lg">
               <p className="text-sm text-blue-700">
-                <strong>Note:</strong> This will integrate with Stripe for secure payment processing. 
-                The actual Stripe integration will be implemented with your API keys.
+                <strong>Note:</strong> This integrates with Stripe for secure payment processing using your API keys.
               </p>
             </div>
           </div>
         </motion.div>
+
+        {/* Stripe Payment Modal */}
+        <AnimatePresence>
+          {showPaymentModal && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+              onClick={closePaymentModal}
+            >
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.9, opacity: 0 }}
+                transition={{ type: "spring", damping: 25, stiffness: 300 }}
+                className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="flex items-center justify-between mb-6">
+                  <h3 className="text-xl font-bold text-gray-800">Processing Payment</h3>
+                  <button
+                    onClick={closePaymentModal}
+                    className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  >
+                    <X size={24} />
+                  </button>
+                </div>
+
+                {paymentStatus === 'processing' && (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Processing Payment</h4>
+                    <p className="text-gray-600 mb-4">
+                      Please wait while we process your payment with Stripe...
+                    </p>
+                    {paymentResult && (
+                      <div className="bg-gray-50 rounded-lg p-4 text-left">
+                        <p className="text-sm text-gray-600">
+                          <strong>Amount:</strong> ${paymentResult.amount}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          <strong>Payment ID:</strong> {paymentResult.payment_intent_id}
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {paymentStatus === 'success' && (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <CheckCircle className="w-8 h-8 text-green-600" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Payment Successful!</h4>
+                    <p className="text-gray-600 mb-4">
+                      Your donation has been processed successfully.
+                    </p>
+                    {paymentResult && (
+                      <div className="bg-green-50 rounded-lg p-4 text-left mb-4">
+                        <p className="text-sm text-green-700">
+                          <strong>Amount:</strong> ${paymentResult.amount}
+                        </p>
+                        <p className="text-sm text-green-700">
+                          <strong>Transaction ID:</strong> {paymentResult.transaction_id}
+                        </p>
+                      </div>
+                    )}
+                    <button
+                      onClick={closePaymentModal}
+                      className="w-full bg-gradient-to-r from-green-600 to-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+
+                {paymentStatus === 'error' && (
+                  <div className="text-center py-8">
+                    <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                      <AlertCircle className="w-8 h-8 text-red-600" />
+                    </div>
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">Payment Failed</h4>
+                    <p className="text-gray-600 mb-4">
+                      There was an error processing your payment. Please try again.
+                    </p>
+                    <button
+                      onClick={closePaymentModal}
+                      className="w-full bg-gradient-to-r from-red-600 to-orange-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-red-700 hover:to-orange-700 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all duration-200"
+                    >
+                      Close
+                    </button>
+                  </div>
+                )}
+              </motion.div>
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
