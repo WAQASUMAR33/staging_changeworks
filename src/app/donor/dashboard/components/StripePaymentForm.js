@@ -10,18 +10,8 @@ const CARD_ELEMENT_OPTIONS = {
     base: {
       fontSize: '16px',
       color: '#424770',
-      fontFamily: '"Helvetica Neue", Helvetica, sans-serif',
-      fontSmoothing: 'antialiased',
-      '::placeholder': {
-        color: '#aab7c4',
-      },
-    },
-    invalid: {
-      color: '#9e2146',
-      iconColor: '#9e2146',
     },
   },
-  hidePostalCode: false,
 };
 
 export default function StripePaymentForm({ 
@@ -223,12 +213,12 @@ export default function StripePaymentForm({
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           Card Information
         </label>
-        <div className="p-4 border-2 border-gray-200 rounded-xl focus-within:border-blue-500 transition-colors duration-200">
+        <div className="p-4 border border-gray-300 rounded">
           {elements ? (
             <CardElement options={CARD_ELEMENT_OPTIONS} />
           ) : (
             <div className="text-gray-500 text-sm">
-              Loading payment form...
+              Loading payment form... (Stripe Elements not ready)
             </div>
           )}
         </div>

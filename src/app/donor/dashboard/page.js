@@ -17,6 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import StripeProvider from './components/StripeProvider';
 import StripePaymentForm from './components/StripePaymentForm';
+import StripeTest from './components/StripeTest';
 
 export default function DonorDashboard() {
   const [stats, setStats] = useState([]);
@@ -278,6 +279,11 @@ export default function DonorDashboard() {
         animate="visible"
         className="space-y-6"
       >
+      {/* Stripe Test Component - Remove after debugging */}
+      <motion.div variants={itemVariants} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
+        <StripeTest />
+      </motion.div>
+
       {/* Welcome Section */}
       <motion.div variants={itemVariants} className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
