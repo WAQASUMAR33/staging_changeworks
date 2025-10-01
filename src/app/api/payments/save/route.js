@@ -18,19 +18,26 @@ export async function POST(request) {
     const body = await request.json();
     const validatedData = savePaymentSchema.parse(body);
 
-    // Create payment record in database
-    const payment = await prisma.donorTransaction.create({
+    // Create payment record in database using SaveTrRecord table
+    const payment = await prisma.saveTrRecord.create({
       data: {
-        donor_id: validatedData.donor_id,
-        organization_id: validatedData.organization_id,
-        amount: validatedData.amount,
-        currency: validatedData.currency,
-        status: validatedData.status === "succeeded" ? "completed" : "failed",
-        payment_method: validatedData.payment_method,
-        stripe_payment_intent_id: validatedData.payment_intent_id,
-        description: validatedData.description,
-        created_at: new Date(),
-        updated_at: new Date(),
+        trx_id: `pi_${validatedData.payment_intent_id}_${Date.now()}`,
+        trx_date: new Date(),
+        trx_amount: validatedData.amount,
+        trx_method: validatedData.payment_method,
+        trx_donor_id: validatedData.donor_id,
+        trx_organization_id: validatedData.organization_id,
+        trx_details: JSON.stringify({
+          payment_intent_id: validatedData.payment_intent_id,
+          description: validatedData.description,
+          currency: validatedData.currency,
+          stripe_metadata: {
+            payment_intent_id: validatedData.payment_intent_id,
+            amount: validatedData.amount,
+            currency: validatedData.currency
+          }
+        }),
+        pay_status: validatedData.status === "succeeded" ? "completed" : "failed",
       },
     });
 
@@ -38,10 +45,12 @@ export async function POST(request) {
       success: true,
       payment: {
         id: payment.id,
-        amount: payment.amount,
-        currency: payment.currency,
-        status: payment.status,
+        trx_id: payment.trx_id,
+        amount: payment.trx_amount,
+        status: payment.pay_status,
         payment_intent_id: validatedData.payment_intent_id,
+        method: payment.trx_method,
+        date: payment.trx_date,
       },
     });
   } catch (error) {
