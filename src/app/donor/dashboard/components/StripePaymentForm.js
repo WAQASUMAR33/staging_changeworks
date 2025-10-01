@@ -104,38 +104,26 @@ export default function StripePaymentForm({
       if (paymentIntent.status === 'succeeded') {
         setPaymentStatus('success');
         
-        // Save transaction record using the correct API
-        const transactionResponse = await fetch('/api/transactions', {
+        // Update the existing pending transaction record to completed status
+        console.log('Updating transaction status for payment intent:', paymentIntent.id);
+        
+        // Use the existing payment confirm API which updates the pending record
+        const confirmResponse = await fetch('/api/payments/confirm', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            trx_id: paymentIntent.id,
-            trx_date: new Date().toISOString(),
-            trx_amount: parseFloat(amount),
-            trx_method: 'stripe',
-            trx_donor_id: user.id,
-            trx_organization_id: parseInt(organization.id),
-            pay_status: 'completed',
-            trx_recipt_url: paymentIntent.receipt_url || null,
-            trx_details: JSON.stringify({
-              payment_intent_id: paymentIntent.id,
-              description: message || `Donation to ${organization.name}`,
-              stripe_metadata: {
-                payment_intent_id: paymentIntent.id,
-                amount: paymentIntent.amount,
-                currency: paymentIntent.currency,
-                status: paymentIntent.status
-              }
-            })
+            payment_intent_id: paymentIntent.id,
           }),
         });
 
-        const transactionData = await transactionResponse.json();
+        const confirmData = await confirmResponse.json();
+        console.log('Payment confirmation response:', confirmData);
         
-        if (!transactionData.success) {
-          console.error('Transaction save failed:', transactionData.error);
+        if (!confirmData.success) {
+          console.error('Payment confirmation failed:', confirmData.error);
+          // Don't throw error here as the payment was successful, just the confirmation failed
         }
 
         onSuccess(paymentIntent);
