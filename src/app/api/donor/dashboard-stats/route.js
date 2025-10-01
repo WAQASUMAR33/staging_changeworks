@@ -31,9 +31,9 @@ export async function GET(request) {
     }
 
     // Get donation statistics
-    const totalDonated = await prisma.transaction.aggregate({
+    const totalDonated = await prisma.donorTransaction.aggregate({
       where: {
-        donorId: donorId,
+        donor_id: donorId,
         status: 'completed'
       },
       _sum: {
@@ -44,11 +44,11 @@ export async function GET(request) {
     // Get this month's donations
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const thisMonthDonated = await prisma.transaction.aggregate({
+    const thisMonthDonated = await prisma.donorTransaction.aggregate({
       where: {
-        donorId: donorId,
+        donor_id: donorId,
         status: 'completed',
-        createdAt: {
+        created_at: {
           gte: startOfMonth
         }
       },
@@ -60,27 +60,27 @@ export async function GET(request) {
     // Get active subscriptions count
     const activeSubscriptions = await prisma.subscription.count({
       where: {
-        donorId: donorId,
-        status: 'active'
+        donor_id: donorId,
+        status: 'ACTIVE'
       }
     });
 
     // Get organizations supported count
-    const organizationsSupported = await prisma.transaction.findMany({
+    const organizationsSupported = await prisma.donorTransaction.findMany({
       where: {
-        donorId: donorId,
+        donor_id: donorId,
         status: 'completed'
       },
       select: {
-        organizationId: true
+        organization_id: true
       },
-      distinct: ['organizationId']
+      distinct: ['organization_id']
     });
 
     // Get recent activity (last 5 transactions)
-    const recentActivity = await prisma.transaction.findMany({
+    const recentActivity = await prisma.donorTransaction.findMany({
       where: {
-        donorId: donorId,
+        donor_id: donorId,
         status: 'completed'
       },
       include: {
@@ -89,7 +89,7 @@ export async function GET(request) {
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       },
       take: 5
     });
@@ -123,7 +123,7 @@ export async function GET(request) {
       id: transaction.id,
       description: `Donation to ${transaction.organization?.name || 'Unknown Organization'}`,
       amount: transaction.amount,
-      date: transaction.createdAt.toISOString(),
+      date: transaction.created_at.toISOString(),
       organization: transaction.organization?.name || 'Unknown Organization'
     }));
 
