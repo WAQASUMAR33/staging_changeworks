@@ -17,7 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import StripeProvider from './components/StripeProvider';
 import StripePaymentForm from './components/StripePaymentForm';
-import StripeTest from './components/StripeTest';
+import FilterableDropdown from './components/FilterableDropdown';
 
 export default function DonorDashboard() {
   const [stats, setStats] = useState([]);
@@ -279,11 +279,6 @@ export default function DonorDashboard() {
         animate="visible"
         className="space-y-6"
       >
-      {/* Stripe Test Component - Remove after debugging */}
-      <motion.div variants={itemVariants} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <StripeTest />
-      </motion.div>
-
       {/* Welcome Section */}
       <motion.div variants={itemVariants} className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
         <div className="flex items-center justify-between">
@@ -466,23 +461,13 @@ export default function DonorDashboard() {
                     <label className="block text-sm font-semibold text-gray-700 mb-2">
                       Organization *
                     </label>
-                    <select
-                      name="organization_id"
+                    <FilterableDropdown
+                      options={organizations}
                       value={paymentForm.organization_id}
-                      onChange={handlePaymentFormChange}
-                      required
-                      disabled={loadingOrgs}
-                      className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 disabled:opacity-50"
-                    >
-                      <option value="">
-                        {loadingOrgs ? 'Loading organizations...' : 'Select an organization'}
-                      </option>
-                      {organizations.map((org) => (
-                        <option key={org.id} value={org.id}>
-                          {org.name}
-                        </option>
-                      ))}
-                    </select>
+                      onChange={(orgId) => setPaymentForm(prev => ({ ...prev, organization_id: orgId }))}
+                      placeholder="Select an organization"
+                      loading={loadingOrgs}
+                    />
                   </div>
 
                   <div>

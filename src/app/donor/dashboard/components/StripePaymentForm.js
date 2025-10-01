@@ -28,13 +28,20 @@ export default function StripePaymentForm({
   const [error, setError] = useState('');
   const [paymentStatus, setPaymentStatus] = useState(''); // 'processing', 'success', 'error'
 
-  // Debug: Log Stripe and Elements status
-  console.log('StripePaymentForm render:', { 
-    stripe: !!stripe, 
-    elements: !!elements,
-    amount,
-    organization: organization?.name 
-  });
+  // Show loading state if Stripe is not ready
+  if (!stripe || !elements) {
+    return (
+      <div className="text-center py-8">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
+        </div>
+        <h4 className="text-lg font-semibold text-gray-900 mb-2">Loading Payment Form</h4>
+        <p className="text-gray-600 mb-4">
+          Please wait while we initialize the secure payment system...
+        </p>
+      </div>
+    );
+  }
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -213,15 +220,21 @@ export default function StripePaymentForm({
         <label className="block text-sm font-semibold text-gray-700 mb-2">
           Card Information
         </label>
-        <div className="p-4 border border-gray-300 rounded">
-          {elements ? (
-            <CardElement options={CARD_ELEMENT_OPTIONS} />
-          ) : (
-            <div className="text-gray-500 text-sm">
-              Loading payment form... (Stripe Elements not ready)
-            </div>
-          )}
+        <div className="p-4 border-2 border-gray-200 rounded-xl focus-within:border-blue-500 transition-colors duration-200 bg-white">
+          <CardElement 
+            options={CARD_ELEMENT_OPTIONS}
+            onChange={(event) => {
+              if (event.error) {
+                setError(event.error.message);
+              } else {
+                setError('');
+              }
+            }}
+          />
         </div>
+        <p className="text-xs text-gray-500 mt-2">
+          Enter your card details securely. We use Stripe to process payments.
+        </p>
       </div>
 
       {error && (
