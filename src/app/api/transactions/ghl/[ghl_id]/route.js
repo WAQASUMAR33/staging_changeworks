@@ -4,7 +4,7 @@ import { prisma } from "../../../../lib/prisma";
 // GET - Get transactions by GHL ID
 export async function GET(request, { params }) {
   try {
-    const { ghl_id } = params;
+    const { ghl_id } = await params;
 
     if (!ghl_id) {
       return NextResponse.json({

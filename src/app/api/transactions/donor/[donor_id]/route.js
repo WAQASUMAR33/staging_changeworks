@@ -4,7 +4,7 @@ import { prisma } from "../../../../lib/prisma";
 // GET - Get transactions by donor ID
 export async function GET(request, { params }) {
   try {
-    const { donor_id } = params;
+    const { donor_id } = await params;
 
     if (!donor_id) {
       return NextResponse.json({

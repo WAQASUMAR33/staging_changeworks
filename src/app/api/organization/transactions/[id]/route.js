@@ -4,7 +4,7 @@ import { prisma } from "../../../../lib/prisma";
 // GET: Fetch all transactions for a specific organization_id
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     // Validate organization_id
     const organizationId = parseInt(id);

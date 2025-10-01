@@ -78,7 +78,7 @@ const updatePackageSchema = z.object({
 
 export async function GET(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const packageId = parseInt(id);
 
     if (isNaN(packageId)) {
@@ -103,7 +103,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const packageId = parseInt(id);
 
     if (isNaN(packageId)) {
@@ -145,7 +145,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const packageId = parseInt(id);
 
     if (isNaN(packageId)) {

@@ -3,7 +3,7 @@ import { prisma } from "../../../../lib/prisma";
 
 export async function GET(request, { params }) {
   try {
-    const { transaction_id } = params;
+    const { transaction_id } = await params;
 
     if (!transaction_id) {
       return NextResponse.json({

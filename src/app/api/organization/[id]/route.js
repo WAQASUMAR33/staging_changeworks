@@ -22,7 +22,7 @@ const updateOrganizationSchema = z.object({
 
 export async function GET(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });
@@ -50,7 +50,7 @@ export async function GET(req, { params }) {
 
 export async function PUT(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await req.json();
     const input = updateOrganizationSchema.parse(body);
 
@@ -127,7 +127,7 @@ export async function PUT(req, { params }) {
 
 export async function DELETE(req, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
 
     if (!id) {
       return NextResponse.json({ error: "Organization ID is required" }, { status: 400 });

@@ -6,7 +6,7 @@ const prisma = new PrismaClient();
 // GET - Fetch a specific fund transfer
 export async function GET(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     const fundTransfer = await prisma.fundTransfer.findUnique({
       where: { id: parseInt(id) },
@@ -41,7 +41,7 @@ export async function GET(request, { params }) {
 // PUT - Update a fund transfer
 export async function PUT(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     const body = await request.json();
     
     const {
@@ -118,7 +118,7 @@ export async function PUT(request, { params }) {
 // DELETE - Delete a fund transfer
 export async function DELETE(request, { params }) {
   try {
-    const { id } = params;
+    const { id } = await params;
     
     // Check if fund transfer exists
     const existingTransfer = await prisma.fundTransfer.findUnique({
