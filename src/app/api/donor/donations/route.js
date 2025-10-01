@@ -31,9 +31,9 @@ export async function GET(request) {
     const limit = parseInt(searchParams.get('limit')) || 20;
     const skip = (page - 1) * limit;
 
-    const donations = await prisma.transaction.findMany({
+    const donations = await prisma.donorTransaction.findMany({
       where: {
-        donorId: donorId
+        donor_id: donorId
       },
       include: {
         organization: {
@@ -41,16 +41,16 @@ export async function GET(request) {
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       },
       skip,
       take: limit
     });
 
     // Get total count for pagination
-    const totalCount = await prisma.transaction.count({
+    const totalCount = await prisma.donorTransaction.count({
       where: {
-        donorId: donorId
+        donor_id: donorId
       }
     });
 
@@ -59,9 +59,13 @@ export async function GET(request) {
       id: donation.id,
       amount: donation.amount,
       status: donation.status,
-      description: donation.description || `Donation to ${donation.organization?.name || 'Unknown Organization'}`,
-      createdAt: donation.createdAt.toISOString(),
-      organization: donation.organization
+      description: `Donation to ${donation.organization?.name || 'Unknown Organization'}`,
+      createdAt: donation.created_at.toISOString(),
+      organization: donation.organization,
+      transaction_type: donation.transaction_type,
+      payment_method: donation.payment_method,
+      receipt_url: donation.receipt_url,
+      trnx_id: donation.trnx_id
     }));
 
     return NextResponse.json({
