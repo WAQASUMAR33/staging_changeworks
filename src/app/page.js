@@ -2,14 +2,14 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { clearAllAuthData } from './lib/auth-utils';
+import { clearOrgAuthData } from './lib/auth-utils';
 
 export default function Home() {
   const router = useRouter();
 
   useEffect(() => {
-    // Clear all authentication data on page load to force fresh login
-    clearAllAuthData();
+    // Clear only organization authentication data on page load
+    clearOrgAuthData();
     
     // Always redirect to organization login page (no auto-login)
     router.push('/organization/login');
