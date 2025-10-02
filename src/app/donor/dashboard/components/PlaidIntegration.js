@@ -127,7 +127,14 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
 
       // If real API fails due to network issues, try mock API
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.error('Failed to parse error response:', jsonError);
+          errorData = { error: 'Unknown error' };
+        }
+        
         if (errorData.errorCode === 'NETWORK_TIMEOUT' || errorData.errorCode === 'NETWORK_ERROR') {
           console.log('Real Plaid exchange API failed due to network issues, trying mock API...');
           response = await fetch('/api/plaid/mock-exchange-token', {
@@ -255,7 +262,14 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
 
       // If real API fails due to network issues, try mock API
       if (!response.ok) {
-        const errorData = await response.json();
+        let errorData;
+        try {
+          errorData = await response.json();
+        } catch (jsonError) {
+          console.error('Failed to parse error response:', jsonError);
+          errorData = { error: 'Unknown error' };
+        }
+        
         if (errorData.errorCode === 'NETWORK_TIMEOUT' || errorData.errorCode === 'NETWORK_ERROR') {
           console.log('Real Plaid API failed due to network issues, trying mock API...');
           response = await fetch('/api/plaid/mock-link-token', {
