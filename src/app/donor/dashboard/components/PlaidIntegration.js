@@ -46,7 +46,9 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
     setError('');
 
     try {
-      console.log('Plaid Link Success:', { publicToken, metadata });
+      console.log('Plaid Link Success - Starting token exchange...');
+      console.log('Public token:', publicToken ? 'Received' : 'Missing');
+      console.log('Metadata:', metadata);
       
       // Get donor info from token
       const token = localStorage.getItem('token');
@@ -54,21 +56,31 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       const donorId = decoded.id;
 
       // Call your backend API to exchange public token for access token
+      console.log('Exchanging public token for access token...');
+      const exchangePayload = {
+        public_token: publicToken,
+        metadata: metadata,
+        organization_id: selectedOrganization.id,
+        donor_id: donorId
+      };
+      console.log('Exchange payload:', exchangePayload);
+
       const response = await fetch('/api/plaid/exchange-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          public_token: publicToken,
-          metadata: metadata,
-          organization_id: selectedOrganization.id,
-          donor_id: donorId
-        })
+        body: JSON.stringify(exchangePayload)
       });
 
+      console.log('Exchange response status:', response.status);
+
       if (!response.ok) {
+        const errorData = await response.json();
+        console.error('Token exchange failed:', errorData);
+        const errorMessage = `Token exchange failed: ${errorData.error || 'Unknown error'}`;
+        alert(errorMessage);
         throw new Error('Failed to exchange token');
       }
 
@@ -127,12 +139,21 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
     setError('');
 
     try {
+      console.log('Starting Plaid connection process...');
+      console.log('Selected organization:', selectedOrganization);
+
       // Get donor info from token
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
       const decoded = JSON.parse(atob(token.split('.')[1]));
       const donorId = decoded.id;
+      console.log('Donor ID:', donorId);
 
       // Get link token from backend
+      console.log('Creating link token...');
       const response = await fetch('/api/plaid/create-link-token', {
         method: 'POST',
         headers: {
@@ -145,19 +166,26 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
         })
       });
 
+      console.log('Link token response status:', response.status);
+
       if (!response.ok) {
         const errorData = await response.json();
         console.error('Link token creation failed:', errorData);
+        const errorMessage = `Failed to create link token: ${errorData.error || 'Unknown error'}`;
+        alert(errorMessage);
         throw new Error(errorData.error || 'Failed to create link token');
       }
 
       const { link_token } = await response.json();
+      console.log('Link token received:', link_token ? 'Success' : 'Failed');
       
       // Set the link token to trigger Plaid Link initialization
       setLinkToken(link_token);
       
     } catch (err) {
       console.error('Error creating link token:', err);
+      const errorMessage = `Failed to initialize bank connection: ${err.message}`;
+      alert(errorMessage);
       setError('Failed to initialize bank connection. Please try again.');
     } finally {
       setLoading(false);
@@ -167,7 +195,14 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   // Open Plaid Link when token is ready
   useEffect(() => {
     if (linkToken && ready) {
-      open();
+      console.log('Opening Plaid Link with token:', linkToken.substring(0, 20) + '...');
+      try {
+        open();
+        console.log('Plaid Link opened successfully');
+      } catch (error) {
+        console.error('Error opening Plaid Link:', error);
+        alert(`Error opening Plaid Link: ${error.message}`);
+      }
     }
   }, [linkToken, ready, open]);
 
