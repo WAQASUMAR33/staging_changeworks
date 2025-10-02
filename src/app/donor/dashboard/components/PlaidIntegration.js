@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, X, Loader2, CheckCircle, AlertCircle, Building2 } from 'lucide-react';
@@ -60,8 +60,10 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
     }
   }, []);
 
+  const [linkToken, setLinkToken] = useState(null);
+
   const config = {
-    token: null, // We'll get this from our backend
+    token: linkToken,
     onSuccess: onPlaidSuccess,
     onExit: onPlaidExit,
   };
@@ -83,18 +85,17 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create link token');
+        const errorData = await response.json();
+        console.error('Link token creation failed:', errorData);
+        throw new Error(errorData.error || 'Failed to create link token');
       }
 
       const { link_token } = await response.json();
+      console.log('Link token received:', link_token);
       
-      // Update config with the link token
-      config.token = link_token;
+      // Set the link token to trigger Plaid Link initialization
+      setLinkToken(link_token);
       
-      // Open Plaid Link
-      if (ready) {
-        open();
-      }
     } catch (err) {
       console.error('Error creating link token:', err);
       setError('Failed to initialize bank connection. Please try again.');
@@ -102,6 +103,14 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       setLoading(false);
     }
   };
+
+  // Open Plaid Link when token is ready
+  useEffect(() => {
+    if (linkToken && ready) {
+      console.log('Opening Plaid Link with token:', linkToken);
+      open();
+    }
+  }, [linkToken, ready, open]);
 
   if (!isOpen) return null;
 

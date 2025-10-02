@@ -1,28 +1,16 @@
 import { NextResponse } from "next/server";
-import jwt from "jsonwebtoken";
 
 // Plaid configuration
 const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
 const PLAID_ENV = process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox';
 
-export async function POST(request) {
+export async function GET() {
   try {
-    console.log('Plaid create-link-token endpoint called');
-    
-    // Verify JWT token
-    const token = request.headers.get('authorization')?.split(' ')[1];
-    if (!token) {
-      console.log('No authorization token provided');
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-
-    console.log('Token received:', token.substring(0, 20) + '...');
-    
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const donorId = decoded.id;
-    
-    console.log('Token decoded successfully, donor ID:', donorId);
+    console.log('Testing Plaid link token creation...');
+    console.log('PLAID_CLIENT_ID:', PLAID_CLIENT_ID ? 'Set' : 'Missing');
+    console.log('PLAID_SECRET_KEY:', PLAID_SECRET_KEY ? 'Set' : 'Missing');
+    console.log('PLAID_ENV:', PLAID_ENV);
 
     // Create link token using Plaid API
     const plaidResponse = await fetch('https://sandbox.plaid.com/link/token/create', {
@@ -40,35 +28,46 @@ export async function POST(request) {
         country_codes: ['US'],
         language: 'en',
         user: {
-          client_user_id: donorId.toString(),
+          client_user_id: 'test-user-123',
         },
         webhook: `${process.env.NEXT_PUBLIC_BASE_URL}/api/plaid/webhook`,
       }),
     });
 
+    console.log('Plaid API response status:', plaidResponse.status);
+
     if (!plaidResponse.ok) {
       const errorData = await plaidResponse.json();
       console.error('Plaid link token creation failed:', errorData);
       return NextResponse.json(
-        { success: false, error: 'Failed to create link token', details: errorData },
+        { 
+          success: false, 
+          error: 'Failed to create link token', 
+          details: errorData,
+          status: plaidResponse.status
+        },
         { status: 500 }
       );
     }
 
-    const { link_token } = await plaidResponse.json();
+    const responseData = await plaidResponse.json();
+    console.log('Plaid link token created successfully');
 
     return NextResponse.json({
       success: true,
-      link_token,
+      message: 'Plaid link token created successfully',
+      link_token: responseData.link_token,
+      expiration: responseData.expiration,
     });
 
   } catch (error) {
     console.error('Error creating Plaid link token:', error);
-    if (error.name === 'JsonWebTokenError') {
-      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
-    }
     return NextResponse.json(
-      { success: false, error: 'Failed to create link token', details: error.message },
+      { 
+        success: false, 
+        error: 'Failed to create link token', 
+        details: error.message 
+      },
       { status: 500 }
     );
   }
