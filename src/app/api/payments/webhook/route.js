@@ -473,6 +473,60 @@ async function handleInvoicePaymentSucceeded(invoice) {
       }
     });
 
+    // Create transaction record in SaveTrRecord table for recurring payment
+    const transactionRecord = await prisma.saveTrRecord.create({
+      data: {
+        trx_id: `sub_${invoice.subscription}_${invoice.id}_${Date.now()}`,
+        trx_date: new Date(),
+        trx_amount: amount,
+        trx_method: 'stripe_subscription_recurring',
+        trx_donor_id: subscription.donor_id,
+        trx_organization_id: subscription.organization_id,
+        pay_status: 'completed',
+        trx_recipt_url: invoice.hosted_invoice_url || null,
+        trx_details: JSON.stringify({
+          subscription_id: invoice.subscription,
+          invoice_id: invoice.id,
+          payment_intent_id: invoice.payment_intent,
+          stripe_customer_id: invoice.customer,
+          subscription_status: 'active',
+          period_start: new Date(invoice.period_start * 1000),
+          period_end: new Date(invoice.period_end * 1000),
+          created_via: 'webhook_recurring_payment',
+          created_at: new Date()
+        })
+      }
+    });
+
+    // Create donor transaction record for recurring payment
+    const donorTransaction = await prisma.donorTransaction.create({
+      data: {
+        donor_id: subscription.donor_id,
+        organization_id: subscription.organization_id,
+        amount: amount,
+        currency: invoice.currency,
+        transaction_type: 'subscription_recurring',
+        status: 'completed',
+        stripe_subscription_id: invoice.subscription,
+        stripe_invoice_id: invoice.id,
+        stripe_payment_intent_id: invoice.payment_intent,
+        description: `Recurring subscription payment: ${invoice.subscription}`,
+        metadata: JSON.stringify({
+          subscription_id: subscription.id,
+          save_tr_record_id: transactionRecord.id,
+          invoice_id: invoice.id,
+          period_start: new Date(invoice.period_start * 1000),
+          period_end: new Date(invoice.period_end * 1000),
+          created_via: 'webhook_recurring_payment'
+        })
+      }
+    });
+
+    console.log(`✅ Recurring subscription payment processed:`);
+    console.log(`   - Subscription ID: ${subscription.id}`);
+    console.log(`   - Transaction ID: ${transactionRecord.id}`);
+    console.log(`   - Donor Transaction ID: ${donorTransaction.id}`);
+    console.log(`   - Amount: $${amount}`);
     console.log(`Updated organization ${subscription.organization_id} balance by $${amount} from subscription payment`);
 
     // Send monthly impact email to donor

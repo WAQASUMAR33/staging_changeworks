@@ -126,6 +126,59 @@ export async function POST(request) {
       create: subscriptionData
     });
 
+    // Create transaction record in SaveTrRecord table
+    const transactionRecord = await prisma.saveTrRecord.create({
+      data: {
+        trx_id: `sub_${stripeSubscription.id}_${Date.now()}`,
+        trx_date: new Date(),
+        trx_amount: amount,
+        trx_method: 'stripe_subscription',
+        trx_donor_id: donorId,
+        trx_organization_id: organizationId,
+        pay_status: 'completed',
+        trx_recipt_url: session.receipt_url || null,
+        trx_details: JSON.stringify({
+          subscription_id: stripeSubscription.id,
+          session_id: session.id,
+          payment_intent_id: session.payment_intent,
+          stripe_customer_id: stripeSubscription.customer,
+          stripe_product_id: productId,
+          stripe_price_id: priceId,
+          subscription_status: stripeSubscription.status,
+          created_via: 'checkout_success',
+          created_at: new Date()
+        })
+      }
+    });
+
+    // Create donor transaction record
+    const donorTransaction = await prisma.donorTransaction.create({
+      data: {
+        donor_id: donorId,
+        organization_id: organizationId,
+        amount: amount,
+        currency: currency,
+        transaction_type: 'subscription',
+        status: 'completed',
+        stripe_subscription_id: stripeSubscription.id,
+        stripe_session_id: session.id,
+        stripe_payment_intent_id: session.payment_intent,
+        description: `Subscription: ${stripeSubscription.id}`,
+        metadata: JSON.stringify({
+          subscription_id: dbSubscription.id,
+          save_tr_record_id: transactionRecord.id,
+          stripe_product_id: productId,
+          stripe_price_id: priceId,
+          created_via: 'checkout_success'
+        })
+      }
+    });
+
+    console.log(`✅ Subscription ${stripeSubscription.id} processed successfully:`);
+    console.log(`   - Subscription ID: ${dbSubscription.id}`);
+    console.log(`   - Transaction ID: ${transactionRecord.id}`);
+    console.log(`   - Donor Transaction ID: ${donorTransaction.id}`);
+
     return NextResponse.json({
       success: true,
       message: 'Subscription created successfully',
@@ -135,6 +188,16 @@ export async function POST(request) {
         amount: dbSubscription.amount,
         currency: dbSubscription.currency,
         interval: dbSubscription.interval
+      },
+      transaction: {
+        id: transactionRecord.id,
+        amount: transactionRecord.trx_amount,
+        status: transactionRecord.pay_status
+      },
+      donor_transaction: {
+        id: donorTransaction.id,
+        amount: donorTransaction.amount,
+        status: donorTransaction.status
       }
     });
 
