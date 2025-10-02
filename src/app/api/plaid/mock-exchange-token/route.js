@@ -45,22 +45,23 @@ export async function POST(request) {
     ];
 
     // Save mock Plaid connection to database
+    // Store organization_id in accounts JSON for now until database migration is complete
+    const mockAccountsWithOrgId = mockAccounts.map(account => ({
+      ...account,
+      organization_id: organization_id,
+      is_mock: true
+    }));
+
     const connectionData = {
       donor_id: donorId,
       access_token: mockAccessToken,
       item_id: mockItemId,
       institution_id: 'ins_mock_bank',
       institution_name: 'Mock Bank',
-      accounts: JSON.stringify(mockAccounts),
+      accounts: JSON.stringify(mockAccountsWithOrgId),
       status: 'ACTIVE',
       created_at: new Date(),
       updated_at: new Date(),
-      // Store organization_id in metadata for now
-      metadata: JSON.stringify({
-        organization_id: organization_id,
-        original_metadata: metadata,
-        is_mock: true
-      })
     };
 
     // Try to create with organization_id first, fallback to without it

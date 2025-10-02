@@ -82,22 +82,22 @@ export async function POST(request) {
     const { accounts } = await accountsResponse.json();
 
     // Save Plaid connection to database
-    // Temporarily store organization_id in metadata until database migration is complete
+    // Store organization_id in accounts JSON for now until database migration is complete
+    const accountsWithOrgId = accounts.map(account => ({
+      ...account,
+      organization_id: organization_id
+    }));
+
     const connectionData = {
       donor_id: donorId,
       access_token: access_token,
       item_id: item_id,
       institution_id: metadata.institution?.institution_id || null,
       institution_name: metadata.institution?.name || null,
-      accounts: JSON.stringify(accounts),
+      accounts: JSON.stringify(accountsWithOrgId),
       status: 'ACTIVE',
       created_at: new Date(),
       updated_at: new Date(),
-      // Store organization_id in metadata for now
-      metadata: JSON.stringify({
-        organization_id: organization_id,
-        original_metadata: metadata
-      })
     };
 
     // Try to create with organization_id first, fallback to without it
