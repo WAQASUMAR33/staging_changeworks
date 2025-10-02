@@ -30,7 +30,9 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       const response = await fetch('/api/organizations/list');
       if (response.ok) {
         const data = await response.json();
-        setOrganizations(data.organizations || []);
+        // Handle both array response and object with organizations property
+        const orgs = Array.isArray(data) ? data : (data?.organizations || []);
+        setOrganizations(orgs);
       }
     } catch (error) {
       console.error('Error fetching organizations:', error);
@@ -73,6 +75,16 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       const result = await response.json();
       console.log('Token exchange successful:', result);
       
+      // Show Plaid response in alert dialog
+      const alertMessage = `Plaid Connection Successful!\n\n` +
+        `Organization: ${selectedOrganization?.name}\n` +
+        `Institution: ${result.connection?.institution_name || 'Unknown'}\n` +
+        `Accounts: ${result.connection?.accounts_count || 0}\n` +
+        `Status: ${result.connection?.status || 'Unknown'}\n` +
+        `Connection ID: ${result.connection?.id || 'N/A'}`;
+      
+      alert(alertMessage);
+      
       setSuccess(true);
       
       // Call success callback after a short delay
@@ -83,6 +95,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
 
     } catch (err) {
       console.error('Plaid integration error:', err);
+      const errorMessage = `Plaid Connection Failed!\n\nError: ${err.message || 'Unknown error occurred'}\n\nPlease try again.`;
+      alert(errorMessage);
       setError('Failed to connect bank account. Please try again.');
     } finally {
       setLoading(false);
@@ -92,6 +106,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   const onPlaidExit = useCallback((err, metadata) => {
     if (err) {
       console.error('Plaid Link Exit Error:', err);
+      const exitMessage = `Plaid Connection Cancelled!\n\nReason: ${err.error_message || err.error_code || 'User cancelled'}\n\nYou can try again anytime.`;
+      alert(exitMessage);
       setError('Connection was cancelled or failed. Please try again.');
     }
   }, []);
