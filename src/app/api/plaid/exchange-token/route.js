@@ -40,6 +40,7 @@ export async function POST(request) {
         secret: PLAID_SECRET_KEY,
         public_token: public_token,
       }),
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
     if (!exchangeResponse.ok) {
@@ -66,6 +67,7 @@ export async function POST(request) {
         secret: PLAID_SECRET_KEY,
         access_token: access_token,
       }),
+      signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
     if (!accountsResponse.ok) {
@@ -137,6 +139,32 @@ export async function POST(request) {
     
     if (error.name === 'JsonWebTokenError') {
       return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
+    }
+    
+    // Handle network connectivity issues
+    if (error.code === 'UND_ERR_CONNECT_TIMEOUT' || error.message.includes('timeout') || error.message.includes('fetch failed')) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Network connection timeout. Please check your internet connection and try again.',
+          details: 'Unable to connect to Plaid API. This may be due to network issues or firewall restrictions.',
+          errorCode: 'NETWORK_TIMEOUT'
+        },
+        { status: 503 }
+      );
+    }
+    
+    // Handle other network errors
+    if (error.message.includes('ENOTFOUND') || error.message.includes('ECONNREFUSED')) {
+      return NextResponse.json(
+        { 
+          success: false, 
+          error: 'Unable to connect to Plaid service. Please try again later.',
+          details: 'DNS resolution or connection refused error.',
+          errorCode: 'NETWORK_ERROR'
+        },
+        { status: 503 }
+      );
     }
     
     // Check for specific database errors
