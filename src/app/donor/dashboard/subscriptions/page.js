@@ -16,6 +16,7 @@ import {
   Clock
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import StripeSubscriptionModal from '../components/StripeSubscriptionModal';
 
 export default function DonorSubscriptionsPage() {
   const [subscriptions, setSubscriptions] = useState([]);
@@ -23,6 +24,7 @@ export default function DonorSubscriptionsPage() {
   const [error, setError] = useState('');
   const [actionLoading, setActionLoading] = useState(null);
   const [message, setMessage] = useState('');
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const fetchSubscriptions = async () => {
     try {
@@ -92,6 +94,14 @@ export default function DonorSubscriptionsPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleSubscriptionSuccess = (subscriptionData) => {
+    console.log('Subscription created successfully:', subscriptionData);
+    // Refresh subscriptions list
+    fetchSubscriptions();
+    setMessage('Subscription created successfully!');
+    setTimeout(() => setMessage(''), 3000);
   };
 
   const formatAmount = (amount) => {
@@ -184,7 +194,10 @@ export default function DonorSubscriptionsPage() {
           <p className="text-gray-600 mt-2">Manage your recurring donations</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+          <button 
+            onClick={() => setShowSubscriptionModal(true)}
+            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+          >
             <Plus className="w-4 h-4" />
             <span>New Subscription</span>
           </button>
@@ -405,12 +418,22 @@ export default function DonorSubscriptionsPage() {
             <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Subscriptions Found</h3>
             <p className="text-gray-600 mb-4">You don&apos;t have any active subscriptions yet.</p>
-            <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+            <button 
+              onClick={() => setShowSubscriptionModal(true)}
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            >
               Create Your First Subscription
             </button>
           </div>
         )}
       </motion.div>
+
+      {/* Subscription Modal */}
+      <StripeSubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        onSuccess={handleSubscriptionSuccess}
+      />
     </motion.div>
   );
 }
