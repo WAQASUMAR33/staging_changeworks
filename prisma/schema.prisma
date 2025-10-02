@@ -98,6 +98,7 @@ model Donor {
   organization    Organization       @relation(fields: [organization_id], references: [id])
   saveTrRecords   SaveTrRecord[]     @relation("DonorTransactions")
   subscriptions   Subscription[]     @relation("DonorSubscriptions")
+  plaidConnections PlaidConnection[]
 
   @@index([organization_id], map: "donors_organization_id_fkey")
   @@map("donors")
@@ -260,6 +261,26 @@ model SubscriptionTransaction {
   @@index([subscription_id])
   @@index([status])
   @@map("subscription_transactions")
+}
+
+model PlaidConnection {
+  id                Int      @id @default(autoincrement())
+  donor_id          Int
+  access_token      String   @unique @db.VarChar(255)
+  item_id           String   @unique @db.VarChar(255)
+  institution_id    String?  @db.VarChar(255)
+  institution_name  String?  @db.VarChar(255)
+  accounts          String?  @db.Text
+  status            String   @default("ACTIVE") @db.VarChar(50)
+  error_message     String?  @db.VarChar(500)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  donor             Donor    @relation(fields: [donor_id], references: [id])
+
+  @@index([donor_id])
+  @@index([status])
+  @@map("plaid_connections")
 }
 
 enum Role {

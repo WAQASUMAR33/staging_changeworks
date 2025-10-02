@@ -18,6 +18,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import StripeProvider from './components/StripeProvider';
 import StripePaymentForm from './components/StripePaymentForm';
 import StripeSubscriptionModal from './components/StripeSubscriptionModal';
+import PlaidIntegration from './components/PlaidIntegration';
 import FilterableDropdown from './components/FilterableDropdown';
 
 export default function DonorDashboard() {
@@ -41,6 +42,9 @@ export default function DonorDashboard() {
 
   // Subscription modal state
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  
+  // Plaid integration modal state
+  const [showPlaidModal, setShowPlaidModal] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
@@ -226,8 +230,14 @@ export default function DonorDashboard() {
   };
 
   const handlePlaidIntegration = () => {
-    // Redirect to Plaid integration page
-    window.open('/donor/plaid-connect', '_blank');
+    // Open Plaid integration modal
+    setShowPlaidModal(true);
+  };
+
+  const handlePlaidSuccess = (result) => {
+    console.log('Plaid integration successful:', result);
+    // Refresh dashboard data to show updated stats
+    fetchDashboardData();
   };
 
   useEffect(() => {
@@ -619,6 +629,13 @@ export default function DonorDashboard() {
         isOpen={showSubscriptionModal}
         onClose={() => setShowSubscriptionModal(false)}
         onSuccess={handleSubscriptionSuccess}
+      />
+
+      {/* Plaid Integration Modal */}
+      <PlaidIntegration
+        isOpen={showPlaidModal}
+        onClose={() => setShowPlaidModal(false)}
+        onSuccess={handlePlaidSuccess}
       />
       </motion.div>
     </StripeProvider>
