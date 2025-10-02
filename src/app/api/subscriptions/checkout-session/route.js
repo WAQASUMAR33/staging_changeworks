@@ -50,6 +50,17 @@ export async function POST(request) {
       expand: ['items.data.price']
     });
 
+    console.log('Stripe subscription data:', {
+      id: stripeSubscription.id,
+      status: stripeSubscription.status,
+      current_period_start: stripeSubscription.current_period_start,
+      current_period_end: stripeSubscription.current_period_end,
+      cancel_at_period_end: stripeSubscription.cancel_at_period_end,
+      canceled_at: stripeSubscription.canceled_at,
+      trial_start: stripeSubscription.trial_start,
+      trial_end: stripeSubscription.trial_end
+    });
+
     // Extract metadata
     const donorId = parseInt(stripeSubscription.metadata.donor_id);
     const organizationId = parseInt(stripeSubscription.metadata.organization_id);
@@ -82,6 +93,13 @@ export async function POST(request) {
     const interval = price.recurring?.interval || 'month';
     const intervalCount = price.recurring?.interval_count || 1;
 
+    // Helper function to safely convert timestamps to dates
+    const safeTimestampToDate = (timestamp) => {
+      if (!timestamp || timestamp === 0) return null;
+      const date = new Date(timestamp * 1000);
+      return isNaN(date.getTime()) ? null : date;
+    };
+
     // Create subscription record in database
     const subscriptionData = {
       stripe_subscription_id: stripeSubscription.id,
@@ -89,12 +107,12 @@ export async function POST(request) {
       organization_id: organizationId,
       package_id: 1, // Default package ID
       status: stripeSubscription.status.toUpperCase(),
-      current_period_start: new Date(stripeSubscription.current_period_start * 1000),
-      current_period_end: new Date(stripeSubscription.current_period_end * 1000),
-      cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-      canceled_at: stripeSubscription.canceled_at ? new Date(stripeSubscription.canceled_at * 1000) : null,
-      trial_start: stripeSubscription.trial_start ? new Date(stripeSubscription.trial_start * 1000) : null,
-      trial_end: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null,
+      current_period_start: safeTimestampToDate(stripeSubscription.current_period_start),
+      current_period_end: safeTimestampToDate(stripeSubscription.current_period_end),
+      cancel_at_period_end: stripeSubscription.cancel_at_period_end || false,
+      canceled_at: safeTimestampToDate(stripeSubscription.canceled_at),
+      trial_start: safeTimestampToDate(stripeSubscription.trial_start),
+      trial_end: safeTimestampToDate(stripeSubscription.trial_end),
       amount: amount,
       currency: currency,
       interval: interval,
@@ -115,12 +133,12 @@ export async function POST(request) {
       },
       update: {
         status: stripeSubscription.status.toUpperCase(),
-        current_period_start: new Date(stripeSubscription.current_period_start * 1000),
-        current_period_end: new Date(stripeSubscription.current_period_end * 1000),
-        cancel_at_period_end: stripeSubscription.cancel_at_period_end,
-        canceled_at: stripeSubscription.canceled_at ? new Date(stripeSubscription.canceled_at * 1000) : null,
-        trial_start: stripeSubscription.trial_start ? new Date(stripeSubscription.trial_start * 1000) : null,
-        trial_end: stripeSubscription.trial_end ? new Date(stripeSubscription.trial_end * 1000) : null,
+        current_period_start: safeTimestampToDate(stripeSubscription.current_period_start),
+        current_period_end: safeTimestampToDate(stripeSubscription.current_period_end),
+        cancel_at_period_end: stripeSubscription.cancel_at_period_end || false,
+        canceled_at: safeTimestampToDate(stripeSubscription.canceled_at),
+        trial_start: safeTimestampToDate(stripeSubscription.trial_start),
+        trial_end: safeTimestampToDate(stripeSubscription.trial_end),
         updated_at: new Date()
       },
       create: subscriptionData
