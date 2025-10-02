@@ -76,6 +76,7 @@ model Organization {
   ghlAccounts   GHLAccount[]       @relation("OrganizationGHLAccounts")
   saveTrRecords SaveTrRecord[]     @relation("OrganizationTransactions")
   subscriptions Subscription[]     @relation("OrganizationSubscriptions")
+  plaidConnections PlaidConnection[]
 
   @@map("organizations")
 }
@@ -266,6 +267,7 @@ model SubscriptionTransaction {
 model PlaidConnection {
   id                Int      @id @default(autoincrement())
   donor_id          Int
+  organization_id   Int
   access_token      String   @unique @db.VarChar(255)
   item_id           String   @unique @db.VarChar(255)
   institution_id    String?  @db.VarChar(255)
@@ -277,8 +279,10 @@ model PlaidConnection {
   updated_at        DateTime @updatedAt
   
   donor             Donor    @relation(fields: [donor_id], references: [id])
+  organization      Organization @relation(fields: [organization_id], references: [id])
 
   @@index([donor_id])
+  @@index([organization_id])
   @@index([status])
   @@map("plaid_connections")
 }

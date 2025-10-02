@@ -17,6 +17,12 @@ export async function POST(request) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const donorId = decoded.id;
 
+    // Get organization_id from request body
+    const { organization_id } = await request.json();
+    if (!organization_id) {
+      return NextResponse.json({ success: false, error: 'Organization ID is required' }, { status: 400 });
+    }
+
     // Create link token using Plaid API
     const plaidResponse = await fetch('https://sandbox.plaid.com/link/token/create', {
       method: 'POST',

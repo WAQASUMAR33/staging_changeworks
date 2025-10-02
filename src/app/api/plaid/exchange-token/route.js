@@ -18,7 +18,7 @@ export async function POST(request) {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const donorId = decoded.id;
 
-    const { public_token, metadata } = await request.json();
+    const { public_token, metadata, organization_id } = await request.json();
 
     if (!public_token) {
       return NextResponse.json(
@@ -83,6 +83,7 @@ export async function POST(request) {
     const plaidConnection = await prisma.plaidConnection.create({
       data: {
         donor_id: donorId,
+        organization_id: organization_id,
         access_token: access_token,
         item_id: item_id,
         institution_id: metadata.institution?.institution_id || null,
