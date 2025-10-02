@@ -290,22 +290,22 @@ export default function DonorDashboard() {
         className="space-y-6"
       >
       {/* Welcome Section */}
-      <motion.div variants={itemVariants} className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-6 text-white">
+      <motion.div variants={itemVariants} className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 text-white">
         <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-bold mb-2">Your Impact Dashboard</h2>
-            <p className="text-blue-100">
+          <div className="flex-1 min-w-0">
+            <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Impact Dashboard</h2>
+            <p className="text-blue-100 text-sm sm:text-base">
               Track your donations, manage subscriptions, and see the difference you&apos;re making
             </p>
           </div>
-          <div className="hidden md:block">
-            <Gift className="w-16 h-16 text-white/20" />
+          <div className="hidden sm:block ml-4">
+            <Gift className="w-12 h-12 sm:w-16 sm:h-16 text-white/20" />
           </div>
         </div>
       </motion.div>
 
       {/* Stats Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -313,95 +313,95 @@ export default function DonorDashboard() {
               key={stat.title}
               variants={itemVariants}
               whileHover={{ scale: 1.02 }}
-              className="bg-white rounded-xl p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
+              className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200 hover:shadow-md transition-all duration-200 cursor-pointer"
               onClick={() => window.location.href = stat.path}
             >
-              <div className="flex items-center justify-between mb-4">
-                <div className={`p-3 rounded-lg bg-${stat.color}-100`}>
-                  <Icon className={`w-6 h-6 text-${stat.color}-600`} />
+              <div className="flex items-center justify-between mb-3 sm:mb-4">
+                <div className={`p-2 sm:p-3 rounded-lg bg-${stat.color}-100`}>
+                  <Icon className={`w-5 h-5 sm:w-6 sm:h-6 text-${stat.color}-600`} />
                 </div>
-                <div className={`text-sm font-medium ${
+                <div className={`text-xs sm:text-sm font-medium ${
                   stat.changeType === 'increase' ? 'text-green-600' : 
                   stat.changeType === 'decrease' ? 'text-red-600' : 'text-gray-600'
                 }`}>
                   {stat.change}
                 </div>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-              <p className="text-gray-600 text-sm">{stat.title}</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
+              <p className="text-gray-600 text-xs sm:text-sm">{stat.title}</p>
             </motion.div>
           );
         })}
       </motion.div>
 
       {/* Recent Activity */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Recent Donations</h3>
-          <div className="space-y-4">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Recent Donations</h3>
+          <div className="space-y-3 sm:space-y-4">
             {recentActivity.length > 0 ? (
               recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                  <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                    <Heart className="w-5 h-5 text-green-600" />
+                <div key={index} className="flex items-center space-x-3 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
                   </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-900">{activity.description}</p>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{activity.description}</p>
                     <p className="text-xs text-gray-500">{activity.date}</p>
                   </div>
-                  <div className="text-sm font-semibold text-green-600">
+                  <div className="text-xs sm:text-sm font-semibold text-green-600 flex-shrink-0">
                     ${activity.amount}
                   </div>
                 </div>
               ))
             ) : (
-              <div className="text-center py-8">
-                <Heart className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No recent donations found</p>
-                <p className="text-sm text-gray-400">Your donation history will appear here</p>
+              <div className="text-center py-6 sm:py-8">
+                <Heart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3" />
+                <p className="text-gray-500 text-sm sm:text-base">No recent donations found</p>
+                <p className="text-xs sm:text-sm text-gray-400">Your donation history will appear here</p>
               </div>
             )}
           </div>
         </div>
 
-        <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-3">
+        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
+          <div className="space-y-2 sm:space-y-3">
             <button 
               onClick={handleStripePayment}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors duration-200 text-left"
+              className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors duration-200 text-left"
             >
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-4 h-4 text-white" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Stripe Payment</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-900">Stripe Payment</p>
                 <p className="text-xs text-gray-500">Make a one-time donation</p>
               </div>
             </button>
             
             <button 
               onClick={handleStripeSubscription}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors duration-200 text-left"
+              className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors duration-200 text-left"
             >
-              <div className="w-8 h-8 bg-green-600 rounded-lg flex items-center justify-center">
-                <TrendingUp className="w-4 h-4 text-white" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Stripe Subscription</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-900">Stripe Subscription</p>
                 <p className="text-xs text-gray-500">Set up recurring donations</p>
               </div>
             </button>
             
             <button 
               onClick={handlePlaidIntegration}
-              className="w-full flex items-center space-x-3 p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors duration-200 text-left"
+              className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors duration-200 text-left"
             >
-              <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
-                <Target className="w-4 h-4 text-white" />
+              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                <Target className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-gray-900">Plaid Integration</p>
+              <div className="min-w-0">
+                <p className="text-xs sm:text-sm font-medium text-gray-900">Plaid Integration</p>
                 <p className="text-xs text-gray-500">Connect your bank account</p>
               </div>
             </button>
@@ -424,24 +424,24 @@ export default function DonorDashboard() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto"
+              className="bg-white rounded-2xl shadow-2xl p-4 sm:p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4 sm:mx-0"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
-                    <CreditCard className="w-5 h-5 text-white" />
+              <div className="flex items-center justify-between mb-4 sm:mb-6">
+                <div className="flex items-center space-x-2 sm:space-x-3">
+                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-blue-600 rounded-xl flex items-center justify-center flex-shrink-0">
+                    <CreditCard className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-xl font-bold text-gray-800">Stripe Payment</h3>
-                    <p className="text-sm text-gray-600">Make a secure donation</p>
+                  <div className="min-w-0">
+                    <h3 className="text-lg sm:text-xl font-bold text-gray-800">Stripe Payment</h3>
+                    <p className="text-xs sm:text-sm text-gray-600">Make a secure donation</p>
                   </div>
                 </div>
                 <button
                   onClick={closePaymentModal}
-                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200 flex-shrink-0"
                 >
-                  <X size={24} />
+                  <X size={20} className="sm:w-6 sm:h-6" />
                 </button>
               </div>
 

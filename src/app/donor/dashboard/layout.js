@@ -56,10 +56,19 @@ export default function DonorLayout({ children }) {
 
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50">
-      <DonorSidebar />
+      {/* Mobile sidebar overlay */}
+      <div className="lg:hidden">
+        <DonorSidebar />
+      </div>
+      
+      {/* Desktop sidebar */}
+      <div className="hidden lg:block">
+        <DonorSidebar />
+      </div>
+      
       <div className="flex flex-col flex-1 overflow-hidden">
         <DonorHeader />
-        <main className="flex-1 overflow-y-auto p-6">
+        <main className="flex-1 overflow-y-auto p-3 sm:p-4 lg:p-6">
           {children}
         </main>
       </div>

@@ -16,6 +16,8 @@ import {
   Bell,
   Pin,
   PinOff,
+  Menu,
+  X,
 } from 'lucide-react';
 
 const DonorSidebar = () => {
@@ -23,6 +25,7 @@ const DonorSidebar = () => {
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -66,7 +69,7 @@ const DonorSidebar = () => {
     },
   ];
 
-  const SidebarContent = () => (
+  const SidebarContent = ({ onMobileClose }) => (
     <div className="flex flex-col h-full">
       {/* Logo and Toggle */}
       <div className="flex items-center justify-between p-6 border-b border-gray-200">
@@ -81,16 +84,28 @@ const DonorSidebar = () => {
             </div>
           </div>
         )}
-        <button
-          onClick={() => setIsPinned(!isPinned)}
-          className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
-        >
-          {isPinned ? (
-            <Pin className="w-4 h-4 text-gray-600" />
-          ) : (
-            <PinOff className="w-4 h-4 text-gray-400" />
+        <div className="flex items-center space-x-2">
+          {/* Mobile close button */}
+          {onMobileClose && (
+            <button
+              onClick={onMobileClose}
+              className="p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200 lg:hidden"
+            >
+              <X className="w-4 h-4 text-gray-600" />
+            </button>
           )}
-        </button>
+          {/* Desktop pin button */}
+          <button
+            onClick={() => setIsPinned(!isPinned)}
+            className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+          >
+            {isPinned ? (
+              <Pin className="w-4 h-4 text-gray-600" />
+            ) : (
+              <PinOff className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+        </div>
       </div>
 
       {/* Navigation Menu */}
@@ -102,7 +117,10 @@ const DonorSidebar = () => {
           return (
             <button
               key={item.path}
-              onClick={() => router.push(item.path)}
+              onClick={() => {
+                router.push(item.path);
+                if (onMobileClose) onMobileClose();
+              }}
               className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
                 isActive
                   ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
@@ -134,15 +152,46 @@ const DonorSidebar = () => {
   );
 
   return (
-    <div
-      className={`bg-white shadow-lg transition-all duration-300 ease-in-out ${
-        isExpanded ? 'w-64' : 'w-16'
-      }`}
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
-      <SidebarContent />
-    </div>
+    <>
+      {/* Mobile Sidebar */}
+      <div className="lg:hidden">
+        {/* Mobile menu button */}
+        <button
+          onClick={() => setIsMobileOpen(!isMobileOpen)}
+          className="fixed top-4 left-4 z-50 p-2 bg-white rounded-lg shadow-lg lg:hidden"
+        >
+          {isMobileOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+        </button>
+
+        {/* Mobile overlay */}
+        {isMobileOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-50 z-40 lg:hidden"
+            onClick={() => setIsMobileOpen(false)}
+          />
+        )}
+
+        {/* Mobile sidebar */}
+        <div
+          className={`fixed top-0 left-0 h-full bg-white shadow-lg z-50 transform transition-transform duration-300 ease-in-out lg:hidden ${
+            isMobileOpen ? 'translate-x-0' : '-translate-x-full'
+          } w-64`}
+        >
+          <SidebarContent onMobileClose={() => setIsMobileOpen(false)} />
+        </div>
+      </div>
+
+      {/* Desktop Sidebar */}
+      <div
+        className={`hidden lg:block bg-white shadow-lg transition-all duration-300 ease-in-out ${
+          isExpanded ? 'w-64' : 'w-16'
+        }`}
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <SidebarContent />
+      </div>
+    </>
   );
 };
 
