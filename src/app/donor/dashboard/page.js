@@ -17,6 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import StripeProvider from './components/StripeProvider';
 import StripePaymentForm from './components/StripePaymentForm';
+import StripeSubscriptionModal from './components/StripeSubscriptionModal';
 import FilterableDropdown from './components/FilterableDropdown';
 
 export default function DonorDashboard() {
@@ -37,6 +38,9 @@ export default function DonorDashboard() {
   const [paymentLoading, setPaymentLoading] = useState(false);
   const [paymentStatus, setPaymentStatus] = useState(''); // 'processing', 'success', 'error'
   const [paymentResult, setPaymentResult] = useState(null);
+
+  // Subscription modal state
+  const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
 
   const fetchDashboardData = async () => {
     try {
@@ -211,8 +215,14 @@ export default function DonorDashboard() {
   };
 
   const handleStripeSubscription = () => {
-    // Redirect to subscription management page
-    window.open('/donor/subscriptions', '_blank');
+    // Open subscription modal
+    setShowSubscriptionModal(true);
+  };
+
+  const handleSubscriptionSuccess = (subscriptionData) => {
+    console.log('Subscription created successfully:', subscriptionData);
+    // Refresh dashboard data to show updated stats
+    fetchDashboardData();
   };
 
   const handlePlaidIntegration = () => {
@@ -603,6 +613,13 @@ export default function DonorDashboard() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Subscription Modal */}
+      <StripeSubscriptionModal
+        isOpen={showSubscriptionModal}
+        onClose={() => setShowSubscriptionModal(false)}
+        onSuccess={handleSubscriptionSuccess}
+      />
       </motion.div>
     </StripeProvider>
   );
