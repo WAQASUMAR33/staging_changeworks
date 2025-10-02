@@ -166,24 +166,6 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                 </div>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
-                <div className="p-3 bg-green-50 rounded-lg">
-                  <h5 className="font-semibold text-green-800 text-sm mb-1">✓ Secure & Encrypted</h5>
-                  <p className="text-xs text-green-700">Bank-level security with 256-bit encryption</p>
-                </div>
-                <div className="p-3 bg-blue-50 rounded-lg">
-                  <h5 className="font-semibold text-blue-800 text-sm mb-1">✓ Read-Only Access</h5>
-                  <p className="text-xs text-blue-700">We can only view your account, never make changes</p>
-                </div>
-                <div className="p-3 bg-purple-50 rounded-lg">
-                  <h5 className="font-semibold text-purple-800 text-sm mb-1">✓ Instant Verification</h5>
-                  <p className="text-xs text-purple-700">Verify your account instantly without waiting</p>
-                </div>
-                <div className="p-3 bg-orange-50 rounded-lg">
-                  <h5 className="font-semibold text-orange-800 text-sm mb-1">✓ Easy Management</h5>
-                  <p className="text-xs text-orange-700">Manage your donations and subscriptions easily</p>
-                </div>
-              </div>
 
               <button
                 onClick={handleConnect}
