@@ -116,7 +116,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       };
       console.log('Exchange payload:', exchangePayload);
 
-      let response = await fetch('/api/plaid/exchange-token', {
+      // Try the simple API first (bypasses Prisma relation issues)
+      let response = await fetch('/api/plaid/simple-exchange-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -125,26 +126,39 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
         body: JSON.stringify(exchangePayload)
       });
 
-      // If real API fails due to network issues, try mock API
+      // If simple API fails, try the original API
       if (!response.ok) {
-        let errorData;
-        try {
-          errorData = await response.json();
-        } catch (jsonError) {
-          console.error('Failed to parse error response:', jsonError);
-          errorData = { error: 'Unknown error' };
-        }
-        
-        if (errorData.errorCode === 'NETWORK_TIMEOUT' || errorData.errorCode === 'NETWORK_ERROR') {
-          console.log('Real Plaid exchange API failed due to network issues, trying mock API...');
-          response = await fetch('/api/plaid/mock-exchange-token', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify(exchangePayload)
-          });
+        console.log('Simple API failed, trying original API...');
+        response = await fetch('/api/plaid/exchange-token', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify(exchangePayload)
+        });
+
+        // If original API also fails due to network issues, try mock API
+        if (!response.ok) {
+          let errorData;
+          try {
+            errorData = await response.json();
+          } catch (jsonError) {
+            console.error('Failed to parse error response:', jsonError);
+            errorData = { error: 'Unknown error' };
+          }
+          
+          if (errorData.errorCode === 'NETWORK_TIMEOUT' || errorData.errorCode === 'NETWORK_ERROR') {
+            console.log('Real Plaid exchange API failed due to network issues, trying mock API...');
+            response = await fetch('/api/plaid/mock-exchange-token', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+              },
+              body: JSON.stringify(exchangePayload)
+            });
+          }
         }
       }
 
