@@ -260,14 +260,43 @@ async function handleSubscriptionCreated(subscription) {
     const donorId = parseInt(subscription.metadata.donor_id);
     const organizationId = parseInt(subscription.metadata.organization_id);
     const packageId = parseInt(subscription.metadata.package_id);
+    const productId = subscription.metadata.product_id;
+    const priceId = subscription.metadata.price_id;
 
     // Get package details for amount and currency
-    const packageData = await prisma.package.findUnique({
-      where: { id: packageId }
-    });
+    let packageData;
+    if (packageId) {
+      packageData = await prisma.package.findUnique({
+        where: { id: packageId }
+      });
+    }
 
-    if (!packageData) {
-      console.error(`Package ${packageId} not found for subscription ${subscription.id}`);
+    // If no package found, get amount from Stripe price
+    let amount = 0;
+    let currency = 'usd';
+    let interval = 'month';
+    let intervalCount = 1;
+
+    if (packageData) {
+      amount = packageData.price;
+      currency = packageData.currency;
+    } else if (priceId) {
+      try {
+        const stripePrice = await stripe.prices.retrieve(priceId);
+        amount = stripePrice.unit_amount / 100; // Convert from cents
+        currency = stripePrice.currency;
+        interval = stripePrice.recurring?.interval || 'month';
+        intervalCount = stripePrice.recurring?.interval_count || 1;
+      } catch (stripeError) {
+        console.error('Failed to retrieve Stripe price:', stripeError);
+        // Use default values
+        amount = 0;
+        currency = 'usd';
+      }
+    }
+
+    if (!packageData && !priceId) {
+      console.error(`No package or price found for subscription ${subscription.id}`);
       return;
     }
 
@@ -276,7 +305,7 @@ async function handleSubscriptionCreated(subscription) {
       stripe_subscription_id: subscription.id,
       donor_id: donorId,
       organization_id: organizationId,
-      package_id: packageId,
+      package_id: packageId || 1, // Default package ID if not provided
       status: subscription.status.toUpperCase(),
       current_period_start: new Date(subscription.current_period_start * 1000),
       current_period_end: new Date(subscription.current_period_end * 1000),
@@ -284,12 +313,14 @@ async function handleSubscriptionCreated(subscription) {
       canceled_at: subscription.canceled_at ? new Date(subscription.canceled_at * 1000) : null,
       trial_start: subscription.trial_start ? new Date(subscription.trial_start * 1000) : null,
       trial_end: subscription.trial_end ? new Date(subscription.trial_end * 1000) : null,
-      amount: packageData.price,
-      currency: packageData.currency,
-      interval: 'month', // Default to monthly
-      interval_count: 1,
+      amount: amount,
+      currency: currency,
+      interval: interval,
+      interval_count: intervalCount,
       metadata: JSON.stringify({
         stripe_customer_id: subscription.customer,
+        stripe_product_id: productId,
+        stripe_price_id: priceId,
         created_via: 'webhook',
         webhook_processed_at: new Date()
       })

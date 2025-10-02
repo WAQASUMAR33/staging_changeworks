@@ -70,12 +70,10 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
         setSubscriptionStatus('success');
         // Redirect to Stripe checkout
         if (data.checkout_url) {
-          window.open(data.checkout_url, '_blank');
+          // Open checkout in same window to handle success callback
+          window.location.href = data.checkout_url;
         }
-        setTimeout(() => {
-          onSuccess && onSuccess(data);
-          onClose();
-        }, 2000);
+        // Don't close modal immediately - let the redirect handle it
       } else {
         setError(data.error || 'Failed to create subscription');
       }
