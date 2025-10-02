@@ -34,7 +34,11 @@ export default function DonorSubscriptionsPage() {
         return;
       }
 
-      const response = await fetch('/api/donor/subscriptions', {
+      // Decode token to get donor ID
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const donorId = payload.id;
+
+      const response = await fetch(`/api/subscriptions?donor_id=${donorId}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
