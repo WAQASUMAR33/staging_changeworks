@@ -38,7 +38,7 @@ const DonorSidebar = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
     localStorage.removeItem('rememberMe');
-    router.push('/login');
+    router.push('/donor/login');
   };
 
   const isExpanded = isHovered || isPinned;
