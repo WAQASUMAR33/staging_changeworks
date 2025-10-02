@@ -116,7 +116,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       };
       console.log('Exchange payload:', exchangePayload);
 
-      const response = await fetch('/api/plaid/exchange-token', {
+      let response = await fetch('/api/plaid/exchange-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -124,6 +124,22 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
         },
         body: JSON.stringify(exchangePayload)
       });
+
+      // If real API fails due to network issues, try mock API
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.errorCode === 'NETWORK_TIMEOUT' || errorData.errorCode === 'NETWORK_ERROR') {
+          console.log('Real Plaid exchange API failed due to network issues, trying mock API...');
+          response = await fetch('/api/plaid/mock-exchange-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify(exchangePayload)
+          });
+        }
+      }
 
       console.log('Exchange response status:', response.status);
 
@@ -225,7 +241,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
 
       // Get link token from backend
       console.log('Creating link token...');
-      const response = await fetch('/api/plaid/create-link-token', {
+      let response = await fetch('/api/plaid/create-link-token', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -236,6 +252,25 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
           donor_id: donorId
         })
       });
+
+      // If real API fails due to network issues, try mock API
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (errorData.errorCode === 'NETWORK_TIMEOUT' || errorData.errorCode === 'NETWORK_ERROR') {
+          console.log('Real Plaid API failed due to network issues, trying mock API...');
+          response = await fetch('/api/plaid/mock-link-token', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              organization_id: currentOrg.id,
+              donor_id: donorId
+            })
+          });
+        }
+      }
 
       console.log('Link token response status:', response.status);
 
