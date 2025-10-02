@@ -17,10 +17,36 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingOrgs, setLoadingOrgs] = useState(false);
 
+  // Persist selected organization in localStorage
+  useEffect(() => {
+    if (selectedOrganization) {
+      localStorage.setItem('plaid-selected-org', JSON.stringify(selectedOrganization));
+      console.log('Saved organization to localStorage:', selectedOrganization);
+    }
+  }, [selectedOrganization]);
+
+  // Restore selected organization from localStorage on component mount
+  useEffect(() => {
+    const savedOrg = localStorage.getItem('plaid-selected-org');
+    if (savedOrg) {
+      try {
+        const org = JSON.parse(savedOrg);
+        setSelectedOrganization(org);
+        console.log('Restored organization from localStorage:', org);
+      } catch (error) {
+        console.error('Error parsing saved organization:', error);
+        localStorage.removeItem('plaid-selected-org');
+      }
+    }
+  }, []);
+
   // Fetch organizations when component mounts
   useEffect(() => {
     if (isOpen) {
       fetchOrganizations();
+    } else {
+      // Clear localStorage when modal is closed
+      localStorage.removeItem('plaid-selected-org');
     }
   }, [isOpen]);
 
@@ -51,9 +77,24 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       console.log('Metadata:', metadata);
       console.log('Selected organization:', selectedOrganization);
       
-      // Check if organization is selected
-      if (!selectedOrganization || !selectedOrganization.id) {
-        throw new Error('Organization selection lost. Please try again.');
+      // Check if organization is selected, try to restore from localStorage
+      let currentOrg = selectedOrganization;
+      if (!currentOrg || !currentOrg.id) {
+        console.log('Organization lost, trying to restore from localStorage...');
+        const savedOrg = localStorage.getItem('plaid-selected-org');
+        if (savedOrg) {
+          try {
+            currentOrg = JSON.parse(savedOrg);
+            setSelectedOrganization(currentOrg);
+            console.log('Restored organization from localStorage:', currentOrg);
+          } catch (error) {
+            console.error('Error parsing saved organization:', error);
+          }
+        }
+        
+        if (!currentOrg || !currentOrg.id) {
+          throw new Error('Organization selection lost. Please try again.');
+        }
       }
       
       // Get donor info from token
@@ -70,7 +111,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       const exchangePayload = {
         public_token: publicToken,
         metadata: metadata,
-        organization_id: selectedOrganization.id,
+        organization_id: currentOrg.id,
         donor_id: donorId
       };
       console.log('Exchange payload:', exchangePayload);
@@ -152,9 +193,24 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       console.log('Starting Plaid connection process...');
       console.log('Selected organization:', selectedOrganization);
 
-      // Check if organization is selected
-      if (!selectedOrganization || !selectedOrganization.id) {
-        throw new Error('Please select an organization first.');
+      // Check if organization is selected, try to restore from localStorage
+      let currentOrg = selectedOrganization;
+      if (!currentOrg || !currentOrg.id) {
+        console.log('Organization lost in handleConnect, trying to restore from localStorage...');
+        const savedOrg = localStorage.getItem('plaid-selected-org');
+        if (savedOrg) {
+          try {
+            currentOrg = JSON.parse(savedOrg);
+            setSelectedOrganization(currentOrg);
+            console.log('Restored organization from localStorage:', currentOrg);
+          } catch (error) {
+            console.error('Error parsing saved organization:', error);
+          }
+        }
+        
+        if (!currentOrg || !currentOrg.id) {
+          throw new Error('Please select an organization first.');
+        }
       }
 
       // Get donor info from token
@@ -176,7 +232,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          organization_id: selectedOrganization.id,
+          organization_id: currentOrg.id,
           donor_id: donorId
         })
       });
