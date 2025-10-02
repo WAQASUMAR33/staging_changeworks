@@ -133,6 +133,44 @@ export default function DonorDonationsPage() {
     }
   };
 
+  const getTransactionTypeColor = (method) => {
+    switch (method?.toLowerCase()) {
+      case 'stripe':
+        return 'text-blue-600 bg-blue-100';
+      case 'stripe_subscription':
+        return 'text-purple-600 bg-purple-100';
+      case 'stripe_subscription_recurring':
+        return 'text-indigo-600 bg-indigo-100';
+      case 'plaid':
+        return 'text-green-600 bg-green-100';
+      case 'bank_transfer':
+        return 'text-orange-600 bg-orange-100';
+      case 'cash':
+        return 'text-gray-600 bg-gray-100';
+      default:
+        return 'text-blue-600 bg-blue-100';
+    }
+  };
+
+  const getTransactionTypeLabel = (method) => {
+    switch (method?.toLowerCase()) {
+      case 'stripe':
+        return 'One-time';
+      case 'stripe_subscription':
+        return 'Subscription';
+      case 'stripe_subscription_recurring':
+        return 'Recurring';
+      case 'plaid':
+        return 'Bank Transfer';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'cash':
+        return 'Cash';
+      default:
+        return 'Payment';
+    }
+  };
+
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -307,6 +345,7 @@ export default function DonorDonationsPage() {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Type</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
@@ -338,6 +377,11 @@ export default function DonorDonationsPage() {
                       <p className="text-sm font-semibold text-gray-900">
                         {formatAmount(donation.amount || 0)}
                       </p>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTransactionTypeColor(donation.method || 'stripe')}`}>
+                        {getTransactionTypeLabel(donation.method || 'stripe')}
+                      </span>
                     </td>
                     <td className="px-6 py-4">
                       <p className="text-sm text-gray-900">

@@ -31,6 +31,73 @@ const formatCurrency = (amount, currency) => {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(amount);
 };
 
+// Helper functions for transaction type colors and labels
+const getTransactionTypeColor = (type) => {
+  switch (type?.toLowerCase()) {
+    case 'one_time':
+    case 'one-time':
+      return 'text-blue-600 bg-blue-100';
+    case 'subscription':
+      return 'text-purple-600 bg-purple-100';
+    case 'recurring':
+      return 'text-indigo-600 bg-indigo-100';
+    case 'donation':
+      return 'text-green-600 bg-green-100';
+    default:
+      return 'text-gray-600 bg-gray-100';
+  }
+};
+
+const getTransactionTypeLabel = (type) => {
+  switch (type?.toLowerCase()) {
+    case 'one_time':
+    case 'one-time':
+      return 'One-time';
+    case 'subscription':
+      return 'Subscription';
+    case 'recurring':
+      return 'Recurring';
+    case 'donation':
+      return 'Donation';
+    default:
+      return type?.charAt(0).toUpperCase() + type?.slice(1) || 'Unknown';
+  }
+};
+
+const getPaymentMethodColor = (method) => {
+  switch (method?.toLowerCase()) {
+    case 'stripe':
+      return 'text-blue-600 bg-blue-100';
+    case 'stripe_subscription':
+      return 'text-purple-600 bg-purple-100';
+    case 'plaid':
+      return 'text-green-600 bg-green-100';
+    case 'bank_transfer':
+      return 'text-orange-600 bg-orange-100';
+    case 'cash':
+      return 'text-gray-600 bg-gray-100';
+    default:
+      return 'text-blue-600 bg-blue-100';
+  }
+};
+
+const getPaymentMethodLabel = (method) => {
+  switch (method?.toLowerCase()) {
+    case 'stripe':
+      return 'Stripe';
+    case 'stripe_subscription':
+      return 'Stripe Subscription';
+    case 'plaid':
+      return 'Bank Transfer';
+    case 'bank_transfer':
+      return 'Bank Transfer';
+    case 'cash':
+      return 'Cash';
+    default:
+      return method?.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ') || 'Unknown';
+  }
+};
+
 export default function TransactionManagementPage() {
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
@@ -281,17 +348,14 @@ export default function TransactionManagementPage() {
                         </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {transaction.transaction_type.charAt(0).toUpperCase() + transaction.transaction_type.slice(1)}
-                        </div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTransactionTypeColor(transaction.transaction_type)}`}>
+                          {getTransactionTypeLabel(transaction.transaction_type)}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {transaction.payment_method
-                            .split('_')
-                            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-                            .join(' ')}
-                        </div>
+                        <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getPaymentMethodColor(transaction.payment_method)}`}>
+                          {getPaymentMethodLabel(transaction.payment_method)}
+                        </span>
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">

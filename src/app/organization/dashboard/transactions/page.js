@@ -112,6 +112,44 @@ const TransactionsPage = () => {
     });
   };
 
+  const getTransactionTypeColor = (method) => {
+    switch (method?.toLowerCase()) {
+      case 'stripe':
+        return 'text-blue-600 bg-blue-100';
+      case 'stripe_subscription':
+        return 'text-purple-600 bg-purple-100';
+      case 'stripe_subscription_recurring':
+        return 'text-indigo-600 bg-indigo-100';
+      case 'plaid':
+        return 'text-green-600 bg-green-100';
+      case 'bank_transfer':
+        return 'text-orange-600 bg-orange-100';
+      case 'cash':
+        return 'text-gray-600 bg-gray-100';
+      default:
+        return 'text-blue-600 bg-blue-100';
+    }
+  };
+
+  const getTransactionTypeLabel = (method) => {
+    switch (method?.toLowerCase()) {
+      case 'stripe':
+        return 'One-time';
+      case 'stripe_subscription':
+        return 'Subscription';
+      case 'stripe_subscription_recurring':
+        return 'Recurring';
+      case 'plaid':
+        return 'Bank Transfer';
+      case 'bank_transfer':
+        return 'Bank Transfer';
+      case 'cash':
+        return 'Cash';
+      default:
+        return 'Payment';
+    }
+  };
+
   const filteredTransactions = transactions.filter(transaction => {
     const matchesSearch = 
       transaction.transaction_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -391,10 +429,8 @@ const TransactionsPage = () => {
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="text-sm text-gray-900 capitalize">
-                      {transaction.method === 'stripe' ? '💳 Stripe' : 
-                       transaction.method === 'plaid' ? '🏦 Plaid' : 
-                       `💳 ${transaction.method || 'Unknown'}`}
+                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getTransactionTypeColor(transaction.method)}`}>
+                      {getTransactionTypeLabel(transaction.method)}
                     </span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
