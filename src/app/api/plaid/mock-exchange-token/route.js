@@ -71,15 +71,32 @@ export async function POST(request) {
         data: {
           ...connectionData,
           organization_id: organization_id,
+          donor: {
+            connect: { id: donorId }
+          },
+          organization: {
+            connect: { id: organization_id }
+          }
         },
       });
     } catch (error) {
-      console.log('organization_id field not found, creating without it:', error.message);
-      // Remove organization_id from data if field doesn't exist
-      const { organization_id: _, ...dataWithoutOrgId } = connectionData;
-      plaidConnection = await prisma.plaidConnection.create({
-        data: dataWithoutOrgId,
-      });
+      console.log('Error creating with relations, trying direct approach:', error.message);
+      // Try direct approach without relations
+      try {
+        plaidConnection = await prisma.plaidConnection.create({
+          data: {
+            ...connectionData,
+            organization_id: organization_id,
+          },
+        });
+      } catch (directError) {
+        console.log('Direct approach failed, trying without organization_id:', directError.message);
+        // Remove organization_id from data if field doesn't exist
+        const { organization_id: _, ...dataWithoutOrgId } = connectionData;
+        plaidConnection = await prisma.plaidConnection.create({
+          data: dataWithoutOrgId,
+        });
+      }
     }
 
     return NextResponse.json({
