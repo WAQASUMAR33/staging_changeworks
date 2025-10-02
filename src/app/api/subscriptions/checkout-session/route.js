@@ -94,11 +94,15 @@ export async function POST(request) {
     const intervalCount = price.recurring?.interval_count || 1;
 
     // Helper function to safely convert timestamps to dates
-    const safeTimestampToDate = (timestamp) => {
-      if (!timestamp || timestamp === 0) return null;
+    const safeTimestampToDate = (timestamp, defaultValue = null) => {
+      if (!timestamp || timestamp === 0) return defaultValue;
       const date = new Date(timestamp * 1000);
-      return isNaN(date.getTime()) ? null : date;
+      return isNaN(date.getTime()) ? defaultValue : date;
     };
+
+    // Get current date for required fields
+    const now = new Date();
+    const nextMonth = new Date(now.getTime() + 30 * 24 * 60 * 60 * 1000); // 30 days from now
 
     // Create subscription record in database
     const subscriptionData = {
@@ -107,8 +111,8 @@ export async function POST(request) {
       organization_id: organizationId,
       package_id: 1, // Default package ID
       status: stripeSubscription.status.toUpperCase(),
-      current_period_start: safeTimestampToDate(stripeSubscription.current_period_start),
-      current_period_end: safeTimestampToDate(stripeSubscription.current_period_end),
+      current_period_start: safeTimestampToDate(stripeSubscription.current_period_start, now),
+      current_period_end: safeTimestampToDate(stripeSubscription.current_period_end, nextMonth),
       cancel_at_period_end: stripeSubscription.cancel_at_period_end || false,
       canceled_at: safeTimestampToDate(stripeSubscription.canceled_at),
       trial_start: safeTimestampToDate(stripeSubscription.trial_start),
@@ -133,8 +137,8 @@ export async function POST(request) {
       },
       update: {
         status: stripeSubscription.status.toUpperCase(),
-        current_period_start: safeTimestampToDate(stripeSubscription.current_period_start),
-        current_period_end: safeTimestampToDate(stripeSubscription.current_period_end),
+        current_period_start: safeTimestampToDate(stripeSubscription.current_period_start, now),
+        current_period_end: safeTimestampToDate(stripeSubscription.current_period_end, nextMonth),
         cancel_at_period_end: stripeSubscription.cancel_at_period_end || false,
         canceled_at: safeTimestampToDate(stripeSubscription.canceled_at),
         trial_start: safeTimestampToDate(stripeSubscription.trial_start),
