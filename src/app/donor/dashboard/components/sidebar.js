@@ -77,7 +77,7 @@ const DonorSidebar = () => {
   ];
 
   const SidebarContent = ({ onMobileClose }) => (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full min-h-screen">
       {/* Logo and Toggle */}
       <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
         {isExpanded && (
@@ -194,7 +194,7 @@ const DonorSidebar = () => {
 
       {/* Desktop Sidebar */}
       <div
-        className={`hidden lg:block bg-white shadow-lg transition-all duration-300 ease-in-out ${
+        className={`hidden lg:block bg-white shadow-lg transition-all duration-300 ease-in-out h-screen ${
           isExpanded ? 'w-64' : 'w-16'
         }`}
         onMouseEnter={() => setIsHovered(true)}
