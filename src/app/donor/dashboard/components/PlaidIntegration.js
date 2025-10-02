@@ -49,9 +49,19 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       console.log('Plaid Link Success - Starting token exchange...');
       console.log('Public token:', publicToken ? 'Received' : 'Missing');
       console.log('Metadata:', metadata);
+      console.log('Selected organization:', selectedOrganization);
+      
+      // Check if organization is selected
+      if (!selectedOrganization || !selectedOrganization.id) {
+        throw new Error('Organization selection lost. Please try again.');
+      }
       
       // Get donor info from token
       const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication token lost. Please log in again.');
+      }
+      
       const decoded = JSON.parse(atob(token.split('.')[1]));
       const donorId = decoded.id;
 
@@ -141,6 +151,11 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
     try {
       console.log('Starting Plaid connection process...');
       console.log('Selected organization:', selectedOrganization);
+
+      // Check if organization is selected
+      if (!selectedOrganization || !selectedOrganization.id) {
+        throw new Error('Please select an organization first.');
+      }
 
       // Get donor info from token
       const token = localStorage.getItem('token');
@@ -331,7 +346,10 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                           filteredOrganizations.map((org) => (
                             <button
                               key={org.id}
-                              onClick={() => setSelectedOrganization(org)}
+                              onClick={() => {
+                                console.log('Selecting organization:', org);
+                                setSelectedOrganization(org);
+                              }}
                               className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
                                 selectedOrganization?.id === org.id
                                   ? 'border-blue-500 bg-blue-50'
@@ -380,6 +398,18 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                       <p className="text-gray-600 text-sm">
                         Securely link your bank account using Plaid for {selectedOrganization?.name}
                       </p>
+                      
+                      {/* Selected Organization Display */}
+                      {selectedOrganization && (
+                        <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                          <div className="flex items-center space-x-2">
+                            <Heart className="w-4 h-4 text-blue-600" />
+                            <span className="text-sm font-medium text-blue-900">
+                              Selected: {selectedOrganization.name}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
 
                     <div className="bg-gray-50 rounded-lg p-4">
@@ -393,6 +423,16 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                           <p className="text-sm text-gray-600">{selectedOrganization?.email}</p>
                         </div>
                       </div>
+                    </div>
+
+                    <div className="flex justify-center">
+                      <button
+                        onClick={handleBack}
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                      >
+                        <ArrowLeft className="w-4 h-4" />
+                        <span>Change Organization</span>
+                      </button>
                     </div>
 
                     <button
