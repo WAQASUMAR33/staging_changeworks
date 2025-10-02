@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { X, Loader2, CheckCircle, AlertCircle, CreditCard, Calendar } from 'lucide-react';
+import { X, Loader2, CheckCircle, AlertCircle, CreditCard, Calendar, TrendingUp } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) {
