@@ -24,7 +24,14 @@ const DonorSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(() => {
+    // Check localStorage for saved preference, default to true (always open)
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('sidebar-pinned');
+      return saved !== null ? JSON.parse(saved) : true;
+    }
+    return true;
+  });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
 
   const handleLogout = () => {
@@ -72,7 +79,7 @@ const DonorSidebar = () => {
   const SidebarContent = ({ onMobileClose }) => (
     <div className="flex flex-col h-full">
       {/* Logo and Toggle */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-200">
+      <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
         {isExpanded && (
           <div className="flex items-center space-x-3">
             <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
@@ -96,7 +103,11 @@ const DonorSidebar = () => {
           )}
           {/* Desktop pin button */}
           <button
-            onClick={() => setIsPinned(!isPinned)}
+            onClick={() => {
+              const newPinnedState = !isPinned;
+              setIsPinned(newPinnedState);
+              localStorage.setItem('sidebar-pinned', JSON.stringify(newPinnedState));
+            }}
             className="hidden lg:block p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
           >
             {isPinned ? (
@@ -109,7 +120,7 @@ const DonorSidebar = () => {
       </div>
 
       {/* Navigation Menu */}
-      <nav className="flex-1 px-4 py-6 space-y-2">
+      <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
         {menuItems.map((item) => {
           const isActive = pathname === item.path;
           const Icon = item.icon;
@@ -136,8 +147,8 @@ const DonorSidebar = () => {
         })}
       </nav>
 
-      {/* Logout Button */}
-      <div className="p-4 border-t border-gray-200">
+      {/* Logout Button - Sticky to bottom */}
+      <div className="p-4 border-t border-gray-200 flex-shrink-0 mt-auto">
         <button
           onClick={handleLogout}
           className="w-full flex items-center space-x-3 px-3 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 group"
