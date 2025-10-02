@@ -182,17 +182,9 @@ export async function POST(request) {
         currency: currency,
         transaction_type: 'subscription',
         status: 'completed',
-        stripe_subscription_id: stripeSubscription.id,
-        stripe_session_id: session.id,
-        stripe_payment_intent_id: session.payment_intent,
-        description: `Subscription: ${stripeSubscription.id}`,
-        metadata: JSON.stringify({
-          subscription_id: dbSubscription.id,
-          save_tr_record_id: transactionRecord.id,
-          stripe_product_id: productId,
-          stripe_price_id: priceId,
-          created_via: 'checkout_success'
-        })
+        trnx_id: `donor_sub_${stripeSubscription.id}_${Date.now()}`,
+        payment_method: 'stripe',
+        receipt_url: session.receipt_url || null
       }
     });
 
