@@ -91,7 +91,6 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       }
 
       const { link_token } = await response.json();
-      console.log('Link token received:', link_token);
       
       // Set the link token to trigger Plaid Link initialization
       setLinkToken(link_token);
@@ -107,7 +106,6 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   // Open Plaid Link when token is ready
   useEffect(() => {
     if (linkToken && ready) {
-      console.log('Opening Plaid Link with token:', linkToken);
       open();
     }
   }, [linkToken, ready, open]);

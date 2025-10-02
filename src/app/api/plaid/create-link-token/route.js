@@ -8,21 +8,14 @@ const PLAID_ENV = process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox';
 
 export async function POST(request) {
   try {
-    console.log('Plaid create-link-token endpoint called');
-    
     // Verify JWT token
     const token = request.headers.get('authorization')?.split(' ')[1];
     if (!token) {
-      console.log('No authorization token provided');
       return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
     }
 
-    console.log('Token received:', token.substring(0, 20) + '...');
-    
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const donorId = decoded.id;
-    
-    console.log('Token decoded successfully, donor ID:', donorId);
 
     // Create link token using Plaid API
     const plaidResponse = await fetch('https://sandbox.plaid.com/link/token/create', {
