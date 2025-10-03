@@ -25,6 +25,8 @@ export default function DonorSubscriptionsPage() {
   const [actionLoading, setActionLoading] = useState(null);
   const [message, setMessage] = useState('');
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
+  const [showCancelDialog, setShowCancelDialog] = useState(false);
+  const [subscriptionToCancel, setSubscriptionToCancel] = useState(null);
 
   const fetchSubscriptions = async () => {
     try {
@@ -94,6 +96,24 @@ export default function DonorSubscriptionsPage() {
     } finally {
       setActionLoading(null);
     }
+  };
+
+  const handleCancelClick = (subscription) => {
+    setSubscriptionToCancel(subscription);
+    setShowCancelDialog(true);
+  };
+
+  const handleCancelConfirm = async () => {
+    if (subscriptionToCancel) {
+      await handleSubscriptionAction(subscriptionToCancel.id, 'cancel');
+      setShowCancelDialog(false);
+      setSubscriptionToCancel(null);
+    }
+  };
+
+  const handleCancelCancel = () => {
+    setShowCancelDialog(false);
+    setSubscriptionToCancel(null);
   };
 
   const handleSubscriptionSuccess = (subscriptionData) => {
@@ -395,15 +415,15 @@ export default function DonorSubscriptionsPage() {
                         ) : null}
                         
                         <button
-                          onClick={() => handleSubscriptionAction(subscription.id, 'cancel')}
+                          onClick={() => handleCancelClick(subscription)}
                           disabled={actionLoading === subscription.id}
-                          className="p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                          className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50 border border-red-200"
                           title="Cancel Subscription"
                         >
                           {actionLoading === subscription.id ? (
                             <Loader2 className="w-4 h-4 animate-spin" />
                           ) : (
-                            <Trash2 className="w-4 h-4" />
+                            'Cancel'
                           )}
                         </button>
                       </div>
@@ -434,6 +454,77 @@ export default function DonorSubscriptionsPage() {
         onClose={() => setShowSubscriptionModal(false)}
         onSuccess={handleSubscriptionSuccess}
       />
+
+      {/* Cancel Confirmation Dialog */}
+      <AnimatePresence>
+        {showCancelDialog && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={handleCancelCancel}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center space-x-3 mb-4">
+                <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                  <AlertCircle className="w-5 h-5 text-red-600" />
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">Cancel Subscription</h3>
+                  <p className="text-sm text-gray-600">This action cannot be undone</p>
+                </div>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-3">
+                  Do you really want to cancel the subscription?
+                </p>
+                {subscriptionToCancel && (
+                  <div className="bg-gray-50 rounded-lg p-3">
+                    <p className="text-sm text-gray-600">
+                      <strong>Organization:</strong> {subscriptionToCancel.organization?.name || 'Unknown'}
+                    </p>
+                    <p className="text-sm text-gray-600">
+                      <strong>Amount:</strong> {formatAmount(subscriptionToCancel.amount || 0)} {subscriptionToCancel.interval || 'monthly'}
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={handleCancelCancel}
+                  className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
+                >
+                  Keep Subscription
+                </button>
+                <button
+                  onClick={handleCancelConfirm}
+                  disabled={actionLoading === subscriptionToCancel?.id}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white hover:bg-red-700 rounded-lg transition-colors duration-200 disabled:opacity-50"
+                >
+                  {actionLoading === subscriptionToCancel?.id ? (
+                    <div className="flex items-center justify-center">
+                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
+                      Canceling...
+                    </div>
+                  ) : (
+                    'Yes, Cancel'
+                  )}
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </motion.div>
   );
 }
