@@ -208,6 +208,8 @@ export default function DonorSubscriptionsPage() {
         return 'text-yellow-600 bg-yellow-100';
       case 'cancelled':
         return 'text-red-600 bg-red-100';
+      case 'canceled_at_period_end':
+        return 'text-orange-600 bg-orange-100';
       case 'incomplete':
         return 'text-gray-600 bg-gray-100';
       default:
@@ -223,10 +225,29 @@ export default function DonorSubscriptionsPage() {
         return <Pause className="w-4 h-4" />;
       case 'cancelled':
         return <Trash2 className="w-4 h-4" />;
+      case 'canceled_at_period_end':
+        return <Clock className="w-4 h-4" />;
       case 'incomplete':
         return <Clock className="w-4 h-4" />;
       default:
         return <Clock className="w-4 h-4" />;
+    }
+  };
+
+  const getStatusText = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'active':
+        return 'Active';
+      case 'paused':
+        return 'Paused';
+      case 'cancelled':
+        return 'Canceled';
+      case 'canceled_at_period_end':
+        return 'Ending Soon';
+      case 'incomplete':
+        return 'Incomplete';
+      default:
+        return status || 'Active';
     }
   };
 
@@ -442,7 +463,7 @@ export default function DonorSubscriptionsPage() {
                     <td className="px-6 py-4">
                       <span className={`inline-flex items-center px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(subscription.status)}`}>
                         {getStatusIcon(subscription.status)}
-                        <span className="ml-1">{subscription.status || 'Active'}</span>
+                        <span className="ml-1">{getStatusText(subscription.status)}</span>
                       </span>
                     </td>
                     <td className="px-6 py-4">
@@ -473,20 +494,34 @@ export default function DonorSubscriptionsPage() {
                               <Play className="w-4 h-4" />
                             )}
                           </button>
+                        ) : subscription.status === 'canceled_at_period_end' ? (
+                          <span className="text-xs text-orange-600 font-medium" title="Subscription will end at period end">
+                            Ending Soon
+                          </span>
                         ) : null}
                         
-                        <button
-                          onClick={() => handleCancelClick(subscription)}
-                          disabled={actionLoading === subscription.id}
-                          className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50 border border-red-200"
-                          title="Cancel Subscription"
-                        >
-                          {actionLoading === subscription.id ? (
-                            <Loader2 className="w-4 h-4 animate-spin" />
-                          ) : (
-                            'Cancel'
-                          )}
-                        </button>
+                        {subscription.status === 'canceled_at_period_end' ? (
+                          <span className="text-xs text-gray-500 font-medium" title="Already scheduled for cancellation">
+                            Already Canceled
+                          </span>
+                        ) : subscription.status === 'cancelled' ? (
+                          <span className="text-xs text-gray-500 font-medium" title="Subscription is canceled">
+                            Canceled
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleCancelClick(subscription)}
+                            disabled={actionLoading === subscription.id}
+                            className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50 border border-red-200"
+                            title="Cancel Subscription"
+                          >
+                            {actionLoading === subscription.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            ) : (
+                              'Cancel'
+                            )}
+                          </button>
+                        )}
                       </div>
                     </td>
                   </motion.tr>

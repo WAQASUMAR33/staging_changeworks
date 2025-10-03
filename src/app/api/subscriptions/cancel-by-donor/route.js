@@ -91,7 +91,7 @@ export async function POST(request) {
           data: {
             cancel_at_period_end: !cancel_immediately,
             canceled_at: cancel_immediately ? new Date() : null,
-            status: cancel_immediately ? 'CANCELED' : 'ACTIVE', // Keep as ACTIVE when cancel_at_period_end is true
+            status: cancel_immediately ? 'CANCELED' : 'CANCELED_AT_PERIOD_END', // Set proper status for both cases
             updated_at: new Date()
           },
           include: {
