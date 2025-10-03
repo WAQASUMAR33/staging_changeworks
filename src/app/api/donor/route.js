@@ -194,7 +194,7 @@ export async function POST(request) {
     try {
       // Check if email server is configured
       if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const verificationUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/api/verify-donor?token=${token}`;
+        const verificationUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org'}/donor/verify?token=${token}&email=${encodeURIComponent(email)}`;
 
         // Send beautiful verification email
         const verificationResult = await emailService.sendVerificationEmail({
