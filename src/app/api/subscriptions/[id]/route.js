@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { getStripe, isStripeConfigured, handleStripeError } from "@/lib/stripe";
 
 // GET /api/subscriptions/[id] - Get specific subscription
 export async function GET(request, { params }) {
   try {
+    // Check if Stripe is properly configured
+    if (!isStripeConfigured()) {
+      return NextResponse.json({ 
+        error: "Payment service not configured. Please contact support." 
+      }, { status: 503 });
+    }
+
+    const stripe = getStripe();
     const subscriptionId = params.id;
 
     const subscription = await prisma.subscription.findUnique({
@@ -78,6 +84,13 @@ export async function GET(request, { params }) {
 
   } catch (error) {
     console.error('Error fetching subscription:', error);
+    
+    // Handle Stripe errors using the utility
+    if (error.type && error.type.startsWith('Stripe')) {
+      const { error: errorMessage, status } = handleStripeError(error, 'Fetch subscription');
+      return NextResponse.json({ success: false, error: errorMessage }, { status });
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Failed to fetch subscription' },
       { status: 500 }
@@ -88,6 +101,14 @@ export async function GET(request, { params }) {
 // PUT /api/subscriptions/[id] - Update subscription
 export async function PUT(request, { params }) {
   try {
+    // Check if Stripe is properly configured
+    if (!isStripeConfigured()) {
+      return NextResponse.json({ 
+        error: "Payment service not configured. Please contact support." 
+      }, { status: 503 });
+    }
+
+    const stripe = getStripe();
     const subscriptionId = params.id;
     const body = await request.json();
     const { action, ...updateData } = body;
@@ -242,6 +263,13 @@ export async function PUT(request, { params }) {
 
   } catch (error) {
     console.error('Error updating subscription:', error);
+    
+    // Handle Stripe errors using the utility
+    if (error.type && error.type.startsWith('Stripe')) {
+      const { error: errorMessage, status } = handleStripeError(error, 'Update subscription');
+      return NextResponse.json({ success: false, error: errorMessage }, { status });
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Failed to update subscription' },
       { status: 500 }
@@ -252,6 +280,14 @@ export async function PUT(request, { params }) {
 // DELETE /api/subscriptions/[id] - Cancel subscription
 export async function DELETE(request, { params }) {
   try {
+    // Check if Stripe is properly configured
+    if (!isStripeConfigured()) {
+      return NextResponse.json({ 
+        error: "Payment service not configured. Please contact support." 
+      }, { status: 503 });
+    }
+
+    const stripe = getStripe();
     const subscriptionId = params.id;
     const { searchParams } = new URL(request.url);
     const cancelImmediately = searchParams.get('immediate') === 'true';
@@ -335,6 +371,13 @@ export async function DELETE(request, { params }) {
 
   } catch (error) {
     console.error('Error canceling subscription:', error);
+    
+    // Handle Stripe errors using the utility
+    if (error.type && error.type.startsWith('Stripe')) {
+      const { error: errorMessage, status } = handleStripeError(error, 'Cancel subscription');
+      return NextResponse.json({ success: false, error: errorMessage }, { status });
+    }
+    
     return NextResponse.json(
       { success: false, error: 'Failed to cancel subscription' },
       { status: 500 }
