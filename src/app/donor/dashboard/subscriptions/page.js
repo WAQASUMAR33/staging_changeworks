@@ -27,6 +27,7 @@ export default function DonorSubscriptionsPage() {
   const [showSubscriptionModal, setShowSubscriptionModal] = useState(false);
   const [showCancelDialog, setShowCancelDialog] = useState(false);
   const [subscriptionToCancel, setSubscriptionToCancel] = useState(null);
+  const [cancelImmediately, setCancelImmediately] = useState(false);
 
   const fetchSubscriptions = async () => {
     try {
@@ -73,13 +74,35 @@ export default function DonorSubscriptionsPage() {
       setActionLoading(subscriptionId);
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/donor/subscriptions/${subscriptionId}/${action}`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
+      // Decode token to get donor ID
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const donorId = payload.id;
+      
+      let response;
+      
+      if (action === 'cancel') {
+        // Use the correct cancel API
+        response = await fetch('/api/subscriptions/cancel-by-donor', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            donor_id: donorId,
+            cancel_immediately: false // Cancel at period end by default
+          }),
+        });
+      } else {
+        // For other actions (pause, resume), use the individual subscription API
+        response = await fetch(`/api/donor/subscriptions/${subscriptionId}/${action}`, {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+      }
 
       const data = await response.json();
 
@@ -105,15 +128,53 @@ export default function DonorSubscriptionsPage() {
 
   const handleCancelConfirm = async () => {
     if (subscriptionToCancel) {
-      await handleSubscriptionAction(subscriptionToCancel.id, 'cancel');
+      // Use the cancel-by-donor API with the immediate flag
+      try {
+        setActionLoading(subscriptionToCancel.id);
+        const token = localStorage.getItem('token');
+        
+        // Decode token to get donor ID
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        const donorId = payload.id;
+        
+        const response = await fetch('/api/subscriptions/cancel-by-donor', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            donor_id: donorId,
+            cancel_immediately: cancelImmediately
+          }),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+          setMessage(data.message || 'Subscription canceled successfully!');
+          fetchSubscriptions(); // Refresh the list
+          setTimeout(() => setMessage(''), 3000);
+        } else {
+          setError(data.error || 'Failed to cancel subscription');
+        }
+      } catch (err) {
+        console.error('Error canceling subscription:', err);
+        setError('Failed to cancel subscription');
+      } finally {
+        setActionLoading(null);
+      }
+      
       setShowCancelDialog(false);
       setSubscriptionToCancel(null);
+      setCancelImmediately(false);
     }
   };
 
   const handleCancelCancel = () => {
     setShowCancelDialog(false);
     setSubscriptionToCancel(null);
+    setCancelImmediately(false);
   };
 
   const handleSubscriptionSuccess = (subscriptionData) => {
@@ -488,7 +549,7 @@ export default function DonorSubscriptionsPage() {
                   Do you really want to cancel the subscription?
                 </p>
                 {subscriptionToCancel && (
-                  <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="bg-gray-50 rounded-lg p-3 mb-4">
                     <p className="text-sm text-gray-600">
                       <strong>Organization:</strong> {subscriptionToCancel.organization?.name || 'Unknown'}
                     </p>
@@ -497,6 +558,35 @@ export default function DonorSubscriptionsPage() {
                     </p>
                   </div>
                 )}
+                
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      id="cancel-at-period-end"
+                      name="cancelType"
+                      checked={!cancelImmediately}
+                      onChange={() => setCancelImmediately(false)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <label htmlFor="cancel-at-period-end" className="text-sm text-gray-700">
+                      <strong>Cancel at period end</strong> - Continue until current billing period ends
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-3">
+                    <input
+                      type="radio"
+                      id="cancel-immediately"
+                      name="cancelType"
+                      checked={cancelImmediately}
+                      onChange={() => setCancelImmediately(true)}
+                      className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
+                    />
+                    <label htmlFor="cancel-immediately" className="text-sm text-gray-700">
+                      <strong>Cancel immediately</strong> - Stop subscription right now
+                    </label>
+                  </div>
+                </div>
               </div>
 
               <div className="flex space-x-3">
@@ -517,7 +607,7 @@ export default function DonorSubscriptionsPage() {
                       Canceling...
                     </div>
                   ) : (
-                    'Yes, Cancel'
+                    `Yes, ${cancelImmediately ? 'Cancel Now' : 'Cancel at Period End'}`
                   )}
                 </button>
               </div>

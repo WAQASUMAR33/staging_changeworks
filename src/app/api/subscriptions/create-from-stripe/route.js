@@ -94,8 +94,8 @@ export async function POST(request) {
           },
         ],
         mode: 'subscription',
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/donor/dashboard/subscriptions?subscription=cancelled`,
+        success_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000'}/donor/dashboard/subscriptions?subscription=cancelled`,
         metadata: {
           donor_id: donor_id.toString(),
           organization_id: organization_id.toString(),
