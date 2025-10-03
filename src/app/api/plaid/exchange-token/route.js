@@ -100,40 +100,25 @@ export async function POST(request) {
       updated_at: new Date(),
     };
 
-    // Try to create with organization_id first, fallback to without it
-    let plaidConnection;
-    try {
-      plaidConnection = await prisma.plaidConnection.create({
-        data: {
-          ...connectionData,
-          organization_id: organization_id,
-          donor: {
-            connect: { id: donorId }
-          },
-          organization: {
-            connect: { id: organization_id }
-          }
+    // Create Plaid connection with proper Prisma relations
+    const plaidConnection = await prisma.plaidConnection.create({
+      data: {
+        donor_id: donorId,
+        organization_id: organization_id,
+        access_token: access_token,
+        item_id: item_id,
+        institution_id: metadata.institution?.institution_id || null,
+        institution_name: metadata.institution?.name || null,
+        accounts: JSON.stringify(accountsWithOrgId),
+        status: 'ACTIVE',
+        donor: {
+          connect: { id: donorId }
         },
-      });
-    } catch (error) {
-      console.log('Error creating with relations, trying direct approach:', error.message);
-      // Try direct approach without relations
-      try {
-        plaidConnection = await prisma.plaidConnection.create({
-          data: {
-            ...connectionData,
-            organization_id: organization_id,
-          },
-        });
-      } catch (directError) {
-        console.log('Direct approach failed, trying without organization_id:', directError.message);
-        // Remove organization_id from data if field doesn't exist
-        const { organization_id: _, ...dataWithoutOrgId } = connectionData;
-        plaidConnection = await prisma.plaidConnection.create({
-          data: dataWithoutOrgId,
-        });
-      }
-    }
+        organization: {
+          connect: { id: organization_id }
+        }
+      },
+    });
 
     return NextResponse.json({
       success: true,
