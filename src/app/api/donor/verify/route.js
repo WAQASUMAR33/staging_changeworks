@@ -14,18 +14,34 @@ export async function POST(request) {
       );
     }
 
-    // Find donor with the verification token
-    const donor = await prisma.donor.findFirst({
+    // Find verification token
+    const verificationToken = await prisma.donorVerificationToken.findFirst({
       where: {
-        verification_token: token,
-        is_verified: false
+        token: token,
+        expires: {
+          gt: new Date()
+        }
+      }
+    });
+
+    if (!verificationToken) {
+      return NextResponse.json(
+        { success: false, error: 'Invalid or expired verification token' },
+        { status: 400 }
+      );
+    }
+
+    // Find donor by email
+    const donor = await prisma.donor.findUnique({
+      where: {
+        email: verificationToken.identifier
       }
     });
 
     if (!donor) {
       return NextResponse.json(
-        { success: false, error: 'Invalid or expired verification token' },
-        { status: 400 }
+        { success: false, error: 'Donor not found' },
+        { status: 404 }
       );
     }
 
@@ -33,16 +49,20 @@ export async function POST(request) {
     const updatedDonor = await prisma.donor.update({
       where: { id: donor.id },
       data: {
-        is_verified: true,
-        verification_token: null // Clear the token after verification
+        status: true // true means verified
       },
       select: {
         id: true,
         name: true,
         email: true,
-        is_verified: true,
+        status: true,
         updated_at: true
       }
+    });
+
+    // Delete the used verification token
+    await prisma.donorVerificationToken.delete({
+      where: { id: verificationToken.id }
     });
 
     return NextResponse.json({

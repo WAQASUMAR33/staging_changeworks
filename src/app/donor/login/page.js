@@ -264,7 +264,7 @@ export default function DonorLoginPage() {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="w-full max-w-md"
         >
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-10">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-10 light-form">
             <motion.div
               variants={containerVariants}
               initial="hidden"
@@ -450,7 +450,7 @@ export default function DonorLoginPage() {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.9, opacity: 0 }}
               transition={{ type: "spring", damping: 25, stiffness: 300 }}
-              className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md"
+              className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md light-form"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">

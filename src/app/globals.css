@@ -239,3 +239,34 @@ html {
 .card-shadow-hover {
   box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 }
+
+/* Light theme input visibility fixes for signup form */
+.light-form input,
+.light-form select,
+.light-form textarea {
+  background-color: #ffffff !important;
+  color: #111827 !important; /* text-gray-900 */
+}
+
+.light-form input::placeholder,
+.light-form textarea::placeholder {
+  color: #9ca3af !important; /* placeholder:text-gray-400 */
+  opacity: 1;
+}
+
+/* Ensure disabled states remain readable */
+.light-form input:disabled,
+.light-form select:disabled,
+.light-form textarea:disabled {
+  color: #6b7280 !important; /* text-gray-500 */
+  background-color: #f9fafb !important; /* gray-50 */
+}
+
+/* Fix for WebKit autofill in light theme */
+.light-form input:-webkit-autofill,
+.light-form input:-webkit-autofill:hover,
+.light-form input:-webkit-autofill:focus {
+  -webkit-text-fill-color: #111827 !important;
+  -webkit-box-shadow: 0 0 0px 1000px #ffffff inset;
+  box-shadow: 0 0 0px 1000px #ffffff inset;
+}

@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, User, Mail, Lock, Phone, MapPin, Building, Loader2, CheckCircle, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
+import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 export default function DonorSignupPage() {
@@ -37,10 +37,32 @@ export default function DonorSignupPage() {
 
   useEffect(() => {
     if (currentStep === 4 && organizations.length === 0) {
-      fetch('/api/organizations/list')
-        .then(r => r.json())
-        .then(data => setOrganizations(Array.isArray(data) ? data : (data.organizations || [])))
-        .catch(() => setOrganizations([]));
+      const load = async () => {
+        try {
+          // Try preferred endpoint first (array response)
+          const r1 = await fetch('/api/organizations/list');
+          if (r1.ok) {
+            const d1 = await r1.json();
+            const list1 = Array.isArray(d1) ? d1 : (d1.organizations || []);
+            if (Array.isArray(list1) && list1.length > 0) {
+              setOrganizations(list1);
+              return;
+            }
+          }
+        } catch {}
+        try {
+          // Fallback endpoint (object with organizations)
+          const r2 = await fetch('/api/organization');
+          if (r2.ok) {
+            const d2 = await r2.json();
+            const list2 = Array.isArray(d2) ? d2 : (d2.organizations || []);
+            if (Array.isArray(list2)) setOrganizations(list2);
+          }
+        } catch {
+          setOrganizations([]);
+        }
+      };
+      load();
     }
   }, [currentStep, organizations.length]);
 
@@ -165,11 +187,11 @@ export default function DonorSignupPage() {
   };
 
   const steps = [
-    { id: 1, title: 'Personal Info', icon: User },
-    { id: 2, title: 'Address', icon: MapPin },
-    { id: 3, title: 'Security', icon: Lock },
-    { id: 4, title: 'Organization', icon: Building },
-    { id: 5, title: 'Review', icon: CheckCircle }
+    { id: 1, title: 'Personal Info' },
+    { id: 2, title: 'Address' },
+    { id: 3, title: 'Security' },
+    { id: 4, title: 'Organization' },
+    { id: 5, title: 'Review' }
   ];
 
   return (
@@ -248,7 +270,7 @@ export default function DonorSignupPage() {
           transition={{ delay: 0.4, duration: 0.6 }}
           className="w-full max-w-2xl"
         >
-          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-10">
+          <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/20 p-8 lg:p-10 light-form">
             <motion.div
               variants={containerVariants}
               initial="hidden"
@@ -272,20 +294,19 @@ export default function DonorSignupPage() {
               <motion.div variants={itemVariants} className="mb-8">
                 <div className="flex items-center justify-between">
                   {steps.map((step, index) => {
-                    const Icon = step.icon;
                     const isActive = currentStep === step.id;
                     const isCompleted = currentStep > step.id;
                     
                     return (
                       <div key={step.id} className="flex flex-col items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 transition-all duration-200 ${
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 text-sm font-semibold transition-all duration-200 ${
                           isActive 
                             ? 'bg-blue-600 border-blue-600 text-white' 
                             : isCompleted 
                             ? 'bg-green-500 border-green-500 text-white' 
                             : 'bg-gray-100 border-gray-300 text-gray-400'
                         }`}>
-                          <Icon className="w-5 h-5" />
+                          {step.id}
                         </div>
                         <span className={`text-xs mt-2 font-medium ${
                           isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
@@ -339,21 +360,18 @@ export default function DonorSignupPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Full Name *
                       </label>
-                      <div className="relative">
-                        <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                          name="name"
-                          type="text"
-                          placeholder="Enter your full name"
-                          value={formData.name}
-                          onChange={handleInputChange}
-                          className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.name 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
-                        />
-                      </div>
+                      <input
+                        name="name"
+                        type="text"
+                        placeholder="Enter your full name"
+                        value={formData.name}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                          errors.name 
+                            ? 'border-red-300 bg-red-50' 
+                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                        }`}
+                      />
                       <AnimatePresence>
                         {errors.name && (
                           <motion.p 
@@ -373,21 +391,18 @@ export default function DonorSignupPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Email Address *
                       </label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                          name="email"
-                          type="email"
-                          placeholder="Enter your email"
-                          value={formData.email}
-                          onChange={handleInputChange}
-                          className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.email 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
-                        />
-                      </div>
+                      <input
+                        name="email"
+                        type="email"
+                        placeholder="Enter your email"
+                        value={formData.email}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                          errors.email 
+                            ? 'border-red-300 bg-red-50' 
+                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                        }`}
+                      />
                       <AnimatePresence>
                         {errors.email && (
                           <motion.p 
@@ -407,21 +422,18 @@ export default function DonorSignupPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Phone Number *
                       </label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                        <input
-                          name="phone"
-                          type="tel"
-                          placeholder="+1234567890"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                          className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.phone 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
-                        />
-                      </div>
+                      <input
+                        name="phone"
+                        type="tel"
+                        placeholder="+1234567890"
+                        value={formData.phone}
+                        onChange={handleInputChange}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                          errors.phone 
+                            ? 'border-red-300 bg-red-50' 
+                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                        }`}
+                      />
                       <AnimatePresence>
                         {errors.phone && (
                           <motion.p 
@@ -489,21 +501,18 @@ export default function DonorSignupPage() {
                         <label className="block text-sm font-semibold text-gray-700 mb-2">
                           City *
                         </label>
-                        <div className="relative">
-                          <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                          <input
-                            name="city"
-                            type="text"
-                            placeholder="Enter your city"
-                            value={formData.city}
-                            onChange={handleInputChange}
-                            className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                              errors.city 
-                                ? 'border-red-300 bg-red-50' 
-                                : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                            }`}
-                          />
-                        </div>
+                        <input
+                          name="city"
+                          type="text"
+                          placeholder="Enter your city"
+                          value={formData.city}
+                          onChange={handleInputChange}
+                          className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                            errors.city 
+                              ? 'border-red-300 bg-red-50' 
+                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                          }`}
+                        />
                         <AnimatePresence>
                           {errors.city && (
                             <motion.p 
@@ -597,14 +606,13 @@ export default function DonorSignupPage() {
                         Password *
                       </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                           name="password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Create a password"
                           value={formData.password}
                           onChange={handleInputChange}
-                          className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
                             errors.password 
                               ? 'border-red-300 bg-red-50' 
                               : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -638,14 +646,13 @@ export default function DonorSignupPage() {
                         Confirm Password *
                       </label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                           name="confirmPassword"
                           type={showConfirmPassword ? 'text' : 'password'}
                           placeholder="Confirm your password"
                           value={formData.confirmPassword}
                           onChange={handleInputChange}
-                          className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
+                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
                             errors.confirmPassword 
                               ? 'border-red-300 bg-red-50' 
                               : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -689,13 +696,12 @@ export default function DonorSignupPage() {
                         Search Organization *
                       </label>
                       <div className="relative">
-                        <Building className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                         <input
                           type="text"
                           placeholder="Search organization..."
                           value={orgSearch}
                           onChange={(e) => setOrgSearch(e.target.value)}
-                          className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                          className="w-full px-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                         />
                       </div>
                     </div>
@@ -865,5 +871,6 @@ export default function DonorSignupPage() {
         </motion.div>
       </motion.div>
     </div>
+    
   );
 }
