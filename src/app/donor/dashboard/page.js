@@ -37,6 +37,38 @@ export default function DonorDashboard() {
   
   // Plaid integration modal state
   const [showPlaidModal, setShowPlaidModal] = useState(false);
+  const [plaidConnectionStatus, setPlaidConnectionStatus] = useState({
+    isConnected: false,
+    connections: [],
+    loading: true
+  });
+
+  const checkPlaidConnection = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('/api/plaid/check-connection', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setPlaidConnectionStatus({
+          isConnected: data.is_connected,
+          connections: data.connections || [],
+          loading: false
+        });
+      } else {
+        setPlaidConnectionStatus(prev => ({ ...prev, loading: false }));
+      }
+    } catch (error) {
+      console.error('Error checking Plaid connection:', error);
+      setPlaidConnectionStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
 
   const fetchDashboardData = async () => {
     try {
@@ -156,10 +188,13 @@ export default function DonorDashboard() {
     console.log('Plaid integration successful:', result);
     // Refresh dashboard data to show updated stats
     fetchDashboardData();
+    // Refresh Plaid connection status
+    checkPlaidConnection();
   };
 
   useEffect(() => {
     fetchDashboardData();
+    checkPlaidConnection();
   }, []);
 
   const containerVariants = {
@@ -321,18 +356,51 @@ export default function DonorDashboard() {
               </div>
             </button>
             
-            <button 
-              onClick={handlePlaidIntegration}
-              className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors duration-200 text-left"
-            >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <Target className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+            {plaidConnectionStatus.loading ? (
+              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-gray-50">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 animate-spin" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Checking Status...</p>
+                  <p className="text-xs text-gray-500">Loading Plaid connection</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-900">Plaid Integration</p>
-                <p className="text-xs text-gray-500">Connect your bank account</p>
+            ) : plaidConnectionStatus.isConnected ? (
+              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 border border-green-200">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-green-900">Plaid Connected</p>
+                  <p className="text-xs text-green-600">
+                    {plaidConnectionStatus.connections.length > 0 
+                      ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
+                      : 'Bank account connected'
+                    }
+                  </p>
+                </div>
+                <button
+                  onClick={handlePlaidIntegration}
+                  className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                >
+                  Manage
+                </button>
               </div>
-            </button>
+            ) : (
+              <button 
+                onClick={handlePlaidIntegration}
+                className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors duration-200 text-left"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Target className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Plaid Integration</p>
+                  <p className="text-xs text-gray-500">Connect your bank account</p>
+                </div>
+              </button>
+            )}
           </div>
         </div>
       </motion.div>
