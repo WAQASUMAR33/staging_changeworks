@@ -1,13 +1,20 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import jwt from "jsonwebtoken";
-import Stripe from "stripe";
-
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+import { getStripe, isStripeConfigured, handleStripeError } from "@/lib/stripe";
 
 // POST /api/donor/subscriptions/[id]/[action] - Handle subscription actions (pause, resume, cancel)
 export async function POST(request, { params }) {
   try {
+    // Check if Stripe is properly configured
+    if (!isStripeConfigured()) {
+      return NextResponse.json({ 
+        error: "Payment service not configured. Please contact support." 
+      }, { status: 503 });
+    }
+
+    const stripe = getStripe();
+
     // Get token from Authorization header
     const authHeader = request.headers.get('authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -214,10 +221,10 @@ export async function POST(request, { params }) {
       return NextResponse.json({ error: "Invalid token" }, { status: 401 });
     }
     
-    if (error.type === 'StripeInvalidRequestError') {
-      return NextResponse.json({ 
-        error: "Stripe error: " + error.message 
-      }, { status: 400 });
+    // Handle Stripe errors using the utility
+    if (error.type && error.type.startsWith('Stripe')) {
+      const { error: errorMessage, status } = handleStripeError(error, 'Subscription action');
+      return NextResponse.json({ error: errorMessage }, { status });
     }
     
     return NextResponse.json({ 
