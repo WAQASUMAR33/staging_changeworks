@@ -43,6 +43,13 @@ export default function DonorDashboard() {
     loading: true
   });
 
+  // Stripe subscription status state
+  const [subscriptionStatus, setSubscriptionStatus] = useState({
+    hasActiveSubscription: false,
+    subscriptions: [],
+    loading: true
+  });
+
   const checkPlaidConnection = async () => {
     try {
       const token = localStorage.getItem('token');
@@ -67,6 +74,33 @@ export default function DonorDashboard() {
     } catch (error) {
       console.error('Error checking Plaid connection:', error);
       setPlaidConnectionStatus(prev => ({ ...prev, loading: false }));
+    }
+  };
+
+  const checkSubscriptionStatus = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+
+      const response = await fetch('/api/subscriptions/check-status', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        setSubscriptionStatus({
+          hasActiveSubscription: data.has_active_subscription,
+          subscriptions: data.subscriptions || [],
+          loading: false
+        });
+      } else {
+        setSubscriptionStatus(prev => ({ ...prev, loading: false }));
+      }
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      setSubscriptionStatus(prev => ({ ...prev, loading: false }));
     }
   };
 
@@ -177,6 +211,8 @@ export default function DonorDashboard() {
     console.log('Subscription created successfully:', subscriptionData);
     // Refresh dashboard data to show updated stats
     fetchDashboardData();
+    // Refresh subscription status
+    checkSubscriptionStatus();
   };
 
   const handlePlaidIntegration = () => {
@@ -195,6 +231,7 @@ export default function DonorDashboard() {
   useEffect(() => {
     fetchDashboardData();
     checkPlaidConnection();
+    checkSubscriptionStatus();
   }, []);
 
   const containerVariants = {
@@ -343,18 +380,51 @@ export default function DonorDashboard() {
               </div>
             </button>
             
-            <button 
-              onClick={handleStripeSubscription}
-              className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors duration-200 text-left"
-            >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+            {subscriptionStatus.loading ? (
+              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-gray-50">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 animate-spin" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Checking Status...</p>
+                  <p className="text-xs text-gray-500">Loading subscription status</p>
+                </div>
               </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-900">Stripe Subscription</p>
-                <p className="text-xs text-gray-500">Set up recurring donations</p>
+            ) : subscriptionStatus.hasActiveSubscription ? (
+              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 border border-green-200">
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs sm:text-sm font-medium text-green-900">Active Subscription</p>
+                  <p className="text-xs text-green-600">
+                    {subscriptionStatus.subscriptions.length > 0 
+                      ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
+                      : 'Recurring donations active'
+                    }
+                  </p>
+                </div>
+                <button
+                  onClick={() => window.location.href = '/donor/dashboard/subscriptions'}
+                  className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                >
+                  Manage
+                </button>
               </div>
-            </button>
+            ) : (
+              <button 
+                onClick={handleStripeSubscription}
+                className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors duration-200 text-left"
+              >
+                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900">Stripe Subscription</p>
+                  <p className="text-xs text-gray-500">Set up recurring donations</p>
+                </div>
+              </button>
+            )}
             
             {plaidConnectionStatus.loading ? (
               <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-gray-50">
