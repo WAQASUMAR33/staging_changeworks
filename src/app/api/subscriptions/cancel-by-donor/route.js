@@ -85,15 +85,29 @@ export async function POST(request) {
           stripeResponse = { message: 'Subscription will be canceled at the end of the current period' };
         }
 
-        // Update database
-        const updatedSubscription = await prisma.subscription.update({
+        // Update database using raw SQL to avoid Prisma enum issues
+        console.log(`Updating subscription ${subscription.id} in database...`);
+        console.log(`Stripe subscription ID: ${subscription.stripe_subscription_id}`);
+        console.log(`Cancel immediately: ${cancel_immediately}`);
+        
+        const newStatus = cancel_immediately ? 'CANCELED' : 'CANCELED_AT_PERIOD_END';
+        const cancelAtPeriodEnd = !cancel_immediately ? 1 : 0;
+        const canceledAt = cancel_immediately ? new Date().toISOString().slice(0, 19).replace('T', ' ') : null;
+        
+        // Use raw SQL to update the subscription
+        await prisma.$executeRaw`
+          UPDATE subscriptions 
+          SET 
+            cancel_at_period_end = ${cancelAtPeriodEnd},
+            canceled_at = ${canceledAt},
+            status = ${newStatus},
+            updated_at = NOW()
+          WHERE id = ${subscription.id}
+        `;
+        
+        // Fetch the updated subscription
+        const updatedSubscription = await prisma.subscription.findUnique({
           where: { id: subscription.id },
-          data: {
-            cancel_at_period_end: !cancel_immediately,
-            canceled_at: cancel_immediately ? new Date() : null,
-            status: cancel_immediately ? 'CANCELED' : 'CANCELED_AT_PERIOD_END', // Set proper status for both cases
-            updated_at: new Date()
-          },
           include: {
             donor: {
               select: {
@@ -122,6 +136,10 @@ export async function POST(request) {
           }
         });
 
+        console.log(`Successfully updated subscription ${subscription.id} in database`);
+        console.log(`New status: ${updatedSubscription.status}`);
+        console.log(`Cancel at period end: ${updatedSubscription.cancel_at_period_end}`);
+        
         results.push({
           subscription_id: subscription.id,
           stripe_subscription_id: subscription.stripe_subscription_id,
@@ -130,14 +148,27 @@ export async function POST(request) {
           stripe_response: stripeResponse
         });
 
-      } catch (stripeError) {
-        console.error(`Stripe cancellation error for subscription ${subscription.id}:`, stripeError);
-        errors.push({
-          subscription_id: subscription.id,
-          stripe_subscription_id: subscription.stripe_subscription_id,
-          status: 'error',
-          error: stripeError.message
-        });
+      } catch (error) {
+        console.error(`Error processing subscription ${subscription.id}:`, error);
+        
+        // Check if it's a Stripe error or database error
+        if (error.type && error.type.startsWith('Stripe')) {
+          console.error(`Stripe cancellation error for subscription ${subscription.id}:`, error);
+          errors.push({
+            subscription_id: subscription.id,
+            stripe_subscription_id: subscription.stripe_subscription_id,
+            status: 'stripe_error',
+            error: error.message
+          });
+        } else {
+          console.error(`Database update error for subscription ${subscription.id}:`, error);
+          errors.push({
+            subscription_id: subscription.id,
+            stripe_subscription_id: subscription.stripe_subscription_id,
+            status: 'database_error',
+            error: error.message
+          });
+        }
       }
     }
 
