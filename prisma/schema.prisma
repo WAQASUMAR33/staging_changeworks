@@ -89,6 +89,7 @@ model Donor {
   phone           String?            @db.VarChar(50)
   city            String?            @db.VarChar(100)
   address         String?            @db.VarChar(500)
+  country         String?            @db.VarChar(100)
   imageUrl        String?            @db.VarChar(500)
   status          Boolean            @default(true)
   created_at      DateTime           @default(now())

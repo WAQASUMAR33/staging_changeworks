@@ -12,15 +12,15 @@ export async function POST(request) {
       email, 
       password, 
       phone, 
-      address, 
-      city, 
-      state, 
-      zip_code, 
-      country = 'US' 
+      city,
+      address,
+      postal_code,
+      country = 'US',
+      organization_id
     } = body;
 
     // Validate required fields
-    if (!name || !email || !password || !phone || !address || !city || !state || !zip_code) {
+    if (!name || !email || !password || !phone || !address || !city || !postal_code || !organization_id) {
       return NextResponse.json(
         { success: false, error: 'All required fields must be provided' },
         { status: 400 }
@@ -72,12 +72,12 @@ export async function POST(request) {
         phone: phone.trim(),
         address: address.trim(),
         city: city.trim(),
-        state: state.trim(),
-        zip_code: zip_code.trim(),
+        postal_code: String(postal_code).trim(),
         country: country,
         is_verified: false,
         verification_token: verificationToken,
-        status: 'ACTIVE'
+        status: 'ACTIVE',
+        organization: { connect: { id: Number(organization_id) } }
       },
       select: {
         id: true,
@@ -86,8 +86,7 @@ export async function POST(request) {
         phone: true,
         address: true,
         city: true,
-        state: true,
-        zip_code: true,
+        postal_code: true,
         country: true,
         is_verified: true,
         created_at: true
