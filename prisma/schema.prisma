@@ -238,7 +238,6 @@ model Subscription {
 
   @@index([donor_id])
   @@index([organization_id])
-  @@index([package_id])
   @@index([status])
   @@map("subscriptions")
 }

@@ -109,7 +109,7 @@ export async function POST(request) {
       stripe_subscription_id: stripeSubscription.id,
       donor_id: donorId,
       organization_id: organizationId,
-      package_id: 1, // Default package ID
+      package_id: 1, // Default package ID - you may need to create a default package
       status: stripeSubscription.status.toUpperCase(),
       current_period_start: safeTimestampToDate(stripeSubscription.current_period_start, now),
       current_period_end: safeTimestampToDate(stripeSubscription.current_period_end, nextMonth),
