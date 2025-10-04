@@ -150,6 +150,15 @@ export default function MultiStepPaymentForm({
     setError('');
 
     try {
+      // Get donor info from localStorage
+      const user = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('🔍 MultiStepPaymentForm - User data:', user);
+      
+      if (!user.id) {
+        setError('Please log in to make a payment');
+        return;
+      }
+
       // Create payment intent
       const response = await fetch('/api/payments/create-intent', {
         method: 'POST',
@@ -159,8 +168,10 @@ export default function MultiStepPaymentForm({
         },
         body: JSON.stringify({
           amount: parseFloat(donationAmount) * 100, // Convert to cents
+          currency: 'USD',
+          donor_id: parseInt(user.id),
           organization_id: selectedOrganization.id,
-          message: message,
+          description: message || `Donation to ${selectedOrganization.name}`,
         }),
       });
 

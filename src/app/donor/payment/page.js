@@ -56,24 +56,32 @@ export default function DonorPaymentPage() {
     try {
       // Get donor info from localStorage
       const user = JSON.parse(localStorage.getItem('user') || '{}');
+      console.log('🔍 User data from localStorage:', user);
+      
       if (!user.id) {
+        console.error('❌ No user ID found in localStorage');
         setError('Please log in to make a payment');
         return;
       }
 
+      // Prepare payment data
+      const paymentData = {
+        amount: parseFloat(formData.amount),
+        currency: 'USD',
+        donor_id: parseInt(user.id),
+        organization_id: parseInt(formData.organization_id),
+        description: formData.message || `Donation to organization`
+      };
+      
+      console.log('🔍 Payment data being sent:', paymentData);
+      
       // Create payment intent
       const response = await fetch('/api/payments/create-intent', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          amount: parseFloat(formData.amount),
-          currency: 'USD',
-          donor_id: parseInt(user.id),
-          organization_id: parseInt(formData.organization_id),
-          description: formData.message || `Donation to organization`
-        }),
+        body: JSON.stringify(paymentData),
       });
 
       const data = await response.json();

@@ -38,6 +38,8 @@ export async function POST(request) {
     }
 
     const body = await request.json();
+    console.log('🔍 Payment Intent Request Body:', body);
+    
     const { amount, currency, donor_id, organization_id, description } = paymentIntentSchema.parse(body);
 
     // Verify donor exists
