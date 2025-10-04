@@ -70,7 +70,7 @@ export default function DonorPaymentPage() {
         currency: 'USD',
         donor_id: parseInt(user.id),
         organization_id: parseInt(formData.organization_id),
-        description: formData.message || `Donation to organization`
+        description: `Donation to organization`
       };
       
       console.log('🔍 Payment data being sent:', paymentData);
@@ -210,19 +210,6 @@ export default function DonorPaymentPage() {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Message (Optional)
-                </label>
-                <textarea
-                  name="message"
-                  value={formData.message}
-                  onChange={handleChange}
-                  placeholder="Add a message with your donation..."
-                  rows={3}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 resize-none"
-                />
-              </div>
 
               <button
                 type="submit"

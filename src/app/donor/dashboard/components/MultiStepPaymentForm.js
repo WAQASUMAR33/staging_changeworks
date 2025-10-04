@@ -57,7 +57,6 @@ export default function MultiStepPaymentForm({
   const [loadingOrgs, setLoadingOrgs] = useState(false);
   
   // Step 3: Checkout
-  const [message, setMessage] = useState('');
 
   const steps = [
     { id: 1, title: 'Donation Amount', icon: DollarSign },
@@ -171,7 +170,7 @@ export default function MultiStepPaymentForm({
           currency: 'USD',
           donor_id: parseInt(user.id),
           organization_id: selectedOrganization.id,
-          description: message || `Donation to ${selectedOrganization.name}`,
+          description: `Donation to ${selectedOrganization.name}`,
         }),
       });
 
@@ -423,19 +422,6 @@ export default function MultiStepPaymentForm({
           </div>
         </div>
 
-        {/* Message */}
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Message (Optional)
-          </label>
-          <textarea
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            rows="3"
-            placeholder="Add a message with your donation..."
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
-          />
-        </div>
 
         {/* Card Element */}
         <div>
