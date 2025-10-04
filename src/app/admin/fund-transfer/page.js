@@ -68,12 +68,20 @@ export default function FundTransferPage() {
   const fetchOrganizations = async () => {
     try {
       const response = await fetch('/api/organizations/list');
-      if (response.ok) {
-        const data = await response.json();
-        setOrganizations(data);
+      const data = await response.json();
+      
+      if (data.success && data.organizations) {
+        setOrganizations(data.organizations);
+        console.log(`✅ Loaded ${data.count} organizations`);
+      } else {
+        console.error('❌ Failed to fetch organizations:', data.error);
+        // Set empty array to prevent form errors
+        setOrganizations([]);
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error);
+      console.error('❌ Error fetching organizations:', error);
+      // Set empty array to prevent form errors
+      setOrganizations([]);
     }
   };
 

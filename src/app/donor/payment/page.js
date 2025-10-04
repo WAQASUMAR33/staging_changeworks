@@ -31,13 +31,17 @@ export default function DonorPaymentPage() {
       const response = await fetch('/api/organizations/list');
       const data = await response.json();
       
-      if (response.ok) {
-        setOrganizations(data);
+      if (data.success && data.organizations && Array.isArray(data.organizations)) {
+        setOrganizations(data.organizations);
+        console.log(`✅ Loaded ${data.count} organizations`);
       } else {
+        console.error('❌ Failed to fetch organizations:', data.error);
+        setOrganizations([]);
         setError('Failed to load organizations');
       }
     } catch (err) {
-      console.error('Error fetching organizations:', err);
+      console.error('❌ Error fetching organizations:', err);
+      setOrganizations([]);
       setError('Failed to load organizations');
     } finally {
       setLoadingOrgs(false);
@@ -66,7 +70,7 @@ export default function DonorPaymentPage() {
         body: JSON.stringify({
           amount: parseFloat(formData.amount),
           currency: 'USD',
-          donor_id: user.id,
+          donor_id: parseInt(user.id),
           organization_id: parseInt(formData.organization_id),
           description: formData.message || `Donation to organization`
         }),

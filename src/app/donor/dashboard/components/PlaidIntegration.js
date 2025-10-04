@@ -54,14 +54,18 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
     try {
       setLoadingOrgs(true);
       const response = await fetch('/api/organizations/list');
-      if (response.ok) {
-        const data = await response.json();
-        // Handle both array response and object with organizations property
-        const orgs = Array.isArray(data) ? data : (data?.organizations || []);
-        setOrganizations(orgs);
+      const data = await response.json();
+      
+      if (data.success && data.organizations && Array.isArray(data.organizations)) {
+        setOrganizations(data.organizations);
+        console.log(`✅ Loaded ${data.count} organizations for Plaid`);
+      } else {
+        console.error('❌ Failed to fetch organizations:', data.error);
+        setOrganizations([]);
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error);
+      console.error('❌ Error fetching organizations:', error);
+      setOrganizations([]);
     } finally {
       setLoadingOrgs(false);
     }

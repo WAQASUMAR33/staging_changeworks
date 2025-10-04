@@ -74,12 +74,18 @@ export default function MultiStepPaymentForm({
     try {
       setLoadingOrgs(true);
       const response = await fetch('/api/organizations/list');
-      if (response.ok) {
-        const data = await response.json();
-        setOrganizations(data.organizations || []);
+      const data = await response.json();
+      
+      if (data.success && data.organizations && Array.isArray(data.organizations)) {
+        setOrganizations(data.organizations);
+        console.log(`✅ Loaded ${data.count} organizations for payment`);
+      } else {
+        console.error('❌ Failed to fetch organizations:', data.error);
+        setOrganizations([]);
       }
     } catch (error) {
-      console.error('Error fetching organizations:', error);
+      console.error('❌ Error fetching organizations:', error);
+      setOrganizations([]);
     } finally {
       setLoadingOrgs(false);
     }
