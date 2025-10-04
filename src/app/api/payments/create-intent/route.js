@@ -68,9 +68,9 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Amount is already in cents from frontend, use as-is
-    const amountInCents = Math.round(amount);
-    console.log(`💰 Payment amount: ${amount} cents = $${amount / 100}`);
+    // Convert dollars to cents for Stripe
+    const amountInCents = Math.round(amount * 100);
+    console.log(`💰 Payment amount: $${amount} = ${amountInCents} cents`);
 
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
@@ -94,7 +94,7 @@ export async function POST(request) {
       data: {
         trx_id: transactionId,
         trx_date: new Date(),
-        trx_amount: amount / 100, // Convert cents back to dollars for storage
+        trx_amount: amount, // Store in dollars (amount is already in dollars)
         trx_method: 'stripe',
         trx_donor_id: donor_id,
         trx_organization_id: organization_id,

@@ -166,7 +166,7 @@ export default function MultiStepPaymentForm({
           'Authorization': `Bearer ${localStorage.getItem('token')}`
         },
         body: JSON.stringify({
-          amount: parseFloat(donationAmount) * 100, // Convert to cents
+          amount: parseFloat(donationAmount), // Send in dollars (like regular payment page)
           currency: 'USD',
           donor_id: parseInt(user.id),
           organization_id: selectedOrganization.id,
