@@ -108,7 +108,7 @@ export async function POST() {
     console.log('📤 Creating donor with GHL contact creation...');
     
     // Use the main donor creation API to test GHL integration
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
     
     const donorResponse = await fetch(`${baseUrl}/api/donor`, {
       method: 'POST',
@@ -292,7 +292,7 @@ export async function POST() {
       environment_check: {
         ghl_agency_key_set: !!process.env.GHL_AGENCY_API_KEY,
         ghl_base_url_set: !!process.env.GHL_BASE_URL,
-        base_url: process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+        base_url: process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'
       }
     }, { status: overallSuccess ? 200 : 207 }); // 207 = Multi-Status
 

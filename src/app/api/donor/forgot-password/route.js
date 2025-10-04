@@ -76,7 +76,7 @@ export async function POST(request) {
           },
         });
 
-        const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/donor/reset-password?token=${resetToken}`;
+        const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`;
 
         await transport.sendMail({
           to: email,

@@ -50,7 +50,7 @@ export async function POST(request) {
     });
 
     // Create reset URL - ALWAYS use reset-password endpoint
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
     // Check if email configuration is available

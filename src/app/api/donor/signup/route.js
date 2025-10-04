@@ -124,7 +124,7 @@ export async function POST(request) {
           },
         });
 
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
         const verificationUrl = `${baseUrl}/donor/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
 
         await transport.sendMail({
