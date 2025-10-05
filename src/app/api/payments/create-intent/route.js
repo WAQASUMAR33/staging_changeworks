@@ -90,7 +90,7 @@ export async function POST(request) {
     // Create a pending transaction record in the database
     const transactionId = `pi_${paymentIntent.id}_${Date.now()}`;
     
-    await prisma.saveTrRecord.create({
+    const transaction = await prisma.saveTrRecord.create({
       data: {
         trx_id: transactionId,
         trx_date: new Date(),
@@ -107,6 +107,72 @@ export async function POST(request) {
       }
     });
 
+    // Automatically check and update payment status after a short delay
+    // This simulates the webhook behavior
+    setTimeout(async () => {
+      try {
+        console.log(`🔄 Auto-checking payment status for ${paymentIntent.id}...`);
+        
+        // Check if payment was completed in Stripe
+        const updatedStripePayment = await stripe.paymentIntents.retrieve(paymentIntent.id);
+        
+        if (updatedStripePayment.status === 'succeeded') {
+          // Update database to completed
+          await prisma.saveTrRecord.update({
+            where: { id: transaction.id },
+            data: {
+              pay_status: 'completed',
+              trx_recipt_url: updatedStripePayment.receipt_url || `https://pay.stripe.com/receipts/${paymentIntent.id}`,
+              trx_details: JSON.stringify({
+                payment_intent_id: paymentIntent.id,
+                description: description || `Donation to ${organization.name}`,
+                stripe_metadata: paymentIntent.metadata,
+                stripe_status: updatedStripePayment.status,
+                stripe_amount_received: updatedStripePayment.amount_received,
+                stripe_payment_method: updatedStripePayment.payment_method,
+                stripe_created: new Date(updatedStripePayment.created * 1000),
+                auto_updated_at: new Date()
+              }),
+              updated_at: new Date()
+            }
+          });
+
+          // Update organization balance
+          await prisma.organization.update({
+            where: { id: organization_id },
+            data: {
+              balance: {
+                increment: amount
+              }
+            }
+          });
+
+          console.log(`✅ Auto-updated payment ${paymentIntent.id} to completed status`);
+        } else if (updatedStripePayment.status === 'payment_failed') {
+          // Update to failed status
+          await prisma.saveTrRecord.update({
+            where: { id: transaction.id },
+            data: {
+              pay_status: 'failed',
+              trx_details: JSON.stringify({
+                payment_intent_id: paymentIntent.id,
+                description: description || `Donation to ${organization.name}`,
+                stripe_metadata: paymentIntent.metadata,
+                stripe_status: updatedStripePayment.status,
+                stripe_last_payment_error: updatedStripePayment.last_payment_error,
+                auto_updated_at: new Date()
+              }),
+              updated_at: new Date()
+            }
+          });
+
+          console.log(`❌ Auto-updated payment ${paymentIntent.id} to failed status`);
+        }
+      } catch (error) {
+        console.error(`❌ Error auto-updating payment ${paymentIntent.id}:`, error);
+      }
+    }, 10000); // 10 seconds delay to allow payment completion
+
     return NextResponse.json({
       success: true,
       client_secret: paymentIntent.client_secret,
@@ -114,7 +180,9 @@ export async function POST(request) {
       amount: amount,
       currency: currency,
       transaction_id: transactionId,
-      message: "Payment intent created successfully"
+      transaction_db_id: transaction.id,
+      message: "Payment intent created successfully with auto-status checking enabled",
+      auto_check_note: "Payment status will be automatically checked and updated after completion"
     });
 
   } catch (error) {
