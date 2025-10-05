@@ -107,71 +107,113 @@ export async function POST(request) {
       }
     });
 
-    // Automatically check and update payment status after a short delay
-    // This simulates the webhook behavior
-    setTimeout(async () => {
-      try {
-        console.log(`🔄 Auto-checking payment status for ${paymentIntent.id}...`);
+    // Immediately check the payment status and update if already completed
+    try {
+      console.log(`🔍 Immediately checking payment status for ${paymentIntent.id}...`);
+      
+      // Check if payment was already completed in Stripe
+      const currentStripePayment = await stripe.paymentIntents.retrieve(paymentIntent.id);
+      console.log(`📊 Current Stripe status: ${currentStripePayment.status}`);
+      
+      if (currentStripePayment.status === 'succeeded') {
+        // Payment already succeeded, update to completed immediately
+        await prisma.saveTrRecord.update({
+          where: { id: transaction.id },
+          data: {
+            pay_status: 'completed',
+            trx_recipt_url: currentStripePayment.receipt_url || `https://pay.stripe.com/receipts/${paymentIntent.id}`,
+            trx_details: JSON.stringify({
+              payment_intent_id: paymentIntent.id,
+              description: description || `Donation to ${organization.name}`,
+              stripe_metadata: paymentIntent.metadata,
+              stripe_status: currentStripePayment.status,
+              stripe_amount_received: currentStripePayment.amount_received,
+              stripe_payment_method: currentStripePayment.payment_method,
+              stripe_created: new Date(currentStripePayment.created * 1000),
+              immediately_updated_at: new Date()
+            }),
+            updated_at: new Date()
+          }
+        });
+
+        // Update organization balance
+        await prisma.organization.update({
+          where: { id: organization_id },
+          data: {
+            balance: {
+              increment: amount
+            }
+          }
+        });
+
+        console.log(`✅ Immediately updated payment ${paymentIntent.id} to completed status`);
+      } else if (currentStripePayment.status === 'payment_failed') {
+        // Payment failed, update to failed immediately
+        await prisma.saveTrRecord.update({
+          where: { id: transaction.id },
+          data: {
+            pay_status: 'failed',
+            trx_details: JSON.stringify({
+              payment_intent_id: paymentIntent.id,
+              description: description || `Donation to ${organization.name}`,
+              stripe_metadata: paymentIntent.metadata,
+              stripe_status: currentStripePayment.status,
+              stripe_last_payment_error: currentStripePayment.last_payment_error,
+              immediately_updated_at: new Date()
+            }),
+            updated_at: new Date()
+          }
+        });
+
+        console.log(`❌ Immediately updated payment ${paymentIntent.id} to failed status`);
+      } else {
+        console.log(`⏳ Payment ${paymentIntent.id} still pending: ${currentStripePayment.status}`);
         
-        // Check if payment was completed in Stripe
-        const updatedStripePayment = await stripe.paymentIntents.retrieve(paymentIntent.id);
-        
-        if (updatedStripePayment.status === 'succeeded') {
-          // Update database to completed
-          await prisma.saveTrRecord.update({
-            where: { id: transaction.id },
-            data: {
-              pay_status: 'completed',
-              trx_recipt_url: updatedStripePayment.receipt_url || `https://pay.stripe.com/receipts/${paymentIntent.id}`,
-              trx_details: JSON.stringify({
-                payment_intent_id: paymentIntent.id,
-                description: description || `Donation to ${organization.name}`,
-                stripe_metadata: paymentIntent.metadata,
-                stripe_status: updatedStripePayment.status,
-                stripe_amount_received: updatedStripePayment.amount_received,
-                stripe_payment_method: updatedStripePayment.payment_method,
-                stripe_created: new Date(updatedStripePayment.created * 1000),
-                auto_updated_at: new Date()
-              }),
-              updated_at: new Date()
-            }
-          });
+        // Set up additional checking for payments that are still pending
+        setTimeout(async () => {
+          try {
+            console.log(`🔄 Delayed check for payment ${paymentIntent.id}...`);
+            const delayedStripePayment = await stripe.paymentIntents.retrieve(paymentIntent.id);
+            
+            if (delayedStripePayment.status === 'succeeded') {
+              await prisma.saveTrRecord.update({
+                where: { id: transaction.id },
+                data: {
+                  pay_status: 'completed',
+                  trx_recipt_url: delayedStripePayment.receipt_url || `https://pay.stripe.com/receipts/${paymentIntent.id}`,
+                  trx_details: JSON.stringify({
+                    payment_intent_id: paymentIntent.id,
+                    description: description || `Donation to ${organization.name}`,
+                    stripe_metadata: paymentIntent.metadata,
+                    stripe_status: delayedStripePayment.status,
+                    stripe_amount_received: delayedStripePayment.amount_received,
+                    stripe_payment_method: delayedStripePayment.payment_method,
+                    stripe_created: new Date(delayedStripePayment.created * 1000),
+                    delayed_updated_at: new Date()
+                  }),
+                  updated_at: new Date()
+                }
+              });
 
-          // Update organization balance
-          await prisma.organization.update({
-            where: { id: organization_id },
-            data: {
-              balance: {
-                increment: amount
-              }
-            }
-          });
+              await prisma.organization.update({
+                where: { id: organization_id },
+                data: {
+                  balance: {
+                    increment: amount
+                  }
+                }
+              });
 
-          console.log(`✅ Auto-updated payment ${paymentIntent.id} to completed status`);
-        } else if (updatedStripePayment.status === 'payment_failed') {
-          // Update to failed status
-          await prisma.saveTrRecord.update({
-            where: { id: transaction.id },
-            data: {
-              pay_status: 'failed',
-              trx_details: JSON.stringify({
-                payment_intent_id: paymentIntent.id,
-                description: description || `Donation to ${organization.name}`,
-                stripe_metadata: paymentIntent.metadata,
-                stripe_status: updatedStripePayment.status,
-                stripe_last_payment_error: updatedStripePayment.last_payment_error,
-                auto_updated_at: new Date()
-              }),
-              updated_at: new Date()
+              console.log(`✅ Delayed update: Payment ${paymentIntent.id} completed`);
             }
-          });
-
-          console.log(`❌ Auto-updated payment ${paymentIntent.id} to failed status`);
-        }
-      } catch (error) {
-        console.error(`❌ Error auto-updating payment ${paymentIntent.id}:`, error);
+          } catch (error) {
+            console.error(`❌ Error in delayed check for payment ${paymentIntent.id}:`, error);
+          }
+        }, 15000); // 15 seconds delay for additional check
       }
-    }, 10000); // 10 seconds delay to allow payment completion
+    } catch (error) {
+      console.error(`❌ Error immediately checking payment ${paymentIntent.id}:`, error);
+    }
 
     return NextResponse.json({
       success: true,
@@ -181,8 +223,8 @@ export async function POST(request) {
       currency: currency,
       transaction_id: transactionId,
       transaction_db_id: transaction.id,
-      message: "Payment intent created successfully with auto-status checking enabled",
-      auto_check_note: "Payment status will be automatically checked and updated after completion"
+      message: "Payment intent created successfully with immediate status checking enabled",
+      status_check_note: "Payment status has been immediately checked and updated if already completed in Stripe"
     });
 
   } catch (error) {
