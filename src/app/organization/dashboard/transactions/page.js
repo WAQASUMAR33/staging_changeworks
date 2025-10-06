@@ -365,7 +365,7 @@ const TransactionsPage = () => {
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Transaction
+                  Date
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Donor
@@ -380,7 +380,7 @@ const TransactionsPage = () => {
                   Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Date
+                  Transaction ID
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Actions
@@ -396,17 +396,8 @@ const TransactionsPage = () => {
                   transition={{ delay: index * 0.05 }}
                   className="hover:bg-gray-50"
                 >
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div>
-                      <div className="text-sm font-medium text-gray-900">
-                        {transaction.transaction_id}
-                      </div>
-                      {transaction.ghl_id && (
-                        <div className="text-xs text-gray-500">
-                          GHL: {transaction.ghl_id}
-                        </div>
-                      )}
-                    </div>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    {formatDate(transaction.transaction_date)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="flex items-center">
@@ -439,8 +430,17 @@ const TransactionsPage = () => {
                       <span className="ml-1 capitalize">{transaction.status}</span>
                     </span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {formatDate(transaction.transaction_date)}
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <div>
+                      <div className="text-sm font-medium text-gray-900">
+                        {transaction.transaction_id}
+                      </div>
+                      {transaction.ghl_id && (
+                        <div className="text-xs text-gray-500">
+                          GHL: {transaction.ghl_id}
+                        </div>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center space-x-2">
