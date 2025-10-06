@@ -32,7 +32,7 @@ export default function ManageGHLAccountsPage() {
 
   useEffect(() => {
     fetchGHLAccounts();
-  }, []);
+  }, [fetchGHLAccounts]);
 
   const fetchGHLAccounts = async () => {
     try {

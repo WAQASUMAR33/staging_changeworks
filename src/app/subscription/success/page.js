@@ -21,7 +21,7 @@ export default function SubscriptionSuccessPage() {
       setVerificationStatus('error');
       setError('Missing required parameters: session_id, donor_id, or organization_id');
     }
-  }, [searchParams]);
+  }, [searchParams, verifySubscription]);
 
   const verifySubscription = async (sessionId, donorId, organizationId) => {
     try {

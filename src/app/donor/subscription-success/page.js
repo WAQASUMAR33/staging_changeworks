@@ -21,7 +21,7 @@ export default function SubscriptionSuccessPage() {
       setStatus('error');
       setError('No session ID found');
     }
-  }, [searchParams]);
+  }, [searchParams, handleSubscriptionSuccess]);
 
   const handleSubscriptionSuccess = async (sessionId) => {
     try {

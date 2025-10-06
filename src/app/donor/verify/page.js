@@ -23,7 +23,7 @@ export default function DonorVerifyPage() {
     }
 
     verifyEmail(token);
-  }, [searchParams]);
+  }, [searchParams, verifyEmail]);
 
   const verifyEmail = async (token) => {
     try {

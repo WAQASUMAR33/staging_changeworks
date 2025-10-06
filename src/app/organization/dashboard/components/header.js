@@ -5,7 +5,8 @@ import {
   Settings, 
   User, 
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Activity
 } from 'lucide-react';
 
 export default function OrgHeader() {
