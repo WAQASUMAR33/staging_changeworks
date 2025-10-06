@@ -169,7 +169,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       console.log('Exchange response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.clone().json().catch(() => ({ error: 'Unknown error' }));
         console.error('Token exchange failed:', errorData);
         const errorMessage = `Token exchange failed: ${errorData.error || 'Unknown error'}`;
         alert(errorMessage);
@@ -282,7 +282,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       if (!response.ok) {
         let errorData;
         try {
-          errorData = await response.json();
+          errorData = await response.clone().json();
         } catch (jsonError) {
           console.error('Failed to parse error response:', jsonError);
           errorData = { error: 'Unknown error' };
@@ -307,7 +307,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
       console.log('Link token response status:', response.status);
 
       if (!response.ok) {
-        const errorData = await response.json();
+        const errorData = await response.clone().json().catch(() => ({ error: 'Unknown error' }));
         console.error('Link token creation failed:', errorData);
         const errorMessage = `Failed to create link token: ${errorData.error || 'Unknown error'}`;
         alert(errorMessage);
