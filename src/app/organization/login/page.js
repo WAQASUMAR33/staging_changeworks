@@ -330,7 +330,7 @@ function OrganizationLoginContent() {
                       placeholder="Enter your email"
                       value={form.email}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
+                      className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-black ${
                         errors.email 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -365,7 +365,7 @@ function OrganizationLoginContent() {
                       placeholder="Enter your password"
                       value={form.password}
                       onChange={handleChange}
-                      className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
+                      className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-black ${
                         errors.password 
                           ? 'border-red-300 bg-red-50' 
                           : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
@@ -523,7 +523,7 @@ function OrganizationLoginContent() {
                       placeholder="Enter your email"
                       value={forgotPasswordEmail}
                       onChange={(e) => setForgotPasswordEmail(e.target.value)}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
                       disabled={forgotPasswordLoading}
                     />
                   </div>
