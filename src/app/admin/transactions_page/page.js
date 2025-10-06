@@ -199,58 +199,66 @@ export default function TransactionManagementPage() {
         initial="hidden"
         animate="visible"
         transition={{ duration: 0.5 }}
-        className="mb-6 flex gap-4 flex-wrap"
+        className="mb-6 bg-gray-50 p-4 rounded-lg"
       >
-        <TextField
-          label="Filter by Donor Name/Email"
-          value={filterDonor}
-          onChange={handleFilterDonorChange}
-          variant="outlined"
-          size="small"
-          className="min-w-[200px]"
-          sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
-        />
-        <FormControl className="min-w-[200px]" size="small">
-          <InputLabel>Filter by Status</InputLabel>
-          <Select
-            value={filterStatus}
-            onChange={handleFilterStatusChange}
-            label="Filter by Status"
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="completed">Completed</MenuItem>
-            <MenuItem value="pending">Pending</MenuItem>
-            <MenuItem value="failed">Failed</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl className="min-w-[200px]" size="small">
-          <InputLabel>Filter by Transaction Type</InputLabel>
-          <Select
-            value={filterTransactionType}
-            onChange={handleFilterTransactionTypeChange}
-            label="Filter by Transaction Type"
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="donation">Donation</MenuItem>
-            <MenuItem value="refund">Refund</MenuItem>
-            <MenuItem value="other">Other</MenuItem>
-          </Select>
-        </FormControl>
-        <FormControl className="min-w-[200px]" size="small">
-          <InputLabel>Filter by Payment Method</InputLabel>
-          <Select
-            value={filterPaymentMethod}
-            onChange={handleFilterPaymentMethodChange}
-            label="Filter by Payment Method"
-          >
-            <MenuItem value="">All</MenuItem>
-            <MenuItem value="credit_card">Credit Card</MenuItem>
-            <MenuItem value="paypal">Stripe</MenuItem>
-            <MenuItem value="paypal">Plaid</MenuItem>
-            <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
-            <MenuItem value="cash">Cash</MenuItem>
-          </Select>
-        </FormControl>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <TextField
+            label="Filter by Donor Name/Email"
+            value={filterDonor}
+            onChange={handleFilterDonorChange}
+            variant="outlined"
+            size="small"
+            fullWidth
+            sx={{ 
+              '& .MuiInputBase-input': { color: '#111827' },
+              '& .MuiOutlinedInput-root': { backgroundColor: 'white' }
+            }}
+          />
+          <FormControl fullWidth size="small">
+            <InputLabel>Filter by Status</InputLabel>
+            <Select
+              value={filterStatus}
+              onChange={handleFilterStatusChange}
+              label="Filter by Status"
+              sx={{ backgroundColor: 'white' }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="completed">Completed</MenuItem>
+              <MenuItem value="pending">Pending</MenuItem>
+              <MenuItem value="failed">Failed</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Filter by Transaction Type</InputLabel>
+            <Select
+              value={filterTransactionType}
+              onChange={handleFilterTransactionTypeChange}
+              label="Filter by Transaction Type"
+              sx={{ backgroundColor: 'white' }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="donation">Donation</MenuItem>
+              <MenuItem value="refund">Refund</MenuItem>
+              <MenuItem value="other">Other</MenuItem>
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Filter by Payment Method</InputLabel>
+            <Select
+              value={filterPaymentMethod}
+              onChange={handleFilterPaymentMethodChange}
+              label="Filter by Payment Method"
+              sx={{ backgroundColor: 'white' }}
+            >
+              <MenuItem value="">All</MenuItem>
+              <MenuItem value="credit_card">Credit Card</MenuItem>
+              <MenuItem value="paypal">Stripe</MenuItem>
+              <MenuItem value="paypal">Plaid</MenuItem>
+              <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
+              <MenuItem value="cash">Cash</MenuItem>
+            </Select>
+          </FormControl>
+        </div>
       </motion.div>
 
       {error && (
