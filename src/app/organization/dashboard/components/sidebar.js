@@ -17,7 +17,6 @@ import {
   Users,
   ClipboardPlus,
   Home,
-  BarChart3,
   Shield,
   Bell,
   Menu,
@@ -81,11 +80,6 @@ const OrgSidebar = () => {
       name: 'Transactions',
       icon: ClipboardPlus,
       path: '/organization/dashboard/transactions',
-    },
-    {
-      name: 'Reports',
-      icon: BarChart3,
-      path: '/organization/dashboard/reports',
     },
     {
       name: 'Settings',
