@@ -281,8 +281,152 @@ export default function TransactionManagementPage() {
   };
   
   const printTable = () => {
-    window.print();
+    // Create a new window for printing
+    const printWindow = window.open('', '_blank');
+    
+    // Generate the HTML content for printing
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Transaction Records - ${new Date().toLocaleDateString()}</title>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              margin: 20px;
+              font-size: 12px;
+              line-height: 1.4;
+            }
+            .header {
+              text-align: center;
+              margin-bottom: 30px;
+              border-bottom: 2px solid #333;
+              padding-bottom: 10px;
+            }
+            .header h1 {
+              margin: 0;
+              font-size: 24px;
+              color: #333;
+            }
+            .header p {
+              margin: 5px 0 0 0;
+              color: #666;
+            }
+            .summary {
+              margin-bottom: 20px;
+              padding: 10px;
+              background-color: #f5f5f5;
+              border-radius: 4px;
+            }
+            .summary p {
+              margin: 5px 0;
+              font-weight: bold;
+            }
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              margin-top: 20px;
+              font-size: 11px;
+            }
+            th, td {
+              border: 1px solid #ddd;
+              padding: 8px;
+              text-align: left;
+              vertical-align: top;
+            }
+            th {
+              background-color: #f8f9fa;
+              font-weight: bold;
+              color: #333;
+            }
+            tr:nth-child(even) {
+              background-color: #f9f9f9;
+            }
+            .status-completed { color: #28a745; font-weight: bold; }
+            .status-pending { color: #ffc107; font-weight: bold; }
+            .status-failed { color: #dc3545; font-weight: bold; }
+            .amount { text-align: right; font-weight: bold; }
+            @media print {
+              body { margin: 0; }
+              .no-print { display: none; }
+            }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <h1>Transaction Records</h1>
+            <p>Generated on: ${new Date().toLocaleDateString('en-US', { 
+              year: 'numeric', 
+              month: 'long', 
+              day: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            })}</p>
+          </div>
+          
+          <div class="summary">
+            <p>Total Records: ${filteredTransactions.length}</p>
+            <p>Total Amount: ${filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0).toLocaleString('en-US', { style: 'currency', currency: 'USD' })}</p>
+            <p>Filtered by: ${getActiveFilters()}</p>
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Donor</th>
+                <th>Organization</th>
+                <th>Amount</th>
+                <th>Status</th>
+                <th>Type</th>
+                <th>Method</th>
+                <th>Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${filteredTransactions.map(transaction => `
+                <tr>
+                  <td>${transaction.id}</td>
+                  <td>${transaction.donor.name}<br><small>${transaction.donor.email}</small></td>
+                  <td>${transaction.organization.name}</td>
+                  <td class="amount">${formatCurrency(transaction.amount, transaction.currency)}</td>
+                  <td class="status-${transaction.status}">${transaction.status.charAt(0).toUpperCase() + transaction.status.slice(1)}</td>
+                  <td>${getTransactionTypeLabel(transaction.transaction_type)}</td>
+                  <td>${getPaymentMethodLabel(transaction.payment_method)}</td>
+                  <td>${formatDate(transaction.created_at)}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </body>
+      </html>
+    `;
+    
+    // Write content to the new window
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    
+    // Wait for content to load, then print
+    printWindow.onload = () => {
+      printWindow.focus();
+      printWindow.print();
+      printWindow.close();
+    };
+    
     handleExportClose();
+  };
+  
+  // Helper function to get active filters for summary
+  const getActiveFilters = () => {
+    const filters = [];
+    if (filterDonor) filters.push(`Donor: ${donors.find(d => d.id.toString() === filterDonor)?.name || 'Unknown'}`);
+    if (filterOrganization) filters.push(`Organization: ${organizations.find(o => o.id.toString() === filterOrganization)?.name || 'Unknown'}`);
+    if (filterStatus) filters.push(`Status: ${filterStatus}`);
+    if (filterTransactionType) filters.push(`Type: ${filterTransactionType}`);
+    if (filterPaymentMethod) filters.push(`Method: ${filterPaymentMethod}`);
+    if (startDate) filters.push(`From: ${startDate}`);
+    if (endDate) filters.push(`To: ${endDate}`);
+    return filters.length > 0 ? filters.join(', ') : 'All records';
   };
 
   // Animation variants
