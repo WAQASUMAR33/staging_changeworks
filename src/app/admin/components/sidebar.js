@@ -17,7 +17,6 @@ import {
   Users,
   ClipboardPlus,
   Home,
-  BarChart3,
   Shield,
   Bell,
   Menu,
@@ -84,11 +83,6 @@ const Sidebar = () => {
       ],
     },
     {
-      name: 'Reports',
-      icon: BarChart3,
-      path: '/admin/reports',
-    },
-    {
       name: 'Transactions',
       icon: ArrowRightLeft,
       path: '/admin/transactions_page',
@@ -102,11 +96,6 @@ const Sidebar = () => {
       name: 'User Management',
       icon: CircleUserRound,
       path: '/admin/users_management',
-    },
-    {
-      name: 'Reports',
-      icon: BarChart3,
-      path: '/admin/reports',
     },
   ];
 
