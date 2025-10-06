@@ -298,7 +298,7 @@ export default function TransactionManagementPage() {
   };
 
   return (
-    <Box sx={{ p: 3, bgcolor: '#FFF', minHeight: '100vh' }}>
+    <Box sx={{ bgcolor: '#FFF', minHeight: '100vh' }}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-900">Transaction Management</h2>
         <div className="flex items-center space-x-2">
