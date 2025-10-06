@@ -21,7 +21,8 @@ export default function DonorDonationsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
-  const [filterPeriod, setFilterPeriod] = useState('all');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
   const [selectedDonation, setSelectedDonation] = useState(null);
 
   const fetchDonations = async () => {
@@ -76,31 +77,20 @@ export default function DonorDonationsPage() {
       );
     }
 
-    // Filter by period
-    const now = new Date();
-    switch (filterPeriod) {
-      case 'today':
-        filtered = filtered.filter(donation => {
-          const donationDate = new Date(donation.created_at);
-          return donationDate.toDateString() === now.toDateString();
-        });
-        break;
-      case 'week':
-        const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(donation => new Date(donation.created_at) >= weekAgo);
-        break;
-      case 'month':
-        const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(donation => new Date(donation.created_at) >= monthAgo);
-        break;
-      case 'year':
-        const yearAgo = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
-        filtered = filtered.filter(donation => new Date(donation.created_at) >= yearAgo);
-        break;
+    // Filter by date range
+    if (startDate) {
+      const start = new Date(startDate);
+      start.setHours(0, 0, 0, 0);
+      filtered = filtered.filter(donation => new Date(donation.created_at) >= start);
+    }
+    if (endDate) {
+      const end = new Date(endDate);
+      end.setHours(23, 59, 59, 999);
+      filtered = filtered.filter(donation => new Date(donation.created_at) <= end);
     }
 
     setFilteredDonations(filtered);
-  }, [donations, searchTerm, filterPeriod]);
+  }, [donations, searchTerm, startDate, endDate]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -294,31 +284,38 @@ export default function DonorDonationsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-black" />
               <input
                 type="text"
                 placeholder="Search donations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-full sm:w-64 placeholder-gray-600"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-full sm:w-64 placeholder-gray-800 text-black"
               />
             </div>
             <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-600" />
-              <select
-                value={filterPeriod}
-                onChange={(e) => setFilterPeriod(e.target.value)}
-                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-full sm:w-auto"
-              >
-                <option value="all">All Time</option>
-                <option value="today">Today</option>
-                <option value="week">This Week</option>
-                <option value="month">This Month</option>
-                <option value="year">This Year</option>
-              </select>
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-black" />
+                <input
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
+                />
+              </div>
+              <span className="text-black">to</span>
+              <div className="flex items-center space-x-2">
+                <Calendar className="w-4 h-4 text-black" />
+                <input
+                  type="date"
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
+                />
+              </div>
             </div>
           </div>
-          <div className="text-sm text-gray-800">
+          <div className="text-sm text-black">
             Showing {filteredDonations.length} of {donations.length} donations
           </div>
         </div>
