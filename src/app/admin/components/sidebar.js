@@ -258,7 +258,8 @@ const Sidebar = () => {
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         onMouseEnter={() => !isPinned && setIsHovered(true)}
         onMouseLeave={() => !isPinned && setIsHovered(false)}
-        className="hidden lg:block fixed left-0 top-0 h-full bg-gray-800 border-r border-gray-700 shadow-xl overflow-hidden z-40"
+        className="hidden lg:block fixed left-0 top-0 h-screen bg-gray-800 border-r border-gray-700 shadow-xl overflow-hidden z-40"
+        style={{ width: isExpanded ? '280px' : '64px' }}
       >
         <SidebarContent />
       </motion.div>
