@@ -7,14 +7,10 @@ import {
   TrendingUp, 
   Activity,
   Users,
-  ArrowRightLeft,
-  ClipboardPlus,
   Loader2,
   Calendar,
   Target,
-  Zap,
-  Settings,
-  ArrowRight
+  Zap
 } from 'lucide-react';
 
 
@@ -160,7 +156,7 @@ export default function OrganizationDashboard() {
                         Organization Dashboard
                     </h1>
                     <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-                        Welcome to your ChangeWorks organization portal. Manage your donors, track donations, and integrate with GoHighLevel.
+                        Welcome to your ChangeWorks organization Dashboard. Manage your donors, and track donations.
                     </p>
                 </motion.div>
 
@@ -196,79 +192,6 @@ export default function OrganizationDashboard() {
                     })}
                 </div>
 
-                {/* Quick Actions Grid */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.3, duration: 0.6 }}
-                    className="max-w-6xl mx-auto"
-                >
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Quick Actions</h2>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group"
-                        >
-                            <div className="flex items-center space-x-4 mb-4">
-                                <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg">
-                                    <ArrowRightLeft className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Fund Transfers</h3>
-                                    <p className="text-gray-600">Manage transfers</p>
-                                </div>
-                            </div>
-                            <p className="text-gray-500 mb-4">Transfer funds between organizations and manage your financial operations.</p>
-                            <div className="flex items-center text-blue-600 font-medium group-hover:text-blue-700 transition-colors">
-                                <span>Access Fund Transfers</span>
-                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group"
-                        >
-                            <div className="flex items-center space-x-4 mb-4">
-                                <div className="p-4 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl shadow-lg">
-                                    <ClipboardPlus className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Transactions</h3>
-                                    <p className="text-gray-600">View all transactions</p>
-                                </div>
-                            </div>
-                            <p className="text-gray-500 mb-4">Track and monitor all your organization&apos;s transaction history and details.</p>
-                            <div className="flex items-center text-green-600 font-medium group-hover:text-green-700 transition-colors">
-                                <span>View Transactions</span>
-                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </motion.div>
-
-                        <motion.div
-                            whileHover={{ scale: 1.02 }}
-                            whileTap={{ scale: 0.98 }}
-                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group"
-                        >
-                            <div className="flex items-center space-x-4 mb-4">
-                                <div className="p-4 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl shadow-lg">
-                                    <Settings className="w-6 h-6 text-white" />
-                                </div>
-                                <div>
-                                    <h3 className="text-xl font-bold text-gray-900">Settings</h3>
-                                    <p className="text-gray-600">Manage profile</p>
-                                </div>
-                            </div>
-                            <p className="text-gray-500 mb-4">Update your organization profile and manage account settings.</p>
-                            <div className="flex items-center text-purple-600 font-medium group-hover:text-purple-700 transition-colors">
-                                <span>Go to Settings</span>
-                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                            </div>
-                        </motion.div>
-                    </div>
-                </motion.div>
 
                 {/* Modern Recent Activity */}
                 <motion.div
