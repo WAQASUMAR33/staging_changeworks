@@ -6,10 +6,16 @@ import {
   Building2, 
   TrendingUp, 
   Activity,
-  ArrowRight,
-  Loader2
+  Users,
+  ArrowRightLeft,
+  ClipboardPlus,
+  Loader2,
+  Calendar,
+  Target,
+  Zap,
+  Settings,
+  ArrowRight
 } from 'lucide-react';
-import Link from 'next/link';
 
 
 const getColorClasses = (color) => {
@@ -82,8 +88,7 @@ export default function OrganizationDashboard() {
                         change: data.stats.totalDonations.change,
                         changeType: data.stats.totalDonations.changeType,
                         icon: DollarSign,
-                        color: 'green',
-                        path: '/organization/dashboard/transactions'
+                        color: 'green'
                     },
                     {
                         title: 'This Month',
@@ -91,8 +96,7 @@ export default function OrganizationDashboard() {
                         change: data.stats.thisMonth.change,
                         changeType: data.stats.thisMonth.changeType,
                         icon: TrendingUp,
-                        color: 'orange',
-                        path: '/organization/dashboard/reports'
+                        color: 'orange'
                     }
                 ];
                 
@@ -139,59 +143,142 @@ export default function OrganizationDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="min-h-screen"
+            className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
         >
-            <div className="space-y-8">
-                {/* Header Section */}
-                <div className="text-center">
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">
+            <div className="space-y-8 p-6">
+                {/* Modern Header Section */}
+                <motion.div 
+                    initial={{ opacity: 0, y: -20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.1, duration: 0.6 }}
+                    className="text-center"
+                >
+                    <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl mb-4 shadow-lg">
+                        <Building2 className="w-8 h-8 text-white" />
+                    </div>
+                    <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-3">
                         Organization Dashboard
                     </h1>
-                    <p className="text-gray-600 max-w-2xl mx-auto">
+                    <p className="text-gray-600 max-w-2xl mx-auto text-lg">
                         Welcome to your ChangeWorks organization portal. Manage your donors, track donations, and integrate with GoHighLevel.
                     </p>
-                </div>
+                </motion.div>
 
-                {/* Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+                {/* Modern Stats Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
                     {stats.map((stat, index) => {
                         const colors = getColorClasses(stat.color);
                         return (
-                            <Link key={stat.title} href={stat.path}>
-                                <motion.div
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.1, duration: 0.5 }}
-                                    className={`${colors.bg} ${colors.border} ${colors.hover} border-2 rounded-2xl p-6 cursor-pointer transition-all duration-300 hover:shadow-lg group`}
-                                >
-                                    <div className="flex items-center justify-between mb-4">
-                                        <div className={`p-3 rounded-xl bg-white ${colors.icon}`}>
-                                            <stat.icon className="w-6 h-6" />
-                                        </div>
-                                        <div className={`flex items-center space-x-1 text-sm font-medium ${
-                                            stat.changeType === 'increase' ? 'text-green-600' : 'text-red-600'
-                                        }`}>
-                                            <TrendingUp className="w-4 h-4" />
-                                            <span>{stat.change}</span>
-                                        </div>
+                            <motion.div
+                                key={stat.title}
+                                initial={{ opacity: 0, y: 20 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                transition={{ delay: index * 0.1, duration: 0.5 }}
+                                className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 group"
+                            >
+                                <div className="flex items-center justify-between mb-4">
+                                    <div className={`p-4 rounded-2xl bg-gradient-to-r ${colors.gradient} shadow-lg`}>
+                                        <stat.icon className="w-6 h-6 text-white" />
                                     </div>
-                                    <h3 className="text-2xl font-bold text-gray-900 mb-1">{stat.value}</h3>
-                                    <p className="text-gray-600 font-medium">{stat.title}</p>
-                                    <div className="mt-4 flex items-center text-sm text-gray-500 group-hover:text-gray-700 transition-colors duration-200">
-                                        <span>View details</span>
-                                        <ArrowRight className="w-4 h-4 ml-1 group-hover:translate-x-1 transition-transform duration-200" />
+                                    <div className={`flex items-center space-x-1 text-sm font-medium px-2 py-1 rounded-full ${
+                                        stat.changeType === 'increase' 
+                                            ? 'bg-green-100 text-green-700' 
+                                            : 'bg-red-100 text-red-700'
+                                    }`}>
+                                        <TrendingUp className="w-3 h-3" />
+                                        <span>{stat.change}</span>
                                     </div>
-                                </motion.div>
-                            </Link>
+                                </div>
+                                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</h3>
+                                <p className="text-gray-600 font-medium">{stat.title}</p>
+                            </motion.div>
                         );
                     })}
                 </div>
 
+                {/* Quick Actions Grid */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3, duration: 0.6 }}
+                    className="max-w-6xl mx-auto"
+                >
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Quick Actions</h2>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group"
+                        >
+                            <div className="flex items-center space-x-4 mb-4">
+                                <div className="p-4 bg-gradient-to-r from-blue-500 to-blue-600 rounded-2xl shadow-lg">
+                                    <ArrowRightLeft className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">Fund Transfers</h3>
+                                    <p className="text-gray-600">Manage transfers</p>
+                                </div>
+                            </div>
+                            <p className="text-gray-500 mb-4">Transfer funds between organizations and manage your financial operations.</p>
+                            <div className="flex items-center text-blue-600 font-medium group-hover:text-blue-700 transition-colors">
+                                <span>Access Fund Transfers</span>
+                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </motion.div>
 
-                {/* Recent Activity */}
-                <div>
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Activity</h2>
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group"
+                        >
+                            <div className="flex items-center space-x-4 mb-4">
+                                <div className="p-4 bg-gradient-to-r from-green-500 to-green-600 rounded-2xl shadow-lg">
+                                    <ClipboardPlus className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">Transactions</h3>
+                                    <p className="text-gray-600">View all transactions</p>
+                                </div>
+                            </div>
+                            <p className="text-gray-500 mb-4">Track and monitor all your organization's transaction history and details.</p>
+                            <div className="flex items-center text-green-600 font-medium group-hover:text-green-700 transition-colors">
+                                <span>View Transactions</span>
+                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </motion.div>
+
+                        <motion.div
+                            whileHover={{ scale: 1.02 }}
+                            whileTap={{ scale: 0.98 }}
+                            className="bg-white/80 backdrop-blur-xl rounded-3xl p-8 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 cursor-pointer group"
+                        >
+                            <div className="flex items-center space-x-4 mb-4">
+                                <div className="p-4 bg-gradient-to-r from-purple-500 to-purple-600 rounded-2xl shadow-lg">
+                                    <Settings className="w-6 h-6 text-white" />
+                                </div>
+                                <div>
+                                    <h3 className="text-xl font-bold text-gray-900">Settings</h3>
+                                    <p className="text-gray-600">Manage profile</p>
+                                </div>
+                            </div>
+                            <p className="text-gray-500 mb-4">Update your organization profile and manage account settings.</p>
+                            <div className="flex items-center text-purple-600 font-medium group-hover:text-purple-700 transition-colors">
+                                <span>Go to Settings</span>
+                                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                            </div>
+                        </motion.div>
+                    </div>
+                </motion.div>
+
+                {/* Modern Recent Activity */}
+                <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.4, duration: 0.6 }}
+                    className="max-w-6xl mx-auto"
+                >
+                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Recent Activity</h2>
+                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-8">
                         {recentActivity.length > 0 ? (
                             <div className="space-y-4">
                                 {recentActivity.map((activity, index) => {
@@ -215,36 +302,36 @@ export default function OrganizationDashboard() {
                                     const colors = getActivityColor(activity.color);
                                     
                                     return (
-                                        <div key={activity.id || index} className={`flex items-center space-x-4 p-4 ${colors.bg} rounded-xl`}>
-                                            <div className={`w-10 h-10 ${colors.icon} rounded-full flex items-center justify-center`}>
-                                                <ActivityIcon className="w-5 h-5 text-white" />
+                                        <motion.div 
+                                            key={activity.id || index} 
+                                            initial={{ opacity: 0, x: -20 }}
+                                            animate={{ opacity: 1, x: 0 }}
+                                            transition={{ delay: index * 0.1 }}
+                                            className={`flex items-center space-x-4 p-4 ${colors.bg} rounded-2xl hover:shadow-md transition-all duration-200`}
+                                        >
+                                            <div className={`w-12 h-12 ${colors.icon} rounded-2xl flex items-center justify-center shadow-lg`}>
+                                                <ActivityIcon className="w-6 h-6 text-white" />
                                             </div>
                                             <div className="flex-1">
-                                                <p className="font-medium text-gray-900">{activity.title}</p>
+                                                <p className="font-semibold text-gray-900">{activity.title}</p>
                                                 <p className="text-sm text-gray-600">{activity.description}</p>
                                             </div>
-                                            <span className="text-sm text-gray-500">{activity.time}</span>
-                                        </div>
+                                            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">{activity.time}</span>
+                                        </motion.div>
                                     );
                                 })}
                             </div>
                         ) : (
-                            <div className="text-center py-8">
-                                <Activity className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                                <p className="text-gray-500 mb-2">No recent activity</p>
-                                <p className="text-sm text-gray-400">Activity will appear here as you use the platform</p>
+                            <div className="text-center py-12">
+                                <div className="w-20 h-20 bg-gradient-to-r from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                    <Activity className="w-10 h-10 text-gray-400" />
+                                </div>
+                                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
+                                <p className="text-gray-500">Activity will appear here as you use the platform</p>
                             </div>
                         )}
-                        
-                        <div className="mt-6 text-center">
-                            <Link href="/organization/dashboard/transactions">
-                                <button className="text-blue-600 hover:text-blue-700 font-medium hover:underline transition-colors duration-200">
-                                    View all activity
-                                </button>
-                            </Link>
-                        </div>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </motion.div>
     );
