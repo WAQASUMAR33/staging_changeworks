@@ -1,43 +1,66 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { Users, Building2, CreditCard, Activity, DollarSign } from 'lucide-react';
 
 export default function AdminDashboard() {
-  const stats = [
-    {
-      title: 'Total Users',
-      value: '1,234',
-      change: '+12%',
-      changeType: 'positive',
-      icon: Users,
-      color: 'blue'
-    },
-    {
-      title: 'Organizations',
-      value: '89',
-      change: '+5%',
-      changeType: 'positive',
-      icon: Building2,
-      color: 'green'
-    },
-    {
-      title: 'Total Revenue',
-      value: '$45,678',
-      change: '+8%',
-      changeType: 'positive',
-      icon: DollarSign,
-      color: 'purple'
-    },
-    {
-      title: 'Active Transactions',
-      value: '234',
-      change: '-2%',
-      changeType: 'negative',
-      icon: CreditCard,
-      color: 'orange'
-    }
-  ];
+  const [stats, setStats] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        setLoading(true);
+        const res = await fetch('/api/admin/dashboard-stats');
+        const data = await res.json();
+        if (!data.success) throw new Error(data.error || 'Failed to load');
+
+        const cards = [
+          {
+            title: 'Total Donors',
+            value: data.stats.totalDonors.value,
+            change: undefined,
+            changeType: 'neutral',
+            icon: Users,
+            color: 'blue'
+          },
+          {
+            title: 'Total Organizations',
+            value: data.stats.totalOrganizations.value,
+            change: undefined,
+            changeType: 'neutral',
+            icon: Building2,
+            color: 'green'
+          },
+          {
+            title: 'Total Donations',
+            value: data.stats.totalDonations.value,
+            change: undefined,
+            changeType: 'neutral',
+            icon: DollarSign,
+            color: 'purple'
+          },
+          {
+            title: 'Active Transactions',
+            value: String(data.stats.activeTransactions.value),
+            change: undefined,
+            changeType: 'neutral',
+            icon: CreditCard,
+            color: 'orange'
+          }
+        ];
+
+        setStats(cards);
+      } catch (e) {
+        setError(e.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchStats();
+  }, []);
 
   const getColorClasses = (color) => {
     const colors = {
@@ -59,6 +82,9 @@ export default function AdminDashboard() {
       >
         <h1 className="text-3xl font-bold text-gray-900">Admin Dashboard</h1>
         <p className="text-gray-600 mt-2">Welcome to the admin control panel</p>
+        {error && (
+          <p className="text-red-600 mt-2">{error}</p>
+        )}
       </motion.div>
 
       {/* Stats Grid */}
@@ -68,9 +94,9 @@ export default function AdminDashboard() {
         transition={{ duration: 0.5, delay: 0.1 }}
         className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6"
       >
-        {stats.map((stat, index) => (
+        {(loading ? [1,2,3,4] : stats).map((stat, index) => (
           <motion.div
-            key={stat.title}
+            key={stat.title || index}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.1 + index * 0.1 }}
@@ -78,20 +104,26 @@ export default function AdminDashboard() {
           >
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm font-medium text-gray-600">{stat.title}</p>
-                <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
+                <p className="text-sm font-medium text-gray-600">{loading ? 'Loading' : stat.title}</p>
+                <p className="text-2xl font-bold text-gray-900 mt-1">{loading ? '—' : stat.value}</p>
                 <div className="flex items-center mt-2">
-                  <span className={`text-sm font-medium ${
-                    stat.changeType === 'positive' ? 'text-green-600' : 'text-red-600'
-                  }`}>
-                    {stat.change}
-                  </span>
-                  <span className="text-sm text-gray-500 ml-1">vs last month</span>
+                  {stat?.change !== undefined && (
+                    <>
+                      <span className={`text-sm font-medium ${
+                        stat.changeType === 'positive' ? 'text-green-600' : stat.changeType === 'negative' ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {stat.change}
+                      </span>
+                      <span className="text-sm text-gray-500 ml-1">vs last month</span>
+                    </>
+                  )}
                 </div>
               </div>
-              <div className={`p-3 rounded-lg ${getColorClasses(stat.color)}`}>
-                <stat.icon className="w-6 h-6" />
-              </div>
+              {!loading && (
+                <div className={`p-3 rounded-lg ${getColorClasses(stat.color)}`}>
+                  <stat.icon className="w-6 h-6" />
+                </div>
+              )}
             </div>
           </motion.div>
         ))}
