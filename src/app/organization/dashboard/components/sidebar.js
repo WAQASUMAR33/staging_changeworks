@@ -92,9 +92,7 @@ const OrgSidebar = () => {
       icon: Settings,
       path: '/organization/dashboard/settings',
       subItems: [
-        { name: 'Profile', path: '/organization/dashboard/settings/profile' },
-        { name: 'Security', path: '/organization/dashboard/settings/security' },
-        { name: 'Notifications', path: '/organization/dashboard/settings/notifications' },
+        { name: 'Profile', path: '/organization/dashboard/settings/profile' }
       ],
     },
   ];
