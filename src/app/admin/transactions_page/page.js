@@ -12,9 +12,16 @@ import {
   Button,
   CircularProgress,
   TablePagination,
+  IconButton,
+  Menu,
+  ListItemIcon,
+  ListItemText,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package } from 'lucide-react';
+import { Package, Download, FileSpreadsheet, FileText, Printer, Filter } from 'lucide-react';
+import * as XLSX from 'xlsx';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
 
 // Helper function to format dates consistently
 const formatDate = (dateString) => {
@@ -109,29 +116,49 @@ export default function TransactionManagementPage() {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   // Filter states
   const [filterDonor, setFilterDonor] = useState('');
+  const [filterOrganization, setFilterOrganization] = useState('');
   const [filterStatus, setFilterStatus] = useState('');
   const [filterTransactionType, setFilterTransactionType] = useState('');
   const [filterPaymentMethod, setFilterPaymentMethod] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  
+  // Data for filters
+  const [organizations, setOrganizations] = useState([]);
+  const [donors, setDonors] = useState([]);
+  
+  // Export menu state
+  const [exportAnchorEl, setExportAnchorEl] = useState(null);
 
   // Fetch transactions on mount and when page/rowsPerPage change
   useEffect(() => {
     fetchTransactions();
+    fetchOrganizations();
+    fetchDonors();
   }, [page, rowsPerPage]);
 
   // Apply filters
   useEffect(() => {
     const filtered = transactions.filter((transaction) => {
       const matchesDonor = filterDonor
-        ? transaction.donor.name.toLowerCase().includes(filterDonor.toLowerCase()) ||
-          transaction.donor.email.toLowerCase().includes(filterDonor.toLowerCase())
+        ? transaction.donor.id.toString() === filterDonor
+        : true;
+      const matchesOrganization = filterOrganization
+        ? transaction.organization.id.toString() === filterOrganization
         : true;
       const matchesStatus = filterStatus ? transaction.status === filterStatus : true;
       const matchesTransactionType = filterTransactionType ? transaction.transaction_type === filterTransactionType : true;
       const matchesPaymentMethod = filterPaymentMethod ? transaction.payment_method === filterPaymentMethod : true;
-      return matchesDonor && matchesStatus && matchesTransactionType && matchesPaymentMethod;
+      
+      // Date range filter
+      const transactionDate = new Date(transaction.created_at);
+      const matchesStartDate = startDate ? transactionDate >= new Date(startDate) : true;
+      const matchesEndDate = endDate ? transactionDate <= new Date(endDate + 'T23:59:59') : true;
+      
+      return matchesDonor && matchesOrganization && matchesStatus && matchesTransactionType && matchesPaymentMethod && matchesStartDate && matchesEndDate;
     });
     setFilteredTransactions(filtered);
-  }, [transactions, filterDonor, filterStatus, filterTransactionType, filterPaymentMethod]);
+  }, [transactions, filterDonor, filterOrganization, filterStatus, filterTransactionType, filterPaymentMethod, startDate, endDate]);
 
   const fetchTransactions = async () => {
     try {
@@ -158,6 +185,30 @@ export default function TransactionManagementPage() {
       console.error('Fetch error:', err);
     }
   };
+  
+  const fetchOrganizations = async () => {
+    try {
+      const response = await fetch('/api/organizations/list');
+      const data = await response.json();
+      if (data.success && data.organizations) {
+        setOrganizations(data.organizations);
+      }
+    } catch (err) {
+      console.error('Failed to fetch organizations:', err);
+    }
+  };
+  
+  const fetchDonors = async () => {
+    try {
+      const response = await fetch('/api/admin/donors');
+      const data = await response.json();
+      if (data.donors) {
+        setDonors(data.donors);
+      }
+    } catch (err) {
+      console.error('Failed to fetch donors:', err);
+    }
+  };
 
   // Pagination handlers
   const handleChangePage = (event, newPage) => {
@@ -171,9 +222,68 @@ export default function TransactionManagementPage() {
 
   // Filter handlers
   const handleFilterDonorChange = (e) => setFilterDonor(e.target.value);
+  const handleFilterOrganizationChange = (e) => setFilterOrganization(e.target.value);
   const handleFilterStatusChange = (e) => setFilterStatus(e.target.value);
   const handleFilterTransactionTypeChange = (e) => setFilterTransactionType(e.target.value);
   const handleFilterPaymentMethodChange = (e) => setFilterPaymentMethod(e.target.value);
+  const handleStartDateChange = (e) => setStartDate(e.target.value);
+  const handleEndDateChange = (e) => setEndDate(e.target.value);
+  
+  // Export handlers
+  const handleExportClick = (event) => {
+    setExportAnchorEl(event.currentTarget);
+  };
+  
+  const handleExportClose = () => {
+    setExportAnchorEl(null);
+  };
+  
+  const exportToExcel = () => {
+    const exportData = filteredTransactions.map(transaction => ({
+      'Transaction ID': transaction.id,
+      'Donor Name': transaction.donor.name,
+      'Donor Email': transaction.donor.email,
+      'Organization': transaction.organization.name,
+      'Amount': transaction.amount,
+      'Currency': transaction.currency,
+      'Status': transaction.status,
+      'Transaction Type': transaction.transaction_type,
+      'Payment Method': transaction.payment_method,
+      'Created At': formatDate(transaction.created_at)
+    }));
+    
+    const ws = XLSX.utils.json_to_sheet(exportData);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, 'Transactions');
+    XLSX.writeFile(wb, `transactions_${new Date().toISOString().split('T')[0]}.xlsx`);
+    handleExportClose();
+  };
+  
+  const exportToPDF = () => {
+    const doc = new jsPDF();
+    doc.autoTable({
+      head: [['ID', 'Donor', 'Organization', 'Amount', 'Status', 'Type', 'Method', 'Date']],
+      body: filteredTransactions.map(transaction => [
+        transaction.id,
+        `${transaction.donor.name} (${transaction.donor.email})`,
+        transaction.organization.name,
+        `${transaction.amount} ${transaction.currency}`,
+        transaction.status,
+        transaction.transaction_type,
+        transaction.payment_method,
+        formatDate(transaction.created_at)
+      ]),
+      styles: { fontSize: 8 },
+      margin: { top: 20 }
+    });
+    doc.save(`transactions_${new Date().toISOString().split('T')[0]}.pdf`);
+    handleExportClose();
+  };
+  
+  const printTable = () => {
+    window.print();
+    handleExportClose();
+  };
 
   // Animation variants
   const tableRowVariants = {
@@ -191,6 +301,55 @@ export default function TransactionManagementPage() {
     <Box sx={{ p: 3, bgcolor: '#FFF', minHeight: '100vh' }}>
       <div className="flex justify-between items-center mb-6">
         <h2 className="text-xl font-bold text-gray-900">Transaction Management</h2>
+        <div className="flex items-center space-x-2">
+          <Button
+            variant="outlined"
+            startIcon={<Filter />}
+            onClick={() => {
+              setFilterDonor('');
+              setFilterOrganization('');
+              setFilterStatus('');
+              setFilterTransactionType('');
+              setFilterPaymentMethod('');
+              setStartDate('');
+              setEndDate('');
+            }}
+          >
+            Clear Filters
+          </Button>
+          <Button
+            variant="contained"
+            startIcon={<Download />}
+            onClick={handleExportClick}
+            sx={{ backgroundColor: '#3B82F6', '&:hover': { backgroundColor: '#2563EB' } }}
+          >
+            Export
+          </Button>
+          <Menu
+            anchorEl={exportAnchorEl}
+            open={Boolean(exportAnchorEl)}
+            onClose={handleExportClose}
+          >
+            <MenuItem onClick={exportToExcel}>
+              <ListItemIcon>
+                <FileSpreadsheet className="w-4 h-4" />
+              </ListItemIcon>
+              <ListItemText>Export to Excel</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={exportToPDF}>
+              <ListItemIcon>
+                <FileText className="w-4 h-4" />
+              </ListItemIcon>
+              <ListItemText>Export to PDF</ListItemText>
+            </MenuItem>
+            <MenuItem onClick={printTable}>
+              <ListItemIcon>
+                <Printer className="w-4 h-4" />
+              </ListItemIcon>
+              <ListItemText>Print</ListItemText>
+            </MenuItem>
+          </Menu>
+        </div>
       </div>
 
       {/* Filters */}
@@ -201,14 +360,62 @@ export default function TransactionManagementPage() {
         transition={{ duration: 0.5 }}
         className="mb-6 bg-gray-50 p-4 rounded-lg"
       >
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <FormControl fullWidth size="small">
+            <InputLabel>Filter by Organization</InputLabel>
+            <Select
+              value={filterOrganization}
+              onChange={handleFilterOrganizationChange}
+              label="Filter by Organization"
+              sx={{ backgroundColor: 'white' }}
+            >
+              <MenuItem value="">All Organizations</MenuItem>
+              {organizations.map((org) => (
+                <MenuItem key={org.id} value={org.id.toString()}>
+                  {org.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <FormControl fullWidth size="small">
+            <InputLabel>Filter by Donor</InputLabel>
+            <Select
+              value={filterDonor}
+              onChange={handleFilterDonorChange}
+              label="Filter by Donor"
+              sx={{ backgroundColor: 'white' }}
+            >
+              <MenuItem value="">All Donors</MenuItem>
+              {donors.map((donor) => (
+                <MenuItem key={donor.id} value={donor.id.toString()}>
+                  {donor.name} ({donor.email})
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <TextField
-            label="Filter by Donor Name/Email"
-            value={filterDonor}
-            onChange={handleFilterDonorChange}
+            label="Start Date"
+            type="date"
+            value={startDate}
+            onChange={handleStartDateChange}
             variant="outlined"
             size="small"
             fullWidth
+            InputLabelProps={{ shrink: true }}
+            sx={{ 
+              '& .MuiInputBase-input': { color: '#111827' },
+              '& .MuiOutlinedInput-root': { backgroundColor: 'white' }
+            }}
+          />
+          <TextField
+            label="End Date"
+            type="date"
+            value={endDate}
+            onChange={handleEndDateChange}
+            variant="outlined"
+            size="small"
+            fullWidth
+            InputLabelProps={{ shrink: true }}
             sx={{ 
               '& .MuiInputBase-input': { color: '#111827' },
               '& .MuiOutlinedInput-root': { backgroundColor: 'white' }
@@ -222,7 +429,7 @@ export default function TransactionManagementPage() {
               label="Filter by Status"
               sx={{ backgroundColor: 'white' }}
             >
-              <MenuItem value="">All</MenuItem>
+              <MenuItem value="">All Status</MenuItem>
               <MenuItem value="completed">Completed</MenuItem>
               <MenuItem value="pending">Pending</MenuItem>
               <MenuItem value="failed">Failed</MenuItem>
@@ -236,7 +443,7 @@ export default function TransactionManagementPage() {
               label="Filter by Transaction Type"
               sx={{ backgroundColor: 'white' }}
             >
-              <MenuItem value="">All</MenuItem>
+              <MenuItem value="">All Types</MenuItem>
               <MenuItem value="donation">Donation</MenuItem>
               <MenuItem value="refund">Refund</MenuItem>
               <MenuItem value="other">Other</MenuItem>
@@ -250,10 +457,10 @@ export default function TransactionManagementPage() {
               label="Filter by Payment Method"
               sx={{ backgroundColor: 'white' }}
             >
-              <MenuItem value="">All</MenuItem>
+              <MenuItem value="">All Methods</MenuItem>
               <MenuItem value="credit_card">Credit Card</MenuItem>
-              <MenuItem value="paypal">Stripe</MenuItem>
-              <MenuItem value="paypal">Plaid</MenuItem>
+              <MenuItem value="stripe">Stripe</MenuItem>
+              <MenuItem value="plaid">Plaid</MenuItem>
               <MenuItem value="bank_transfer">Bank Transfer</MenuItem>
               <MenuItem value="cash">Cash</MenuItem>
             </Select>
@@ -283,7 +490,7 @@ export default function TransactionManagementPage() {
       ) : (
         <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
           <div className="overflow-x-auto">
-            <table className="w-full">
+            <table className="w-full min-w-full">
               <thead className="bg-gray-50">
                 <tr>
                   
