@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { 
   DollarSign, 
   Heart, 
@@ -51,7 +51,7 @@ export default function DonorDashboard() {
     loading: true
   });
 
-  const checkPlaidConnection = async () => {
+  const checkPlaidConnection = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -76,9 +76,9 @@ export default function DonorDashboard() {
       console.error('Error checking Plaid connection:', error);
       setPlaidConnectionStatus(prev => ({ ...prev, loading: false }));
     }
-  };
+  }, []);
 
-  const checkSubscriptionStatus = async () => {
+  const checkSubscriptionStatus = useCallback(async () => {
     try {
       const token = localStorage.getItem('token');
       if (!token) return;
@@ -103,9 +103,9 @@ export default function DonorDashboard() {
       console.error('Error checking subscription status:', error);
       setSubscriptionStatus(prev => ({ ...prev, loading: false }));
     }
-  };
+  }, []);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
@@ -176,7 +176,7 @@ export default function DonorDashboard() {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Payment handlers
   const handlePaymentSuccess = (paymentIntent) => {
@@ -270,7 +270,7 @@ export default function DonorDashboard() {
     fetchDashboardData();
     checkPlaidConnection();
     checkSubscriptionStatus();
-  }, []);
+  }, [fetchDashboardData, checkPlaidConnection, checkSubscriptionStatus]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
