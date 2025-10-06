@@ -3,12 +3,10 @@ import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useRouter } from 'next/navigation';
 import { 
-  Settings, 
   User, 
   LogOut, 
   Search,
-  ChevronDown,
-  Activity
+  ChevronDown
 } from 'lucide-react';
 import Image from 'next/image';
 import { getAdminUser, clearAdminAuth } from '../../lib/admin-auth';
@@ -120,16 +118,6 @@ export default function Header() {
                                         <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
                                             <User className="w-4 h-4" />
                                             <span>My Profile</span>
-                                        </button>
-                                        
-                                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                            <Settings className="w-4 h-4" />
-                                            <span>Settings</span>
-                                        </button>
-                                        
-                                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                            <Activity className="w-4 h-4" />
-                                            <span>Activity Log</span>
                                         </button>
                                         
                                         <div className="border-t border-gray-100 my-2" />
