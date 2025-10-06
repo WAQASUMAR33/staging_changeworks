@@ -294,17 +294,17 @@ export default function DonorDonationsPage() {
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
           <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-600" />
               <input
                 type="text"
                 placeholder="Search donations..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-full sm:w-64"
+                className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-full sm:w-64 placeholder-gray-600"
               />
             </div>
             <div className="flex items-center space-x-2">
-              <Filter className="w-4 h-4 text-gray-400" />
+              <Filter className="w-4 h-4 text-gray-600" />
               <select
                 value={filterPeriod}
                 onChange={(e) => setFilterPeriod(e.target.value)}
@@ -318,7 +318,7 @@ export default function DonorDonationsPage() {
               </select>
             </div>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-sm text-gray-800">
             Showing {filteredDonations.length} of {donations.length} donations
           </div>
         </div>
