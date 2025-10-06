@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Bell, Search, User, Settings } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 
 const DonorHeader = () => {
   const [user, setUser] = useState(null);
@@ -44,15 +44,7 @@ const DonorHeader = () => {
             <Search className="w-5 h-5" />
           </button>
 
-          {/* Notifications */}
-          <button className="relative p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-            <Bell className="w-5 h-5" />
-            {notifications.length > 0 && (
-              <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs text-white flex items-center justify-center">
-                {notifications.length}
-              </span>
-            )}
-          </button>
+          {/* Notifications removed */}
 
           {/* User Profile */}
           <div className="flex items-center space-x-3">
