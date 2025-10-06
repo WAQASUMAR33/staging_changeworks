@@ -30,10 +30,6 @@ export default function ManageGHLAccountsPage() {
   const [selectedAccount, setSelectedAccount] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  useEffect(() => {
-    fetchGHLAccounts();
-  }, [fetchGHLAccounts]);
-
   const fetchGHLAccounts = useCallback(async () => {
     try {
       const orgUser = JSON.parse(localStorage.getItem('orgUser'));
@@ -58,6 +54,10 @@ export default function ManageGHLAccountsPage() {
       setLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    fetchGHLAccounts();
+  }, [fetchGHLAccounts]);
 
   const handleDelete = async () => {
     if (!selectedAccount) return;

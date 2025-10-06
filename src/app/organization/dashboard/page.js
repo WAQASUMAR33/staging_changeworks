@@ -240,7 +240,7 @@ export default function OrganizationDashboard() {
                                     <p className="text-gray-600">View all transactions</p>
                                 </div>
                             </div>
-                            <p className="text-gray-500 mb-4">Track and monitor all your organization's transaction history and details.</p>
+                            <p className="text-gray-500 mb-4">Track and monitor all your organization&apos;s transaction history and details.</p>
                             <div className="flex items-center text-green-600 font-medium group-hover:text-green-700 transition-colors">
                                 <span>View Transactions</span>
                                 <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
