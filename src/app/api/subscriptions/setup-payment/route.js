@@ -293,6 +293,9 @@ export async function POST(request) {
 
     // If create_checkout_session is true, create a checkout session
     if (create_checkout_session) {
+      // Build dynamic base URL without hardcoding
+      const fallbackOrigin = new URL(request.url).origin;
+      const baseUrl = return_url || process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || fallbackOrigin;
       let checkoutSession;
       try {
         const sessionData = {
@@ -314,8 +317,8 @@ export async function POST(request) {
             },
             quantity: 1,
           }],
-          success_url: return_url || `https://app.changeworksfund.org/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: return_url || `https://app.changeworksfund.org/subscription/cancel`,
+          success_url: `${baseUrl.replace(/\/$/, '')}/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+          cancel_url: `${baseUrl.replace(/\/$/, '')}/subscription/cancel`,
           metadata: {
             donor_id: donor_id.toString(),
             organization_id: organization_id.toString(),

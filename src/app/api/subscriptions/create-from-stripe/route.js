@@ -84,6 +84,10 @@ export async function POST(request) {
 
     // Create Stripe checkout session for subscription
     try {
+      // Determine base URL without hardcoding localhost
+      const requestUrl = new URL(request.url);
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || `${requestUrl.protocol}//${requestUrl.host}`;
+
       const checkoutSession = await stripe.checkout.sessions.create({
         customer: customer.id,
         payment_method_types: ['card'],
@@ -94,8 +98,8 @@ export async function POST(request) {
           },
         ],
         mode: 'subscription',
-        success_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://app.changeworksfund.org'}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'https://app.changeworksfund.org'}/donor/dashboard/subscriptions?subscription=cancelled`,
+        success_url: `${baseUrl.replace(/\/$/, '')}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl.replace(/\/$/, '')}/donor/dashboard/subscriptions?subscription=cancelled`,
         metadata: {
           donor_id: donor_id.toString(),
           organization_id: organization_id.toString(),
