@@ -66,7 +66,7 @@ export default function DonorPaymentPage() {
 
       // Prepare payment data
       const paymentData = {
-        amount: parseFloat(formData.amount),
+        amount: Math.round(parseFloat(formData.amount) * 100), // send in cents
         currency: 'USD',
         donor_id: parseInt(user.id),
         organization_id: parseInt(formData.organization_id),
@@ -87,7 +87,7 @@ export default function DonorPaymentPage() {
       const data = await response.json();
 
       if (data.success) {
-        setPaymentResult(data);
+        setPaymentResult({ ...data, amount: formData.amount });
         setShowPaymentModal(true);
         setPaymentStatus('processing');
         
