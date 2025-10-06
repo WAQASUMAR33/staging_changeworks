@@ -57,20 +57,42 @@ export default function AdminProfile() {
   const handleSave = async () => {
     setLoading(true);
     try {
-      // Here you would typically make an API call to update the profile
-      // For now, we'll just update localStorage
-      const updatedUser = {
-        ...user,
-        name: formData.name,
-        email: formData.email
-      };
-      
-      localStorage.setItem('adminUser', JSON.stringify(updatedUser));
-      setUser(updatedUser);
-      setIsEditing(false);
-      
-      // Show success message (you could add a toast notification here)
-      alert('Profile updated successfully!');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found');
+        return;
+      }
+
+      const response = await fetch('/api/admin/update-profile', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          name: formData.name,
+          email: formData.email
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update localStorage with new data
+        const updatedUser = {
+          ...user,
+          name: formData.name,
+          email: formData.email
+        };
+        
+        localStorage.setItem('adminUser', JSON.stringify(updatedUser));
+        setUser(updatedUser);
+        setIsEditing(false);
+        
+        alert('Profile updated successfully!');
+      } else {
+        alert(data.error || 'Failed to update profile. Please try again.');
+      }
     } catch (error) {
       console.error('Error updating profile:', error);
       alert('Failed to update profile. Please try again.');
@@ -92,14 +114,38 @@ export default function AdminProfile() {
 
     setLoading(true);
     try {
-      // Here you would make an API call to change password
-      alert('Password changed successfully!');
-      setFormData(prev => ({
-        ...prev,
-        currentPassword: '',
-        newPassword: '',
-        confirmPassword: ''
-      }));
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found');
+        return;
+      }
+
+      const response = await fetch('/api/admin/change-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          currentPassword: formData.currentPassword,
+          newPassword: formData.newPassword,
+          confirmPassword: formData.confirmPassword
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        alert('Password changed successfully!');
+        setFormData(prev => ({
+          ...prev,
+          currentPassword: '',
+          newPassword: '',
+          confirmPassword: ''
+        }));
+      } else {
+        alert(data.error || 'Failed to change password. Please try again.');
+      }
     } catch (error) {
       console.error('Error changing password:', error);
       alert('Failed to change password. Please try again.');
@@ -181,7 +227,7 @@ export default function AdminProfile() {
                 name="name"
                 value={formData.name}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-black"
                 placeholder="Enter your full name"
               />
             ) : (
@@ -203,7 +249,7 @@ export default function AdminProfile() {
                 name="email"
                 value={formData.email}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-black"
                 placeholder="Enter your email"
               />
             ) : (
@@ -277,7 +323,7 @@ export default function AdminProfile() {
                 name="currentPassword"
                 value={formData.currentPassword}
                 onChange={handleInputChange}
-                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
+                className="w-full px-4 py-3 pr-12 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-black"
                 placeholder="Enter current password"
               />
               <button
@@ -295,14 +341,14 @@ export default function AdminProfile() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               New Password
             </label>
-            <input
-              type="password"
-              name="newPassword"
-              value={formData.newPassword}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              placeholder="Enter new password"
-            />
+              <input
+                type="password"
+                name="newPassword"
+                value={formData.newPassword}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-black"
+                placeholder="Enter new password"
+              />
           </div>
 
           {/* Confirm Password */}
@@ -310,14 +356,14 @@ export default function AdminProfile() {
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Confirm New Password
             </label>
-            <input
-              type="password"
-              name="confirmPassword"
-              value={formData.confirmPassword}
-              onChange={handleInputChange}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200"
-              placeholder="Confirm new password"
-            />
+              <input
+                type="password"
+                name="confirmPassword"
+                value={formData.confirmPassword}
+                onChange={handleInputChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-colors duration-200 text-black"
+                placeholder="Confirm new password"
+              />
           </div>
         </div>
 
