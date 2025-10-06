@@ -30,7 +30,7 @@ const Sidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({});
 
@@ -253,7 +253,7 @@ const Sidebar = () => {
     <>
       {/* Desktop Sidebar */}
       <motion.div
-        initial={{ width: 64 }}
+        initial={{ width: 280 }}
         animate={{ width: isExpanded ? 280 : 64 }}
         transition={{ duration: 0.3, ease: 'easeInOut' }}
         onMouseEnter={() => !isPinned && setIsHovered(true)}
