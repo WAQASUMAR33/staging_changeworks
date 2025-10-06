@@ -23,8 +23,7 @@ export default function DonorProfilePage() {
     phone: '',
     address: '',
     city: '',
-    state: '',
-    postalCode: '',
+    postal_code: '',
     country: ''
   });
   const [passwordData, setPasswordData] = useState({
@@ -71,8 +70,7 @@ export default function DonorProfilePage() {
             phone: data.donor.phone || '',
             address: data.donor.address || '',
             city: data.donor.city || '',
-            state: data.donor.state || '',
-            postalCode: data.donor.postalCode || '',
+            postal_code: data.donor.postal_code || '',
             country: data.donor.country || ''
           });
         } else {
@@ -441,20 +439,7 @@ export default function DonorProfilePage() {
                   disabled={saving}
                 />
               </div>
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  State
-                </label>
-                <input
-                  name="state"
-                  type="text"
-                  placeholder="Enter state"
-                  value={formData.state}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
-                />
-              </div>
+              <div />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -463,10 +448,10 @@ export default function DonorProfilePage() {
                   Postal Code
                 </label>
                 <input
-                  name="postalCode"
+                  name="postal_code"
                   type="text"
                   placeholder="Enter postal code"
-                  value={formData.postalCode}
+                  value={formData.postal_code}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
                   disabled={saving}
