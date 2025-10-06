@@ -18,12 +18,14 @@ try {
 }
 
 // Validation schema for payment intent creation
+// NOTE: amount is expected in CENTS per latest contract
 const paymentIntentSchema = z.object({
-  amount: z.number().positive("Amount must be positive"),
+  amount: z.number().int().positive("Amount (in cents) must be positive"),
   currency: z.string().min(3).max(3).default("USD"),
   donor_id: z.number().int().positive("Donor ID is required"),
   organization_id: z.number().int().positive("Organization ID is required"),
   description: z.string().optional(),
+  metadata: z.record(z.any()).optional(),
 });
 
 export async function POST(request) {
@@ -40,7 +42,7 @@ export async function POST(request) {
     const body = await request.json();
     console.log('🔍 Payment Intent Request Body:', body);
     
-    const { amount, currency, donor_id, organization_id, description } = paymentIntentSchema.parse(body);
+    const { amount, currency, donor_id, organization_id, description, metadata } = paymentIntentSchema.parse(body);
 
     // Verify donor exists
     const donor = await prisma.donor.findUnique({
@@ -68,9 +70,10 @@ export async function POST(request) {
       }, { status: 400 });
     }
 
-    // Convert dollars to cents for Stripe
-    const amountInCents = Math.round(amount * 100);
-    console.log(`💰 Payment amount: $${amount} = ${amountInCents} cents`);
+    // amount is in cents (per contract)
+    const amountInCents = Math.round(amount);
+    const amountDollars = amountInCents / 100;
+    console.log(`💰 Payment amount: $${amountDollars} = ${amountInCents} cents`);
 
     // Create payment intent with Stripe
     const paymentIntent = await stripe.paymentIntents.create({
@@ -83,6 +86,7 @@ export async function POST(request) {
         organization_id: organization_id.toString(),
         donor_name: donor.name,
         organization_name: organization.name,
+        ...(metadata || {}),
       },
       receipt_email: donor.email,
     });
@@ -94,7 +98,7 @@ export async function POST(request) {
       data: {
         trx_id: transactionId,
         trx_date: new Date(),
-        trx_amount: amount, // Store in dollars (amount is already in dollars)
+        trx_amount: amountDollars, // store in dollars
         trx_method: 'stripe',
         trx_donor_id: donor_id,
         trx_organization_id: organization_id,
@@ -218,13 +222,7 @@ export async function POST(request) {
     return NextResponse.json({
       success: true,
       client_secret: paymentIntent.client_secret,
-      payment_intent_id: paymentIntent.id,
-      amount: amount,
-      currency: currency,
-      transaction_id: transactionId,
-      transaction_db_id: transaction.id,
-      message: "Payment intent created successfully with immediate status checking enabled",
-      status_check_note: "Payment status has been immediately checked and updated if already completed in Stripe"
+      payment_intent_id: paymentIntent.id
     });
 
   } catch (error) {
