@@ -8,13 +8,14 @@ const updateProfileSchema = z.object({
   city: z.string().optional(),
   address: z.string().optional(),
   postal_code: z.string().optional(),
+  country: z.string().optional(),
   imageUrl: z.string().url("Invalid image URL").optional().or(z.literal("")),
 });
 
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { phone, city, address, postal_code, imageUrl } = updateProfileSchema.parse(body);
+    const { phone, city, address, postal_code, country, imageUrl } = updateProfileSchema.parse(body);
 
     console.log('🔍 Profile update request received');
 
@@ -53,6 +54,7 @@ export async function PUT(request) {
         city: true,
         address: true,
         postal_code: true,
+        country: true,
         imageUrl: true,
         organization: {
           select: {
@@ -87,6 +89,9 @@ export async function PUT(request) {
     if (postal_code !== undefined) {
       updateData.postal_code = postal_code || null; // Allow clearing postal_code
     }
+    if (country !== undefined) {
+      updateData.country = country || null; // Allow clearing country
+    }
     if (imageUrl !== undefined) {
       updateData.imageUrl = imageUrl || null; // Allow clearing imageUrl
     }
@@ -99,7 +104,7 @@ export async function PUT(request) {
       return NextResponse.json({
         success: false,
         error: "No valid fields to update",
-        message: "Please provide at least one field to update (phone, city, address, postal_code, or imageUrl)"
+        message: "Please provide at least one field to update (phone, city, address, postal_code, country, or imageUrl)"
       }, { status: 400 });
     }
 
@@ -115,6 +120,7 @@ export async function PUT(request) {
         city: true,
         address: true,
         postal_code: true,
+        country: true,
         imageUrl: true,
         updated_at: true,
         organization: {
@@ -138,6 +144,7 @@ export async function PUT(request) {
         city: updatedDonor.city,
         address: updatedDonor.address,
         postal_code: updatedDonor.postal_code,
+        country: updatedDonor.country,
         imageUrl: updatedDonor.imageUrl,
         organization: updatedDonor.organization.name,
         updated_at: updatedDonor.updated_at
@@ -146,7 +153,7 @@ export async function PUT(request) {
       security_info: {
         profile_updated: true,
         protected_fields: ["name", "email"],
-        editable_fields: ["phone", "city", "address", "postal_code", "imageUrl"]
+        editable_fields: ["phone", "city", "address", "postal_code", "country", "imageUrl"]
       }
     });
 
