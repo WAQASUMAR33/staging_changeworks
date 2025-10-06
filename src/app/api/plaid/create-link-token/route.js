@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
 // Plaid configuration
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID || '6622a89cb64d92001c9ca99a';
+const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
 const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
 const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
