@@ -115,7 +115,13 @@ export default function Header() {
                                     </div>
                                     
                                     <div className="p-2">
-                                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
+                                        <button 
+                                            onClick={() => {
+                                                setShowProfile(false);
+                                                router.push('/admin/profile');
+                                            }}
+                                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                                        >
                                             <User className="w-4 h-4" />
                                             <span>My Profile</span>
                                         </button>

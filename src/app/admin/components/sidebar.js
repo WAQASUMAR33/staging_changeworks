@@ -24,6 +24,7 @@ import {
   ChevronLeft,
   Pin,
   PinOff,
+  User,
 } from 'lucide-react';
 
 const Sidebar = () => {
@@ -96,6 +97,11 @@ const Sidebar = () => {
       name: 'User Management',
       icon: CircleUserRound,
       path: '/admin/users_management',
+    },
+    {
+      name: 'Profile',
+      icon: User,
+      path: '/admin/profile',
     },
   ];
 
