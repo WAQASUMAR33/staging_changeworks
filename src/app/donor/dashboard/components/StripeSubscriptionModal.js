@@ -163,7 +163,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
           </div>
 
           {/* Content */}
-          <div className="p-6 overflow-y-auto max-h-[calc(90vh-140px)]">
+          <div className="px-6 pt-6 pb-4 overflow-y-auto max-h-[calc(90vh-140px)]">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <div className="text-center">
@@ -199,12 +199,12 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                 </div>
 
                 {products.length > 0 ? (
-                  <div className="grid gap-4">
+                  <div className="grid gap-4 pb-0">
                     {products.map((product) => (
                       <motion.div
                         key={product.id}
                         whileHover={{ scale: 1.02 }}
-                        className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-200 ${
+                        className={`border-2 rounded-xl p-6 cursor-pointer transition-all duration-200 overflow-hidden ${
                           selectedProduct?.id === product.id
                             ? 'border-green-500 bg-green-50'
                             : 'border-gray-200 hover:border-green-300'
