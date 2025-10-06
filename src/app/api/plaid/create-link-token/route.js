@@ -42,9 +42,7 @@ export async function POST(request) {
     const plaidResponse = await fetch(`${getPlaidBaseUrl(PLAID_ENV)}/link/token/create`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'Content-Type': 'application/json'
       },
       body: JSON.stringify({
         client_id: PLAID_CLIENT_ID,
@@ -66,7 +64,17 @@ export async function POST(request) {
       const errorData = await plaidResponse.json().catch(() => ({}));
       console.error('Plaid link token creation failed:', errorData);
       return NextResponse.json(
-        { success: false, error: 'Failed to create link token', details: errorData, env: PLAID_ENV },
+        { 
+          success: false, 
+          error: 'Failed to create link token', 
+          details: errorData, 
+          env: PLAID_ENV,
+          diagnostics: {
+            client_id_present: Boolean(PLAID_CLIENT_ID),
+            client_id_length: PLAID_CLIENT_ID ? PLAID_CLIENT_ID.length : 0,
+            secret_present: Boolean(PLAID_SECRET_KEY)
+          }
+        },
         { status: 500 }
       );
     }
