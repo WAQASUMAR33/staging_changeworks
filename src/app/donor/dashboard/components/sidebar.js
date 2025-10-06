@@ -63,11 +63,6 @@ const DonorSidebar = () => {
       icon: User,
       path: '/donor/dashboard/profile',
     },
-    {
-      name: 'Settings',
-      icon: Settings,
-      path: '/donor/dashboard/settings',
-    },
   ];
 
   const SidebarContent = ({ onMobileClose }) => (
