@@ -408,11 +408,11 @@ export default function DonorDonationsPage() {
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Donations Found</h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || filterPeriod !== 'all' 
-                ? 'No donations match your current filters.' 
+              {searchTerm || startDate || endDate
+                ? 'No donations match your current filters.'
                 : 'You haven\'t made any donations yet.'}
             </p>
-            {!searchTerm && filterPeriod === 'all' && (
+            {!searchTerm && !startDate && !endDate && (
               <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
                 Make Your First Donation
               </button>
