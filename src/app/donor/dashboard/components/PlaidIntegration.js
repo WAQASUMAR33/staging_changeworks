@@ -205,7 +205,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
     } finally {
       setLoading(false);
     }
-  }, [onSuccess, onClose]);
+  }, [onSuccess, onClose, selectedOrganization]);
 
   const onPlaidExit = useCallback((err, metadata) => {
     if (err) {
