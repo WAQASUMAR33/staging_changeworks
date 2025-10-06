@@ -124,12 +124,18 @@ const ProfilePage = () => {
         body: JSON.stringify({
           currentPassword: passwordForm.currentPassword,
           newPassword: passwordForm.newPassword,
+          confirmPassword: passwordForm.confirmPassword,
         }),
       });
 
       const data = await response.json();
 
       if (!response.ok) {
+        // Prefer server-provided validation details when available
+        if (data?.details && Array.isArray(data.details)) {
+          const first = data.details[0];
+          throw new Error(first?.message || data.error || 'Failed to change password');
+        }
         throw new Error(data.error || 'Failed to change password');
       }
 
