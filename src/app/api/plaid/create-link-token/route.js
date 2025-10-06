@@ -2,9 +2,20 @@ import { NextResponse } from "next/server";
 import jwt from "jsonwebtoken";
 
 // Plaid configuration
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
+const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID || '6622a89cb64d92001c9ca99a';
 const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox';
+const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
+
+function getPlaidBaseUrl(env) {
+  switch (env) {
+    case 'production':
+      return 'https://production.plaid.com';
+    case 'development':
+      return 'https://development.plaid.com';
+    default:
+      return 'https://sandbox.plaid.com';
+  }
+}
 
 export async function POST(request) {
   try {
@@ -23,8 +34,12 @@ export async function POST(request) {
       return NextResponse.json({ success: false, error: 'Organization ID is required' }, { status: 400 });
     }
 
-    // Create link token using Plaid API with timeout and retry
-    const plaidResponse = await fetch('https://sandbox.plaid.com/link/token/create', {
+    // Build webhook base URL without hardcoding localhost
+    const requestOrigin = new URL(request.url).origin;
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || requestOrigin;
+
+    // Create link token using Plaid API (environment-aware)
+    const plaidResponse = await fetch(`${getPlaidBaseUrl(PLAID_ENV)}/link/token/create`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -41,17 +56,17 @@ export async function POST(request) {
         user: {
           client_user_id: donorId.toString(),
         },
-        webhook: `${process.env.NEXT_PUBLIC_BASE_URL}/api/plaid/webhook`,
+        webhook: `${baseUrl.replace(/\/$/, '')}/api/plaid/webhook`,
       }),
       // Add timeout and retry configuration
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
     if (!plaidResponse.ok) {
-      const errorData = await plaidResponse.json();
+      const errorData = await plaidResponse.json().catch(() => ({}));
       console.error('Plaid link token creation failed:', errorData);
       return NextResponse.json(
-        { success: false, error: 'Failed to create link token', details: errorData },
+        { success: false, error: 'Failed to create link token', details: errorData, env: PLAID_ENV },
         { status: 500 }
       );
     }
