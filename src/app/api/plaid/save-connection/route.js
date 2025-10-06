@@ -43,9 +43,7 @@ export async function POST(request) {
         institution_name: data.institution_name || null,
         accounts: JSON.stringify(data.accounts || []),
         status: data.status || 'ACTIVE',
-        error_message: data.error_message || null,
-        donor: { connect: { id: data.donor_id } },
-        organization: { connect: { id: data.organization_id } }
+        error_message: data.error_message || null
       },
       select: {
         id: true,
