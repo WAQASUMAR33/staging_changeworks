@@ -48,7 +48,7 @@ export default function AdminLayout({ children }) {
   return (
     <div className="flex h-screen w-full overflow-hidden bg-gray-50">
       <Sidebar />
-      <div className="flex flex-col flex-1 overflow-hidden admin-content-area">
+      <div className="flex flex-col flex-1 overflow-hidden">
         <Header />
         <main className="flex-1 overflow-y-auto">
           <div className="container-fluid px-4 py-6">

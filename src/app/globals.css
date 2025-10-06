@@ -49,18 +49,6 @@ body {
   }
 }
 
-/* Admin content area to account for fixed sidebar */
-.admin-content-area {
-  margin-left: 0;
-  transition: margin-left 0.3s ease-in-out;
-}
-
-@media (min-width: 1024px) {
-  .admin-content-area {
-    margin-left: 64px; /* Default sidebar width */
-  }
-}
-
 /* Custom animations for login page */
 @keyframes blob {
   0% {
