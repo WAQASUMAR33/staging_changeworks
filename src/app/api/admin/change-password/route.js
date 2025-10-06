@@ -1,8 +1,8 @@
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../../../../lib/prisma';
-import { verifyToken } from '../../../../lib/auth';
+import jwt from 'jsonwebtoken';
+import { prisma } from '../../../lib/prisma';
 
 // Validation schema for password change
 const changePasswordSchema = z.object({
@@ -23,10 +23,17 @@ export async function POST(request) {
     }
 
     const token = authHeader.split(' ')[1];
-    const decoded = verifyToken(token);
+    
+    // Verify the JWT token
+    let decoded;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET);
+    } catch (jwtError) {
+      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+    }
 
     if (!decoded || !decoded.id) {
-      return NextResponse.json({ error: 'Invalid or expired token' }, { status: 401 });
+      return NextResponse.json({ error: 'Invalid token payload' }, { status: 401 });
     }
 
     const body = await request.json();
