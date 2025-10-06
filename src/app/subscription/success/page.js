@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { CheckCircle, XCircle, Loader2, ExternalLink } from 'lucide-react';
 
@@ -23,7 +23,7 @@ export default function SubscriptionSuccessPage() {
     }
   }, [searchParams, verifySubscription]);
 
-  const verifySubscription = async (sessionId, donorId, organizationId) => {
+  const verifySubscription = useCallback(async (sessionId, donorId, organizationId) => {
     try {
       setVerificationStatus('loading');
       
@@ -54,9 +54,9 @@ export default function SubscriptionSuccessPage() {
       console.log('Verify API error, trying manual sync...');
       await manualSync(donorId, organizationId);
     }
-  };
+  }, [manualSync]);
 
-  const manualSync = async (donorId, organizationId) => {
+  const manualSync = useCallback(async (donorId, organizationId) => {
     try {
       const syncResponse = await fetch('/api/sync-donor-subscriptions', {
         method: 'POST',
@@ -88,7 +88,7 @@ export default function SubscriptionSuccessPage() {
       setError('Network error occurred while creating subscription record');
       console.error('Sync error:', syncErr);
     }
-  };
+  }, []);
 
   const renderLoadingState = () => (
     <div className="min-h-screen bg-gray-50 flex items-center justify-center">

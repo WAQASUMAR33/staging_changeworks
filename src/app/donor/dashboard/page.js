@@ -660,7 +660,7 @@ export default function DonorDashboard() {
               <div className="mb-6">
                 <p className="text-gray-700 mb-4">
                   Are you sure you want to disconnect your Plaid bank account connection? 
-                  This action will remove your bank account link and you'll need to reconnect 
+                  This action will remove your bank account link and you&apos;ll need to reconnect 
                   if you want to use Plaid features again.
                 </p>
                 <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import { CheckCircle, Loader2, AlertCircle } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -23,7 +23,7 @@ export default function SubscriptionSuccessPage() {
     }
   }, [searchParams, handleSubscriptionSuccess]);
 
-  const handleSubscriptionSuccess = async (sessionId) => {
+  const handleSubscriptionSuccess = useCallback(async (sessionId) => {
     try {
       setStatus('loading');
       setMessage('Processing your subscription...');
@@ -56,7 +56,7 @@ export default function SubscriptionSuccessPage() {
       setStatus('error');
       setError('Failed to process subscription');
     }
-  };
+  }, [router]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },

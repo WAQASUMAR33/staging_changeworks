@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Building2, 
@@ -34,7 +34,7 @@ export default function ManageGHLAccountsPage() {
     fetchGHLAccounts();
   }, [fetchGHLAccounts]);
 
-  const fetchGHLAccounts = async () => {
+  const fetchGHLAccounts = useCallback(async () => {
     try {
       const orgUser = JSON.parse(localStorage.getItem('orgUser'));
       if (!orgUser) {
@@ -57,7 +57,7 @@ export default function ManageGHLAccountsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   const handleDelete = async () => {
     if (!selectedAccount) return;

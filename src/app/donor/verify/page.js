@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { CheckCircle, AlertCircle, Loader2, Mail } from 'lucide-react';
 import { useRouter, useSearchParams } from 'next/navigation';
@@ -25,7 +25,7 @@ export default function DonorVerifyPage() {
     verifyEmail(token);
   }, [searchParams, verifyEmail]);
 
-  const verifyEmail = async (token) => {
+  const verifyEmail = useCallback(async (token) => {
     try {
       const response = await fetch('/api/donor/verify', {
         method: 'POST',
@@ -54,7 +54,7 @@ export default function DonorVerifyPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
