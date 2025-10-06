@@ -56,6 +56,11 @@ export default function MultiStepPaymentForm({
   const [searchTerm, setSearchTerm] = useState('');
   const [loadingOrgs, setLoadingOrgs] = useState(false);
   
+  // Fetch organizations when component mounts
+  useEffect(() => {
+    fetchOrganizations();
+  }, []);
+  
   // Early return if Stripe is not ready
   if (!stripe || !elements) {
     return (
@@ -78,11 +83,6 @@ export default function MultiStepPaymentForm({
     { id: 2, title: 'Select Organization', icon: Building2 },
     { id: 3, title: 'Checkout', icon: CreditCard },
   ];
-
-  // Fetch organizations when component mounts
-  useEffect(() => {
-    fetchOrganizations();
-  }, []);
 
   const fetchOrganizations = async () => {
     try {
