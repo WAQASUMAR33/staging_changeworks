@@ -18,7 +18,6 @@ import {
   ClipboardPlus,
   Home,
   Shield,
-  Bell,
   Menu,
   X,
   ChevronLeft,
