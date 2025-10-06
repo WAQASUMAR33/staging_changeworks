@@ -50,7 +50,7 @@ export default function Header() {
 
     const handleLogout = () => {
         clearAdminAuth();
-        router.push('/admin/login');
+        router.push('/login');
     };
 
     const notifications = [

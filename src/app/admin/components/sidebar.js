@@ -84,9 +84,9 @@ const Sidebar = () => {
       ],
     },
     {
-      name: 'Packages',
-      icon: ClipboardPlus,
-      path: '/admin/packages',
+      name: 'Reports',
+      icon: BarChart3,
+      path: '/admin/reports',
     },
     {
       name: 'Transactions',
