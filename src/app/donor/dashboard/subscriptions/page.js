@@ -508,7 +508,7 @@ export default function DonorSubscriptionsPage() {
                           <span className="text-xs text-gray-500 font-medium" title="Subscription is canceled">
                             Canceled
                           </span>
-                        ) : (
+                        ) : subscription.status === 'active' ? (
                           <button
                             onClick={() => handleCancelClick(subscription)}
                             disabled={actionLoading === subscription.id}
@@ -521,7 +521,7 @@ export default function DonorSubscriptionsPage() {
                               'Cancel'
                             )}
                           </button>
-                        )}
+                        ) : null}
                       </div>
                     </td>
                   </motion.tr>
