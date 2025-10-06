@@ -11,13 +11,13 @@ export async function POST(request) {
       donor_id,
       product_id,
       price_id,
-      organization_id = 1 // Default organization if not provided
+      organization_id
     } = body;
 
     // Validate required fields
-    if (!donor_id || !product_id || !price_id) {
+    if (!donor_id || !product_id || !price_id || !organization_id) {
       return NextResponse.json(
-        { success: false, error: 'Missing required fields: donor_id, product_id, price_id' },
+        { success: false, error: 'Missing required fields: donor_id, product_id, price_id, organization_id' },
         { status: 400 }
       );
     }

@@ -12,7 +12,6 @@ import {
   ChevronLeft,
   ChevronRight,
   Gift,
-  TrendingUp,
   Bell,
   Pin,
   PinOff,
@@ -58,11 +57,6 @@ const DonorSidebar = () => {
       name: 'Subscriptions',
       icon: CreditCard,
       path: '/donor/dashboard/subscriptions',
-    },
-    {
-      name: 'Impact Reports',
-      icon: TrendingUp,
-      path: '/donor/dashboard/impact',
     },
     {
       name: 'Profile',

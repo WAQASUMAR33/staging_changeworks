@@ -50,6 +50,26 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
       const payload = JSON.parse(atob(token.split('.')[1]));
       const donorId = payload.id;
 
+      // Get donor details to fetch organization_id
+      const donorResponse = await fetch('/api/donor/profile', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+
+      if (!donorResponse.ok) {
+        setError('Failed to fetch donor information');
+        return;
+      }
+
+      const donorData = await donorResponse.json();
+      const organizationId = donorData.donor?.organization_id;
+
+      if (!organizationId) {
+        setError('Donor organization not found');
+        return;
+      }
+
       const response = await fetch('/api/subscriptions/create-from-stripe', {
         method: 'POST',
         headers: {
@@ -60,7 +80,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
           donor_id: donorId,
           product_id: product.id,
           price_id: product.prices[0].id, // Use the first price
-          organization_id: 1, // Default organization
+          organization_id: organizationId, // Use donor's actual organization
         }),
       });
 

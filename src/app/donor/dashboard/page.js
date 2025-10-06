@@ -151,7 +151,7 @@ export default function DonorDashboard() {
             changeType: data.stats.thisMonth.changeType,
             icon: TrendingUp,
             color: 'blue',
-            path: '/donor/dashboard/impact'
+            path: '/donor/dashboard/donations'
           },
           {
             title: 'Organizations Supported',
@@ -160,7 +160,7 @@ export default function DonorDashboard() {
             changeType: data.stats.organizationsSupported.changeType,
             icon: Target,
             color: 'purple',
-            path: '/donor/dashboard/impact'
+            path: '/donor/dashboard/donations'
           }
         ];
         
