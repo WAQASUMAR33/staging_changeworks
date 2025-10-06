@@ -1,40 +1,28 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "../../../lib/prisma";
-import jwt from "jsonwebtoken";
 
+const MAX_VARCHAR = 255;
 const schema = z.object({
+  donor_id: z.number().int().positive(),
   organization_id: z.number().int().positive(),
-  access_token: z.string().min(1),
-  item_id: z.string().min(1),
-  institution_id: z.string().optional().nullable(),
-  institution_name: z.string().optional().nullable(),
+  access_token: z.string().min(1).max(MAX_VARCHAR),
+  item_id: z.string().min(1).max(MAX_VARCHAR),
+  institution_id: z.string().max(MAX_VARCHAR).optional().nullable(),
+  institution_name: z.string().max(MAX_VARCHAR).optional().nullable(),
   accounts: z.array(z.any()).default([]), // pass through JSON array
-  status: z.string().default('ACTIVE')
+  status: z.string().max(50).default('ACTIVE'),
+  error_message: z.string().max(500).optional().nullable()
 });
 
 export async function POST(request) {
   try {
-    const auth = request.headers.get('authorization');
-    if (!auth || !auth.startsWith('Bearer ')) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-
-    let donorId;
-    try {
-      const token = auth.substring(7);
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      donorId = decoded.id;
-    } catch (e) {
-      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
-    }
-
     const body = await request.json();
     const data = schema.parse(body);
 
     // Ensure donor and organization exist
     const [donor, organization] = await Promise.all([
-      prisma.donor.findUnique({ where: { id: donorId }, select: { id: true } }),
+      prisma.donor.findUnique({ where: { id: data.donor_id }, select: { id: true } }),
       prisma.organization.findUnique({ where: { id: data.organization_id }, select: { id: true } })
     ]);
 
@@ -47,7 +35,7 @@ export async function POST(request) {
 
     const saved = await prisma.plaidConnection.create({
       data: {
-        donor_id: donorId,
+        donor_id: data.donor_id,
         organization_id: data.organization_id,
         access_token: data.access_token,
         item_id: data.item_id,
@@ -55,7 +43,8 @@ export async function POST(request) {
         institution_name: data.institution_name || null,
         accounts: JSON.stringify(data.accounts || []),
         status: data.status || 'ACTIVE',
-        donor: { connect: { id: donorId } },
+        error_message: data.error_message || null,
+        donor: { connect: { id: data.donor_id } },
         organization: { connect: { id: data.organization_id } }
       },
       select: {
@@ -73,6 +62,10 @@ export async function POST(request) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ success: false, error: 'Validation error', details: error.errors }, { status: 400 });
+    }
+    // Handle unique constraint violations for access_token/item_id
+    if (error.code === 'P2002') {
+      return NextResponse.json({ success: false, error: 'Duplicate record', details: error.meta }, { status: 409 });
     }
     console.error('save-connection error:', error);
     return NextResponse.json({ success: false, error: 'Failed to save connection', details: error.message }, { status: 500 });
