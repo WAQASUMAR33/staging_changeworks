@@ -37,6 +37,7 @@ export default function DonorDashboard() {
   
   // Plaid integration modal state
   const [showPlaidModal, setShowPlaidModal] = useState(false);
+  const [showPlaidDisconnectModal, setShowPlaidDisconnectModal] = useState(false);
   const [plaidConnectionStatus, setPlaidConnectionStatus] = useState({
     isConnected: false,
     connections: [],
@@ -226,6 +227,43 @@ export default function DonorDashboard() {
     fetchDashboardData();
     // Refresh Plaid connection status
     checkPlaidConnection();
+  };
+
+  const handlePlaidDisconnect = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('No authentication token found. Please log in again.');
+        return;
+      }
+
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const donorId = decoded.id;
+
+      const response = await fetch('/api/plaid/disconnect', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ donor_id: donorId })
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alert('Plaid connection disconnected successfully!');
+        // Refresh Plaid connection status
+        checkPlaidConnection();
+        // Close the disconnect modal
+        setShowPlaidDisconnectModal(false);
+      } else {
+        alert(`Failed to disconnect Plaid: ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      console.error('Error disconnecting Plaid:', error);
+      alert('Failed to disconnect Plaid connection. Please try again.');
+    }
   };
 
   useEffect(() => {
@@ -451,10 +489,10 @@ export default function DonorDashboard() {
                   </p>
                 </div>
                 <button
-                  onClick={handlePlaidIntegration}
-                  className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                  onClick={() => setShowPlaidDisconnectModal(true)}
+                  className="px-2 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
                 >
-                  Manage
+                  Cancel
                 </button>
               </div>
             ) : (
@@ -582,6 +620,74 @@ export default function DonorDashboard() {
         onClose={() => setShowPlaidModal(false)}
         onSuccess={handlePlaidSuccess}
       />
+
+      {/* Plaid Disconnect Confirmation Modal */}
+      <AnimatePresence>
+        {showPlaidDisconnectModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+            onClick={() => setShowPlaidDisconnectModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: "spring", damping: 25, stiffness: 300 }}
+              className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-md mx-4"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center space-x-3">
+                  <div className="w-10 h-10 bg-red-600 rounded-xl flex items-center justify-center">
+                    <AlertCircle className="w-5 h-5 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-800">Disconnect Plaid</h3>
+                    <p className="text-sm text-gray-600">Remove bank account connection</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowPlaidDisconnectModal(false)}
+                  className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-gray-700 mb-4">
+                  Are you sure you want to disconnect your Plaid bank account connection? 
+                  This action will remove your bank account link and you'll need to reconnect 
+                  if you want to use Plaid features again.
+                </p>
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
+                  <p className="text-sm text-yellow-800">
+                    <strong>Note:</strong> This will not affect any existing donations or subscriptions.
+                  </p>
+                </div>
+              </div>
+
+              <div className="flex space-x-3">
+                <button
+                  onClick={() => setShowPlaidDisconnectModal(false)}
+                  className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
+                >
+                  Keep Connected
+                </button>
+                <button
+                  onClick={handlePlaidDisconnect}
+                  className="flex-1 bg-gradient-to-r from-red-600 to-red-700 text-white py-3 px-4 rounded-xl font-semibold hover:from-red-700 hover:to-red-800 focus:outline-none focus:ring-2 focus:ring-red-500/50 transition-all duration-200"
+                >
+                  Disconnect
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       </motion.div>
     </StripeProvider>
   );
