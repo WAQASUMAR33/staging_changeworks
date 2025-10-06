@@ -12,17 +12,6 @@ export default function SubscriptionSuccessPage() {
   const searchParams = useSearchParams();
   const router = useRouter();
 
-  useEffect(() => {
-    const sessionId = searchParams.get('session_id');
-    
-    if (sessionId) {
-      handleSubscriptionSuccess(sessionId);
-    } else {
-      setStatus('error');
-      setError('No session ID found');
-    }
-  }, [searchParams, handleSubscriptionSuccess]);
-
   const handleSubscriptionSuccess = useCallback(async (sessionId) => {
     try {
       setStatus('loading');
@@ -57,6 +46,17 @@ export default function SubscriptionSuccessPage() {
       setError('Failed to process subscription');
     }
   }, [router]);
+
+  useEffect(() => {
+    const sessionId = searchParams.get('session_id');
+    
+    if (sessionId) {
+      handleSubscriptionSuccess(sessionId);
+    } else {
+      setStatus('error');
+      setError('No session ID found');
+    }
+  }, [searchParams, handleSubscriptionSuccess]);
 
   const containerVariants = {
     hidden: { opacity: 0, y: 20 },
