@@ -137,7 +137,7 @@ export default function DonorDashboard() {
             path: '/donor/dashboard/donations'
           },
           {
-            title: 'Active Subscriptions',
+            title: 'Active Recurrent Donations',
             value: data.stats.activeSubscriptions.value,
             change: data.stats.activeSubscriptions.change,
             changeType: data.stats.activeSubscriptions.changeType,
@@ -412,7 +412,7 @@ export default function DonorDashboard() {
                 <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
               </div>
               <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-900">Stripe Payment</p>
+                <p className="text-xs sm:text-sm font-medium text-gray-900">One Time Payment</p>
                 <p className="text-xs text-gray-500">Make a one-time donation</p>
               </div>
             </button>
@@ -433,7 +433,7 @@ export default function DonorDashboard() {
                   <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-green-900">Active Subscription</p>
+                  <p className="text-xs sm:text-sm font-medium text-green-900">Active Recurrent Donations</p>
                   <p className="text-xs text-green-600">
                     {subscriptionStatus.subscriptions.length > 0 
                       ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
@@ -479,7 +479,7 @@ export default function DonorDashboard() {
                   <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-green-900">Plaid Connected</p>
+                  <p className="text-xs sm:text-sm font-medium text-green-900">Start Change Donation Now</p>
                   <p className="text-xs text-green-600">
                     {plaidConnectionStatus.connections.length > 0 
                       ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
