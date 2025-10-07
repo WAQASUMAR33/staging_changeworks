@@ -11,7 +11,6 @@ import {
   ExternalLink,
   Filter,
   Search,
-  Download,
   Eye,
   CheckCircle,
   XCircle,
@@ -225,12 +224,6 @@ const TransactionsPage = () => {
               'View and track your organization&apos;s transaction records'
             }
           </p>
-        </div>
-        <div className="flex items-center space-x-3">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-blue-700 transition-colors">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
         </div>
       </div>
 

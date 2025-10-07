@@ -2,11 +2,8 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
-  Settings, 
-  User, 
   LogOut,
-  ChevronDown,
-  Activity
+  ChevronDown
 } from 'lucide-react';
 
 export default function OrgHeader() {
@@ -106,23 +103,6 @@ export default function OrgHeader() {
                                     </div>
                                     
                                     <div className="p-2">
-                                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                            <User className="w-4 h-4" />
-                                            <span>Organization Profile</span>
-                                        </button>
-                                        
-                                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                            <Settings className="w-4 h-4" />
-                                            <span>Settings</span>
-                                        </button>
-                                        
-                                        <button className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-                                            <Activity className="w-4 h-4" />
-                                            <span>Activity Log</span>
-                                        </button>
-                                        
-                                        <div className="border-t border-gray-100 my-2" />
-                                        
                                         <button
                                             onClick={handleLogout}
                                             className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"
