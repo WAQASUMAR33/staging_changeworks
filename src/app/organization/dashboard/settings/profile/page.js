@@ -232,7 +232,7 @@ const ProfilePage = () => {
         >
           <div className="flex items-center justify-between">
             <div className="flex items-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-purple-600 rounded-full flex items-center justify-center mr-6">
+              <div className="w-16 h-16 bg-[#0E0061] rounded-full flex items-center justify-center mr-6">
                 <Building2 className="w-8 h-8 text-white" />
               </div>
               <div>
@@ -245,7 +245,7 @@ const ProfilePage = () => {
             </div>
             <button
               onClick={() => setShowPasswordPopup(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] focus:ring-2 focus:ring-[#0E0061] focus:ring-offset-2 transition-colors"
             >
               <Key className="w-4 h-4" />
               <span>Change Password</span>
@@ -516,7 +516,7 @@ const ProfilePage = () => {
                   <button
                     type="submit"
                     disabled={loading}
-                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                    className="flex-1 flex items-center justify-center space-x-2 px-4 py-3 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] focus:ring-2 focus:ring-[#0E0061] focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                   >
                     {loading ? (
                       <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
