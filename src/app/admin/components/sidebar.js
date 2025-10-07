@@ -34,6 +34,20 @@ const Sidebar = () => {
   const [isPinned, setIsPinned] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({});
+  const [userRole, setUserRole] = useState(null);
+
+  // Get user role from localStorage
+  useEffect(() => {
+    const adminUser = localStorage.getItem('adminUser');
+    if (adminUser) {
+      try {
+        const user = JSON.parse(adminUser);
+        setUserRole(user.role);
+      } catch (error) {
+        console.error('Error parsing admin user:', error);
+      }
+    }
+  }, []);
 
   // Close mobile menu on route change
   useEffect(() => {
@@ -59,7 +73,8 @@ const Sidebar = () => {
 
   const isExpanded = isHovered || isPinned;
 
-  const menuItems = [
+  // All menu items
+  const allMenuItems = [
     { 
       name: 'Dashboard', 
       icon: LayoutDashboard, 
@@ -92,11 +107,13 @@ const Sidebar = () => {
       name: 'Fund Transfer',
       icon: ArrowRightLeft,
       path: '/admin/fund-transfer',
+      requiresRole: 'SUPERADMIN', // Only visible to SUPERADMIN
     },
     {
       name: 'User Management',
       icon: CircleUserRound,
       path: '/admin/users_management',
+      requiresRole: 'SUPERADMIN', // Only visible to SUPERADMIN
     },
     {
       name: 'Profile',
@@ -105,12 +122,25 @@ const Sidebar = () => {
     },
   ];
 
+  // Filter menu items based on user role
+  const menuItems = allMenuItems.filter(item => {
+    // If item doesn't require a specific role, show it to everyone
+    if (!item.requiresRole) return true;
+    
+    // If item requires SUPERADMIN, only show to SUPERADMIN
+    if (item.requiresRole === 'SUPERADMIN') {
+      return userRole === 'SUPERADMIN';
+    }
+    
+    return true;
+  });
+
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-gray-800">
       {/* Logo Section */}
       <div className="flex items-center justify-between h-16 px-4 border-b border-gray-700">
         <div className="flex items-center space-x-3">
-          <div className="w-8 h-8 bg-purple-600 rounded-lg flex items-center justify-center">
+          <div className="w-8 h-8 bg-[#0E0061] rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-sm">CW</span>
           </div>
           <AnimatePresence>
@@ -164,7 +194,7 @@ const Sidebar = () => {
                   }}
                   className={`group flex items-center px-3 py-3 cursor-pointer rounded-lg transition-all duration-200 ${
                     isActive 
-                      ? 'bg-gray-700 text-white' 
+                      ? 'bg-[#0E0061] text-white' 
                       : 'text-gray-300 hover:bg-gray-700 hover:text-white'
                   }`}
                 >
@@ -211,7 +241,7 @@ const Sidebar = () => {
                               href={sub.path}
                               className={`block px-3 py-2 text-sm rounded-lg transition-all duration-200 ${
                                 isSubActive 
-                                  ? 'bg-purple-600/20 text-purple-300 font-medium' 
+                                  ? 'bg-[#0E0061]/30 text-white font-medium border border-[#0E0061]/50' 
                                   : 'text-gray-400 hover:text-white hover:bg-gray-700'
                               }`}
                             >
