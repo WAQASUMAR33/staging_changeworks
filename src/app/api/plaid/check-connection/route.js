@@ -1,22 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import jwt from "jsonwebtoken";
 
 export async function GET(request) {
   try {
-    // Verify JWT token for authentication
-    const token = request.headers.get('authorization')?.split(' ')[1];
-    if (!token) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (jwtError) {
-      return NextResponse.json({ success: false, error: 'Invalid or expired token' }, { status: 401 });
-    }
-
     // Get donor_id from query parameters
     const { searchParams } = new URL(request.url);
     const donorIdParam = searchParams.get('donor_id');
@@ -77,9 +63,6 @@ export async function GET(request) {
 
   } catch (error) {
     console.error('❌ Error checking Plaid connection:', error);
-    if (error.name === 'JsonWebTokenError') {
-      return NextResponse.json({ success: false, error: 'Invalid token' }, { status: 401 });
-    }
     return NextResponse.json(
       { success: false, error: 'Failed to check Plaid connection', details: error.message },
       { status: 500 }

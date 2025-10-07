@@ -60,11 +60,7 @@ export default function DonorDashboard() {
       const decoded = JSON.parse(atob(token.split('.')[1]));
       const donorId = decoded.id;
 
-      const response = await fetch(`/api/plaid/check-connection?donor_id=${donorId}`, {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const response = await fetch(`/api/plaid/check-connection?donor_id=${donorId}`);
 
       if (response.ok) {
         const data = await response.json();
