@@ -16,7 +16,7 @@ import {
   ListItemText,
 } from '@mui/material';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Package, Download, FileSpreadsheet, FileText, Printer, Filter } from 'lucide-react';
+import { Package, Download, FileSpreadsheet, FileText, Printer, Filter, DollarSign, CheckCircle, Clock } from 'lucide-react';
 import * as XLSX from 'xlsx';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
@@ -475,6 +475,86 @@ export default function TransactionManagementPage() {
               <ListItemText>Print</ListItemText>
             </MenuItem>
           </Menu>
+        </div>
+      </div>
+
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-lg text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-blue-100 mb-1">Total Transactions</p>
+              <p className="text-3xl font-bold">{filteredTransactions.length}</p>
+              <p className="text-xs text-blue-100 mt-1">
+                {filteredTransactions.length !== transactions.length && `of ${transactions.length} total`}
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <Package className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-green-500 to-green-600 rounded-xl p-6 shadow-lg text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-green-100 mb-1">Total Amount</p>
+              <p className="text-3xl font-bold">
+                {formatCurrency(
+                  filteredTransactions.reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
+                  'USD'
+                )}
+              </p>
+              <p className="text-xs text-green-100 mt-1">All transactions</p>
+            </div>
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <DollarSign className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl p-6 shadow-lg text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-purple-100 mb-1">Completed</p>
+              <p className="text-3xl font-bold">
+                {formatCurrency(
+                  filteredTransactions
+                    .filter(t => t.status === 'completed')
+                    .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
+                  'USD'
+                )}
+              </p>
+              <p className="text-xs text-purple-100 mt-1">
+                {filteredTransactions.filter(t => t.status === 'completed').length} transactions
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <CheckCircle className="w-6 h-6" />
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl p-6 shadow-lg text-white">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-orange-100 mb-1">Pending</p>
+              <p className="text-3xl font-bold">
+                {formatCurrency(
+                  filteredTransactions
+                    .filter(t => t.status === 'pending')
+                    .reduce((sum, t) => sum + parseFloat(t.amount || 0), 0),
+                  'USD'
+                )}
+              </p>
+              <p className="text-xs text-orange-100 mt-1">
+                {filteredTransactions.filter(t => t.status === 'pending').length} transactions
+              </p>
+            </div>
+            <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+              <Clock className="w-6 h-6" />
+            </div>
+          </div>
         </div>
       </div>
 

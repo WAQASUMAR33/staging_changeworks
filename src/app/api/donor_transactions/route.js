@@ -90,14 +90,42 @@ export async function GET(request) {
     }
 
     const { searchParams } = new URL(request.url);
-    const page = parseInt(searchParams.get('page') || '1', 10);
-    const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const skip = (page - 1) * limit;
+    const page = searchParams.get('page');
+    const limit = searchParams.get('limit');
 
-    const [transactions, totalCount] = await Promise.all([
-      prisma.donorTransaction.findMany({
-        skip,
-        take: limit,
+    // If pagination params are provided, use them; otherwise return all
+    let transactions;
+    let totalCount;
+
+    if (page && limit) {
+      const skip = (parseInt(page, 10) - 1) * parseInt(limit, 10);
+      [transactions, totalCount] = await Promise.all([
+        prisma.donorTransaction.findMany({
+          skip,
+          take: parseInt(limit, 10),
+          select: {
+            id: true,
+            donor_id: true,
+            organization_id: true,
+            status: true,
+            amount: true,
+            currency: true,
+            receipt_url: true,
+            trnx_id: true,
+            transaction_type: true,
+            payment_method: true,
+            created_at: true,
+            updated_at: true,
+            donor: { select: { id: true, name: true, email: true } },
+            organization: { select: { id: true, name: true } },
+          },
+          orderBy: { created_at: 'desc' },
+        }),
+        prisma.donorTransaction.count(),
+      ]);
+    } else {
+      // Return all transactions
+      transactions = await prisma.donorTransaction.findMany({
         select: {
           id: true,
           donor_id: true,
@@ -114,9 +142,10 @@ export async function GET(request) {
           donor: { select: { id: true, name: true, email: true } },
           organization: { select: { id: true, name: true } },
         },
-      }),
-      prisma.donorTransaction.count(),
-    ]);
+        orderBy: { created_at: 'desc' },
+      });
+      totalCount = transactions.length;
+    }
 
     return NextResponse.json({ transactions, totalCount }, { status: 200 });
   } catch (error) {
