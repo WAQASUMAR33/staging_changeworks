@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
-import jwt from 'jsonwebtoken';
 
 const prisma = new PrismaClient();
 
@@ -22,58 +21,35 @@ function getPlaidBaseUrl(env) {
 
 export async function POST(request) {
   try {
-    // Verify JWT token for authentication
-    const authHeader = request.headers.get('authorization');
-    const token = authHeader?.split(' ')[1];
-    
-    if (!token) {
-      return NextResponse.json(
-        { error: 'Authentication required. Please log in.' },
-        { status: 401 }
-      );
-    }
-
-    let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch (jwtError) {
-      console.error('JWT verification failed:', jwtError);
-      return NextResponse.json(
-        { error: 'Invalid or expired token. Please log in again.' },
-        { status: 401 }
-      );
-    }
-
-    const authenticatedDonorId = decoded.id;
     const { donor_id } = await request.json();
 
     if (!donor_id) {
       return NextResponse.json(
-        { error: 'Donor ID is required' },
+        { error: 'donor_id is required in request body' },
         { status: 400 }
       );
     }
 
-    // Verify that the authenticated user matches the donor_id
-    if (parseInt(donor_id) !== authenticatedDonorId) {
-      console.error(`Authorization failed: authenticated user ${authenticatedDonorId} tried to disconnect donor ${donor_id}`);
+    const donorId = parseInt(donor_id);
+
+    if (isNaN(donorId)) {
       return NextResponse.json(
-        { error: 'Unauthorized: You can only disconnect your own bank account' },
-        { status: 403 }
+        { error: 'donor_id must be a valid number' },
+        { status: 400 }
       );
     }
 
-    console.log(`🔍 Looking for Plaid connection for donor ${donor_id}`);
+    console.log(`🔍 Looking for Plaid connection for donor ${donorId}`);
 
     // Find the Plaid connection(s) for this donor
     const connections = await prisma.plaidConnection.findMany({
       where: {
-        donor_id: parseInt(donor_id)
+        donor_id: donorId
       }
     });
 
     if (!connections || connections.length === 0) {
-      console.log(`ℹ️ No Plaid connection found for donor ${donor_id}`);
+      console.log(`ℹ️ No Plaid connection found for donor ${donorId}`);
       return NextResponse.json({
         success: true,
         message: 'No Plaid connection found to disconnect',
@@ -81,7 +57,7 @@ export async function POST(request) {
       });
     }
 
-    console.log(`✅ Found ${connections.length} Plaid connection(s) for donor ${donor_id}`);
+    console.log(`✅ Found ${connections.length} Plaid connection(s) for donor ${donorId}`);
 
     // Remove each item from Plaid's side
     let plaidRemovalErrors = [];
@@ -125,17 +101,18 @@ export async function POST(request) {
     // Delete the Plaid connection(s) from database
     const deletedConnection = await prisma.plaidConnection.deleteMany({
       where: {
-        donor_id: parseInt(donor_id)
+        donor_id: donorId
       }
     });
 
-    console.log(`✅ Deleted ${deletedConnection.count} Plaid connection(s) from database for donor ${donor_id}`);
+    console.log(`✅ Deleted ${deletedConnection.count} Plaid connection(s) from database for donor ${donorId}`);
 
     // Prepare response
     const response = {
       success: true,
       message: 'Plaid connection disconnected successfully',
-      deletedCount: deletedConnection.count
+      deletedCount: deletedConnection.count,
+      donor_id: donorId
     };
 
     // Include warnings if there were issues with Plaid removal

@@ -243,8 +243,7 @@ export default function DonorDashboard() {
       const response = await fetch('/api/plaid/disconnect', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
+          'Content-Type': 'application/json'
         },
         body: JSON.stringify({ donor_id: donorId })
       });
