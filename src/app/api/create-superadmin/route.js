@@ -9,7 +9,14 @@ export async function POST(request) {
     const { name, email, password, secretKey } = await request.json();
 
     // Security check - require a secret key
-    const ADMIN_CREATION_SECRET = process.env.ADMIN_CREATION_SECRET || 'change-this-secret-key-123';
+    const ADMIN_CREATION_SECRET = process.env.ADMIN_CREATION_SECRET;
+    
+    if (!ADMIN_CREATION_SECRET) {
+      return NextResponse.json(
+        { error: 'Server configuration error: ADMIN_CREATION_SECRET not set in environment variables' },
+        { status: 500 }
+      );
+    }
     
     if (!secretKey || secretKey !== ADMIN_CREATION_SECRET) {
       return NextResponse.json(
