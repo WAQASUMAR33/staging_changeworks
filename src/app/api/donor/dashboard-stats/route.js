@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
 
+// GET /api/donor/dashboard-stats - Get donor dashboard statistics from save_tr_record table
 export async function GET(request) {
   try {
     // Get token from Authorization header
@@ -30,30 +31,30 @@ export async function GET(request) {
       return NextResponse.json({ error: "Donor not found" }, { status: 404 });
     }
 
-    // Get donation statistics
-    const totalDonated = await prisma.donorTransaction.aggregate({
+    // Get donation statistics from save_tr_record table
+    const totalDonated = await prisma.saveTrRecord.aggregate({
       where: {
-        donor_id: donorId,
-        status: 'completed'
+        trx_donor_id: donorId,
+        pay_status: 'completed'
       },
       _sum: {
-        amount: true
+        trx_amount: true
       }
     });
 
     // Get this month's donations
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const thisMonthDonated = await prisma.donorTransaction.aggregate({
+    const thisMonthDonated = await prisma.saveTrRecord.aggregate({
       where: {
-        donor_id: donorId,
-        status: 'completed',
-        created_at: {
+        trx_donor_id: donorId,
+        pay_status: 'completed',
+        trx_date: {
           gte: startOfMonth
         }
       },
       _sum: {
-        amount: true
+        trx_amount: true
       }
     });
 
@@ -66,22 +67,22 @@ export async function GET(request) {
     });
 
     // Get organizations supported count
-    const organizationsSupported = await prisma.donorTransaction.findMany({
+    const organizationsSupported = await prisma.saveTrRecord.findMany({
       where: {
-        donor_id: donorId,
-        status: 'completed'
+        trx_donor_id: donorId,
+        pay_status: 'completed'
       },
       select: {
-        organization_id: true
+        trx_organization_id: true
       },
-      distinct: ['organization_id']
+      distinct: ['trx_organization_id']
     });
 
-    // Get recent activity (last 5 transactions)
-    const recentActivity = await prisma.donorTransaction.findMany({
+    // Get recent activity (last 5 transactions from save_tr_record)
+    const recentActivity = await prisma.saveTrRecord.findMany({
       where: {
-        donor_id: donorId,
-        status: 'completed'
+        trx_donor_id: donorId,
+        pay_status: 'completed'
       },
       include: {
         organization: {
@@ -89,7 +90,7 @@ export async function GET(request) {
         }
       },
       orderBy: {
-        created_at: 'desc'
+        trx_date: 'desc'
       },
       take: 5
     });
@@ -97,7 +98,7 @@ export async function GET(request) {
     // Calculate changes (mock data for now - in real app, you'd compare with previous periods)
     const stats = {
       totalDonated: {
-        value: totalDonated._sum.amount || 0,
+        value: totalDonated._sum.trx_amount || 0,
         change: '+12.5%',
         changeType: 'increase'
       },
@@ -107,7 +108,7 @@ export async function GET(request) {
         changeType: 'increase'
       },
       thisMonth: {
-        value: thisMonthDonated._sum.amount || 0,
+        value: thisMonthDonated._sum.trx_amount || 0,
         change: '+8.3%',
         changeType: 'increase'
       },
@@ -118,13 +119,14 @@ export async function GET(request) {
       }
     };
 
-    // Format recent activity
+    // Format recent activity from save_tr_record
     const formattedRecentActivity = recentActivity.map(transaction => ({
       id: transaction.id,
       description: `Donation to ${transaction.organization?.name || 'Unknown Organization'}`,
-      amount: transaction.amount,
-      date: transaction.created_at.toISOString(),
-      organization: transaction.organization?.name || 'Unknown Organization'
+      amount: transaction.trx_amount,
+      date: transaction.trx_date.toISOString(),
+      organization: transaction.organization?.name || 'Unknown Organization',
+      transactionId: transaction.trx_id
     }));
 
     return NextResponse.json({
