@@ -33,6 +33,18 @@ const OrgSidebar = () => {
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({});
 
+  // Initialize pinned state from localStorage or default to true
+  useEffect(() => {
+    const savedPinState = localStorage.getItem('orgSidebarPinned');
+    if (savedPinState !== null) {
+      setIsPinned(savedPinState === 'true');
+    } else {
+      // Default to true (open) and save it
+      setIsPinned(true);
+      localStorage.setItem('orgSidebarPinned', 'true');
+    }
+  }, []);
+
   // Close mobile menu on route change
   useEffect(() => {
     setIsMobileOpen(false);
@@ -59,7 +71,9 @@ const OrgSidebar = () => {
   };
 
   const togglePin = () => {
-    setIsPinned(!isPinned);
+    const newPinState = !isPinned;
+    setIsPinned(newPinState);
+    localStorage.setItem('orgSidebarPinned', newPinState.toString());
   };
 
   const isExpanded = isHovered || isPinned;
