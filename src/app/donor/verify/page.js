@@ -12,19 +12,6 @@ export default function DonorVerifyPage() {
   const [status, setStatus] = useState('verifying'); // 'verifying', 'success', 'error'
   const [message, setMessage] = useState('');
 
-  useEffect(() => {
-    const token = searchParams.get('token');
-    
-    if (!token) {
-      setStatus('error');
-      setMessage('No verification token provided');
-      setLoading(false);
-      return;
-    }
-
-    verifyEmail(token);
-  }, [searchParams, verifyEmail]);
-
   const verifyEmail = useCallback(async (token) => {
     try {
       const response = await fetch('/api/donor/verify', {
@@ -55,6 +42,19 @@ export default function DonorVerifyPage() {
       setLoading(false);
     }
   }, [router]);
+
+  useEffect(() => {
+    const token = searchParams.get('token');
+    
+    if (!token) {
+      setStatus('error');
+      setMessage('No verification token provided');
+      setLoading(false);
+      return;
+    }
+
+    verifyEmail(token);
+  }, [searchParams, verifyEmail]);
 
   const containerVariants = {
     hidden: { opacity: 0 },

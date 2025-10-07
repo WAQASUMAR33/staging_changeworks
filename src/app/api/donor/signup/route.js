@@ -125,7 +125,7 @@ export async function POST(request) {
         });
 
         const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-        const verificationUrl = `${baseUrl}/donor/verify?token=${verificationToken}&email=${encodeURIComponent(email)}`;
+        const verificationUrl = `${baseUrl}/api/verify-donor?token=${verificationToken}`;
 
         await transport.sendMail({
           to: email,
