@@ -11,8 +11,6 @@ import {
   Alert,
   Button,
   CircularProgress,
-  TablePagination,
-  IconButton,
   Menu,
   ListItemIcon,
   ListItemText,
@@ -108,12 +106,8 @@ const getPaymentMethodLabel = (method) => {
 export default function TransactionManagementPage() {
   const [transactions, setTransactions] = useState([]);
   const [filteredTransactions, setFilteredTransactions] = useState([]);
-  const [totalCount, setTotalCount] = useState(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  // Pagination states
-  const [page, setPage] = useState(0);
-  const [rowsPerPage, setRowsPerPage] = useState(10);
   // Filter states
   const [filterDonor, setFilterDonor] = useState('');
   const [filterOrganization, setFilterOrganization] = useState('');
@@ -130,12 +124,12 @@ export default function TransactionManagementPage() {
   // Export menu state
   const [exportAnchorEl, setExportAnchorEl] = useState(null);
 
-  // Fetch transactions on mount and when page/rowsPerPage change
+  // Fetch transactions on mount
   useEffect(() => {
     fetchTransactions();
     fetchOrganizations();
     fetchDonors();
-  }, [page, rowsPerPage]);
+  }, []);
 
   // Apply filters
   useEffect(() => {
@@ -162,7 +156,7 @@ export default function TransactionManagementPage() {
 
   const fetchTransactions = async () => {
     try {
-      const response = await fetch(`/api/donor_transactions?page=${page + 1}&limit=${rowsPerPage}`);
+      const response = await fetch(`/api/donor_transactions`);
       const data = await response.json();
       console.log('API Response:', data);
       if (!response.ok) {
@@ -175,12 +169,10 @@ export default function TransactionManagementPage() {
       }
 
       setTransactions(data.transactions);
-      setTotalCount(data.totalCount || data.transactions.length);
       setLoading(false);
     } catch (err) {
       setError(`Failed to load transactions: ${err.message}`);
       setTransactions([]);
-      setTotalCount(0);
       setLoading(false);
       console.error('Fetch error:', err);
     }
@@ -208,16 +200,6 @@ export default function TransactionManagementPage() {
     } catch (err) {
       console.error('Failed to fetch donors:', err);
     }
-  };
-
-  // Pagination handlers
-  const handleChangePage = (event, newPage) => {
-    setPage(newPage);
-  };
-
-  const handleChangeRowsPerPage = (event) => {
-    setRowsPerPage(parseInt(event.target.value, 10));
-    setPage(0);
   };
 
   // Filter handlers
@@ -747,16 +729,9 @@ export default function TransactionManagementPage() {
           )}
 
           {filteredTransactions.length > 0 && (
-            <TablePagination
-              rowsPerPageOptions={[5, 10, 25]}
-              component="div"
-              count={totalCount}
-              rowsPerPage={rowsPerPage}
-              page={page}
-              onPageChange={handleChangePage}
-              onRowsPerPageChange={handleChangeRowsPerPage}
-              className="border-t border-gray-200"
-            />
+            <div className="px-6 py-4 border-t border-gray-200 text-sm text-gray-600">
+              Showing {filteredTransactions.length} transaction{filteredTransactions.length !== 1 ? 's' : ''}
+            </div>
           )}
         </div>
       )}
