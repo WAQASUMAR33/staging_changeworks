@@ -56,7 +56,11 @@ export default function DonorDashboard() {
       const token = localStorage.getItem('token');
       if (!token) return;
 
-      const response = await fetch('/api/plaid/check-connection', {
+      // Decode token to get donor_id
+      const decoded = JSON.parse(atob(token.split('.')[1]));
+      const donorId = decoded.id;
+
+      const response = await fetch(`/api/plaid/check-connection?donor_id=${donorId}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
