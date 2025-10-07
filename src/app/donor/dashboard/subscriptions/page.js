@@ -342,7 +342,7 @@ export default function DonorSubscriptionsPage() {
             <div>
               <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
               <p className="text-2xl font-bold text-gray-900">
-                {subscriptions.filter(sub => sub.status?.toLowerCase() === 'active').length}
+                {subscriptions.filter(sub => sub.status === 'ACTIVE').length}
               </p>
             </div>
             <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -358,7 +358,7 @@ export default function DonorSubscriptionsPage() {
               <p className="text-2xl font-bold text-gray-900">
                 {formatAmount(
                   subscriptions
-                    .filter(sub => sub.status?.toLowerCase() === 'active')
+                    .filter(sub => sub.status === 'ACTIVE')
                     .reduce((sum, sub) => sum + (sub.amount || 0), 0)
                 )}
               </p>
@@ -468,7 +468,7 @@ export default function DonorSubscriptionsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        {subscription.status?.toLowerCase() === 'active' ? (
+                        {subscription.status === 'ACTIVE' ? (
                           <button
                             onClick={() => handleSubscriptionAction(subscription.id, 'pause')}
                             disabled={actionLoading === subscription.id}
@@ -481,7 +481,7 @@ export default function DonorSubscriptionsPage() {
                               <Pause className="w-4 h-4" />
                             )}
                           </button>
-                        ) : subscription.status?.toLowerCase() === 'paused' ? (
+                        ) : subscription.status === 'PAUSED' ? (
                           <button
                             onClick={() => handleSubscriptionAction(subscription.id, 'resume')}
                             disabled={actionLoading === subscription.id}
@@ -494,21 +494,21 @@ export default function DonorSubscriptionsPage() {
                               <Play className="w-4 h-4" />
                             )}
                           </button>
-                        ) : subscription.status?.toLowerCase() === 'canceled_at_period_end' ? (
+                        ) : subscription.status === 'CANCELED_AT_PERIOD_END' ? (
                           <span className="text-xs text-orange-600 font-medium" title="Subscription will end at period end">
                             Ending Soon
                           </span>
                         ) : null}
                         
-                        {subscription.status?.toLowerCase() === 'canceled_at_period_end' ? (
+                        {subscription.status === 'CANCELED_AT_PERIOD_END' ? (
                           <span className="text-xs text-gray-500 font-medium" title="Already scheduled for cancellation">
                             Already Canceled
                           </span>
-                        ) : subscription.status?.toLowerCase() === 'cancelled' || subscription.status?.toLowerCase() === 'canceled' ? (
+                        ) : subscription.status === 'CANCELLED' || subscription.status === 'CANCELED' ? (
                           <span className="text-xs text-gray-500 font-medium" title="Subscription is canceled">
                             Canceled
                           </span>
-                        ) : subscription.status?.toLowerCase() === 'active' ? (
+                        ) : subscription.status === 'ACTIVE' ? (
                           <button
                             onClick={() => handleCancelClick(subscription)}
                             disabled={actionLoading === subscription.id}
