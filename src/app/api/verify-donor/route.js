@@ -5,10 +5,10 @@ import emailService from "../../lib/email-service";
 // Helper function to create HTML response
 function createHtmlResponse(title, message, isSuccess = true, email = null, note = null) {
   const icon = isSuccess ? '✅' : '❌';
-  const bgColor = isSuccess ? 'from-green-50 to-white' : 'from-red-50 to-white';
-  const iconBg = isSuccess ? 'bg-green-100' : 'bg-red-100';
-  const textColor = isSuccess ? 'text-green-700' : 'text-red-700';
-  const buttonColor = isSuccess ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700';
+  const bgColor = isSuccess ? 'from-blue-50 to-white' : 'from-red-50 to-white';
+  const iconBg = isSuccess ? 'bg-gradient-to-r from-blue-100 to-purple-100' : 'bg-red-100';
+  const textColor = isSuccess ? 'text-blue-700' : 'text-red-700';
+  const buttonColor = isSuccess ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 'bg-red-600 hover:bg-red-700';
   
   return new NextResponse(`
     <!DOCTYPE html>
@@ -21,12 +21,13 @@ function createHtmlResponse(title, message, isSuccess = true, email = null, note
       <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
         body { font-family: 'Inter', sans-serif; }
-        .gradient-bg { background: linear-gradient(135deg, ${isSuccess ? '#f0fdf4 0%, #ffffff 100%' : '#fef2f2 0%, #ffffff 100%'}); }
+        .gradient-bg { background: linear-gradient(135deg, ${isSuccess ? '#eff6ff 0%, #faf5ff 50%, #ffffff 100%' : '#fef2f2 0%, #ffffff 100%'}); }
         .card-shadow { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); }
         .animate-fade-in { animation: fadeIn 0.6s ease-out; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-bounce-gentle { animation: bounceGentle 2s infinite; }
         @keyframes bounceGentle { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
+        .gradient-text { background: linear-gradient(135deg, #2563eb 0%, #9333ea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
       </style>
     </head>
     <body class="min-h-screen gradient-bg flex items-center justify-center py-16 px-6">
@@ -35,7 +36,7 @@ function createHtmlResponse(title, message, isSuccess = true, email = null, note
           <div class="mx-auto mb-6 h-20 w-20 rounded-full ${iconBg} flex items-center justify-center animate-bounce-gentle">
             <span class="text-4xl">${icon}</span>
           </div>
-          <h1 class="text-4xl font-bold ${textColor} mb-4">${title}</h1>
+          <h1 class="text-4xl font-bold ${isSuccess ? 'gradient-text' : textColor} mb-4">${title}</h1>
           <p class="text-lg text-gray-600 mb-6">
             ${email ? `Your email <span class="font-semibold text-gray-800">${email}</span> has been ${isSuccess ? 'verified' : 'could not be verified'}.</span>` : message}
           </p>
