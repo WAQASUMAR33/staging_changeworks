@@ -823,7 +823,7 @@ export default function DonorSignupPage() {
                       whileTap={{ scale: 0.98 }}
                       type="button"
                       onClick={goNext}
-                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 shadow-lg hover:shadow-xl"
+                      className="flex items-center space-x-2 px-6 py-3 bg-[#0E0061] text-white rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 shadow-lg hover:shadow-xl"
                     >
                       <span>Next</span>
                       <ArrowRight className="w-4 h-4" />
@@ -834,7 +834,7 @@ export default function DonorSignupPage() {
                       whileTap={{ scale: 0.98 }}
                       type="submit"
                       disabled={loading}
-                      className="flex items-center space-x-2 px-6 py-3 bg-gradient-to-r from-green-600 to-blue-600 text-white rounded-xl font-semibold hover:from-green-700 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-green-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                      className="flex items-center space-x-2 px-6 py-3 bg-[#0E0061] text-white rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                     >
                       {loading ? (
                         <>

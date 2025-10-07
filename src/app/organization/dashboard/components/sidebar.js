@@ -95,7 +95,7 @@ const OrgSidebar = () => {
       {/* Modern Logo Section */}
       <div className="flex items-center justify-between h-20 px-6 border-b border-gray-700/50">
         <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <div className="w-12 h-12 bg-[#0E0061] rounded-2xl flex items-center justify-center shadow-lg">
             <span className="text-white font-bold text-lg">CW</span>
           </div>
           <AnimatePresence>
@@ -152,7 +152,7 @@ const OrgSidebar = () => {
                   }}
                   className={`group flex items-center px-4 py-4 cursor-pointer rounded-2xl transition-all duration-300 ${
                     isActive 
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg' 
+                      ? 'bg-[#0E0061] text-white shadow-lg' 
                       : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
                   }`}
                 >

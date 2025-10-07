@@ -206,7 +206,7 @@ export default function DonorDonationsPage() {
           <p className="text-gray-600 mt-2">View and manage your donation history</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+          <button className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200">
             <Download className="w-4 h-4" />
             <span>Export</span>
           </button>
@@ -330,7 +330,7 @@ export default function DonorDonationsPage() {
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchDonations}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
             >
               Try Again
             </button>
@@ -413,7 +413,7 @@ export default function DonorDonationsPage() {
                 : 'You haven\'t made any donations yet.'}
             </p>
             {!searchTerm && !startDate && !endDate && (
-              <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200">
+              <button className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200">
                 Make Your First Donation
               </button>
             )}

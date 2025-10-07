@@ -95,7 +95,7 @@ export default function Loading() {
             <motion.div
               animate={{ x: ["-100%", "100%"] }}
               transition={{ duration: 1.5, repeat: Infinity, ease: "easeInOut" }}
-              className="h-full bg-gradient-to-r from-blue-600 to-purple-600 w-1/3 rounded-full"
+              className="h-full bg-[#0E0061] w-1/3 rounded-full"
             />
           </div>
         </motion.div>

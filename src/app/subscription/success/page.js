@@ -152,7 +152,7 @@ export default function SubscriptionSuccessPage() {
         <div className="text-center">
           <button
             onClick={() => window.location.href = '/organization/dashboard'}
-            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors inline-flex items-center"
+            className="bg-[#0E0061] text-white px-6 py-3 rounded-lg hover:bg-[#0C0055] transition-colors inline-flex items-center"
           >
             Go to Dashboard
             <ExternalLink className="w-4 h-4 ml-2" />
@@ -175,7 +175,7 @@ export default function SubscriptionSuccessPage() {
         <div className="space-y-3">
           <button
             onClick={() => window.location.reload()}
-            className="w-full bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors"
+            className="w-full bg-[#0E0061] text-white px-6 py-3 rounded-lg hover:bg-[#0C0055] transition-colors"
           >
             Try Again
           </button>

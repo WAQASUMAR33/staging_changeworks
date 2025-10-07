@@ -78,7 +78,7 @@ export default function Header() {
                             onClick={() => setShowProfile(!showProfile)}
                             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                         >
-                            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                            <div className="w-8 h-8 bg-[#0E0061] rounded-lg flex items-center justify-center">
                                 <span className="text-white text-sm font-medium">
                                     {userName ? userName.charAt(0).toUpperCase() : 'A'}
                                 </span>
@@ -101,7 +101,7 @@ export default function Header() {
                                 >
                                     <div className="p-4 border-b border-gray-100">
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center">
+                                            <div className="w-10 h-10 bg-[#0E0061] rounded-lg flex items-center justify-center">
                                                 <span className="text-white font-medium">
                                                     {userName ? userName.charAt(0).toUpperCase() : 'A'}
                                                 </span>

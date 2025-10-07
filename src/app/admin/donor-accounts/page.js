@@ -368,7 +368,7 @@ export default function DonorManagementPage() {
         </div>
         <button
           onClick={() => handleModalOpen('add')}
-          className="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
+          className="inline-flex items-center px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200 shadow-sm"
         >
           <Plus className="w-4 h-4 mr-2" />
           Add New Donor
@@ -862,7 +862,7 @@ export default function DonorManagementPage() {
                     <button
                       type="submit"
                       disabled={submitting}
-                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
+                      className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200"
                     >
                       {submitting ? 'Saving...' : (selectedDonor ? 'Update Donor' : 'Create Donor')}
                     </button>

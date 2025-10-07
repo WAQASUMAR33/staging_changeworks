@@ -258,7 +258,7 @@ const PackagesPage = () => {
             </div>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
+              className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-colors"
             >
               <Plus className="w-4 h-4" />
               <span>Create Package</span>
@@ -423,7 +423,7 @@ const PackagesPage = () => {
             <p className="text-gray-500 mb-4">Get started by creating your first package</p>
             <button
               onClick={() => setShowCreateModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors"
             >
               Create Package
             </button>
@@ -603,7 +603,7 @@ const PackagesPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors"
                 >
                   Create Package
                 </button>
@@ -787,7 +787,7 @@ const PackagesPage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors"
                 >
                   Update Package
                 </button>

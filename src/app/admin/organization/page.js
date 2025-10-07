@@ -354,7 +354,7 @@ export default function OrganizationManagementPage() {
         {canCreate && (
           <button
             onClick={() => handleModalOpen('add')}
-            className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+            className="inline-flex items-center gap-2 bg-[#0E0061] text-white px-4 py-2 rounded-lg hover:bg-[#0C0055] transition-colors"
           >
             <Plus className="w-4 h-4" />
             Add New Organization
@@ -592,7 +592,7 @@ export default function OrganizationManagementPage() {
               {canCreate && (
                 <button
                   onClick={() => handleModalOpen('add')}
-                  className="inline-flex items-center gap-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  className="inline-flex items-center gap-2 bg-[#0E0061] text-white px-4 py-2 rounded-lg hover:bg-[#0C0055] transition-colors"
                 >
                   <Plus className="w-4 h-4" />
                   Add New Organization

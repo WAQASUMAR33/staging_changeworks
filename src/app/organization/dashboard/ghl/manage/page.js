@@ -128,7 +128,7 @@ export default function ManageGHLAccountsPage() {
               </p>
             </div>
             <Link href="/organization/dashboard/ghl/create">
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2">
+              <button className="bg-[#0E0061] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#0C0055] transition-all duration-200 shadow-lg hover:shadow-xl flex items-center space-x-2">
                 <Plus className="w-5 h-5" />
                 <span>Create New Account</span>
               </button>
@@ -163,7 +163,7 @@ export default function ManageGHLAccountsPage() {
             <h3 className="text-xl font-semibold text-gray-900 mb-2">No GHL Accounts Yet</h3>
             <p className="text-gray-600 mb-6">Create your first GoHighLevel sub-account to get started</p>
             <Link href="/organization/dashboard/ghl/create">
-              <button className="bg-gradient-to-r from-blue-600 to-purple-600 text-white px-6 py-3 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 transition-all duration-200 shadow-lg hover:shadow-xl">
+              <button className="bg-[#0E0061] text-white px-6 py-3 rounded-xl font-semibold hover:bg-[#0C0055] transition-all duration-200 shadow-lg hover:shadow-xl">
                 Create Your First Account
               </button>
             </Link>
@@ -180,7 +180,7 @@ export default function ManageGHLAccountsPage() {
               >
                 <div className="flex justify-between items-start mb-4">
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl flex items-center justify-center">
+                    <div className="w-12 h-12 bg-[#0E0061] rounded-xl flex items-center justify-center">
                       <Building2 className="w-6 h-6 text-white" />
                     </div>
                     <div>

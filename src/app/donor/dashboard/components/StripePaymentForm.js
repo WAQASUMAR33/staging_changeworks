@@ -213,7 +213,7 @@ export default function StripePaymentForm({
               setPaymentStatus('');
               setError('');
             }}
-            className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
+            className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200"
           >
             Try Again
           </button>
@@ -290,7 +290,7 @@ export default function StripePaymentForm({
         <button
           type="submit"
           disabled={loading || !stripe}
-          className="flex-1 bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-4 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {loading ? (
             <div className="flex items-center justify-center space-x-2">

@@ -223,7 +223,7 @@ export default function DonorResetPasswordPage() {
               animate="visible"
             >
               <motion.div variants={itemVariants} className="text-center mb-8">
-                <div className="w-16 h-16 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
+                <div className="w-16 h-16 bg-[#0E0061] rounded-2xl flex items-center justify-center mx-auto mb-4">
                   <Key className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
@@ -355,7 +355,7 @@ export default function DonorResetPasswordPage() {
                   whileTap={{ scale: 0.98 }}
                   type="submit"
                   disabled={isSubmitting || !token}
-                  className="w-full bg-gradient-to-r from-blue-600 to-purple-600 text-white py-3 px-6 rounded-xl font-semibold hover:from-blue-700 hover:to-purple-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                  className="w-full bg-[#0E0061] text-white py-3 px-6 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center space-x-2">

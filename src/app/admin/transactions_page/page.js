@@ -480,7 +480,7 @@ export default function TransactionManagementPage() {
 
       {/* Summary Statistics */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-        <div className="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl p-6 shadow-lg text-white">
+        <div className="bg-[#0E0061] rounded-xl p-6 shadow-lg text-white">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-blue-100 mb-1">Total Transactions</p>

@@ -298,7 +298,7 @@ export default function DonorSubscriptionsPage() {
         <div className="mt-4 sm:mt-0">
           <button 
             onClick={() => setShowSubscriptionModal(true)}
-            className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+            className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
             <span>New Subscription</span>
@@ -405,7 +405,7 @@ export default function DonorSubscriptionsPage() {
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchSubscriptions}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
             >
               Try Again
             </button>
@@ -536,7 +536,7 @@ export default function DonorSubscriptionsPage() {
             <p className="text-gray-600 mb-4">You don&apos;t have any active subscriptions yet.</p>
             <button 
               onClick={() => setShowSubscriptionModal(true)}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors duration-200"
+              className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
             >
               Create Your First Subscription
             </button>

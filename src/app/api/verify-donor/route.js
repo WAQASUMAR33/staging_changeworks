@@ -6,9 +6,9 @@ import emailService from "../../lib/email-service";
 function createHtmlResponse(title, message, isSuccess = true, email = null, note = null) {
   const icon = isSuccess ? '✅' : '❌';
   const bgColor = isSuccess ? 'from-blue-50 to-white' : 'from-red-50 to-white';
-  const iconBg = isSuccess ? 'bg-gradient-to-r from-blue-100 to-purple-100' : 'bg-red-100';
-  const textColor = isSuccess ? 'text-blue-700' : 'text-red-700';
-  const buttonColor = isSuccess ? 'bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700' : 'bg-red-600 hover:bg-red-700';
+  const iconBg = isSuccess ? 'bg-[#0E0061]/10' : 'bg-red-100';
+  const textColor = isSuccess ? 'text-[#0E0061]' : 'text-red-700';
+  const buttonColor = isSuccess ? 'bg-[#0E0061] hover:bg-[#0C0055]' : 'bg-red-600 hover:bg-red-700';
   
   return new NextResponse(`
     <!DOCTYPE html>
@@ -27,7 +27,7 @@ function createHtmlResponse(title, message, isSuccess = true, email = null, note
         @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
         .animate-bounce-gentle { animation: bounceGentle 2s infinite; }
         @keyframes bounceGentle { 0%, 20%, 50%, 80%, 100% { transform: translateY(0); } 40% { transform: translateY(-10px); } 60% { transform: translateY(-5px); } }
-        .gradient-text { background: linear-gradient(135deg, #2563eb 0%, #9333ea 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+        .gradient-text { color: #0E0061; }
       </style>
     </head>
     <body class="min-h-screen gradient-bg flex items-center justify-center py-16 px-6">
@@ -36,7 +36,7 @@ function createHtmlResponse(title, message, isSuccess = true, email = null, note
           <div class="mx-auto mb-6 h-20 w-20 rounded-full ${iconBg} flex items-center justify-center animate-bounce-gentle">
             <span class="text-4xl">${icon}</span>
           </div>
-          <h1 class="text-4xl font-bold ${isSuccess ? 'gradient-text' : textColor} mb-4">${title}</h1>
+          <h1 class="text-4xl font-bold ${textColor} mb-4">${title}</h1>
           <p class="text-lg text-gray-600 mb-6">
             ${email ? `Your email <span class="font-semibold text-gray-800">${email}</span> has been ${isSuccess ? 'verified' : 'could not be verified'}.</span>` : message}
           </p>

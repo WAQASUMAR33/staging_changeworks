@@ -131,7 +131,7 @@ export default function OrganizationFundTransferPage() {
         <p className="text-red-600 mb-4">{error}</p>
         <button
           onClick={fetchFundTransfers}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+          className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-blue-700 transition-colors"
         >
           Retry
         </button>

@@ -327,7 +327,7 @@ export default function DonorDashboard() {
         className="space-y-6"
       >
       {/* Welcome Section */}
-      <motion.div variants={itemVariants} className="bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl p-4 sm:p-6 text-white">
+      <motion.div variants={itemVariants} className="bg-[#0E0061] rounded-2xl p-4 sm:p-6 text-white">
         <div className="flex items-center justify-between">
           <div className="flex-1 min-w-0">
             <h2 className="text-xl sm:text-2xl font-bold mb-2">Your Impact Dashboard</h2>

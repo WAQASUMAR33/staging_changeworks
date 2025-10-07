@@ -71,7 +71,7 @@ const DonorSidebar = () => {
       <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
         {isExpanded && (
           <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center">
+            <div className="w-8 h-8 bg-[#0E0061] rounded-lg flex items-center justify-center">
               <Gift className="w-5 h-5 text-white" />
             </div>
             <div>
@@ -123,7 +123,7 @@ const DonorSidebar = () => {
               }}
               className={`w-full flex items-center space-x-3 px-3 py-3 rounded-xl transition-all duration-200 group ${
                 isActive
-                  ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white shadow-lg'
+                  ? 'bg-[#0E0061] text-white shadow-lg'
                   : 'text-gray-600 hover:bg-gray-100 hover:text-gray-900'
               }`}
             >
