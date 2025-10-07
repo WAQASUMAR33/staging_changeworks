@@ -29,7 +29,7 @@ const OrgSidebar = () => {
   const pathname = usePathname();
   const router = useRouter();
   const [isHovered, setIsHovered] = useState(false);
-  const [isPinned, setIsPinned] = useState(false);
+  const [isPinned, setIsPinned] = useState(true);
   const [isMobileOpen, setIsMobileOpen] = useState(false);
   const [openSubmenus, setOpenSubmenus] = useState({});
 
@@ -205,7 +205,7 @@ const OrgSidebar = () => {
                               href={sub.path}
                               className={`block px-4 py-3 text-sm rounded-xl transition-all duration-200 ${
                                 isSubActive 
-                                  ? 'bg-blue-500/20 text-blue-300 font-semibold border border-blue-500/30' 
+                                  ? 'bg-[#0E0061]/30 text-white font-semibold border border-[#0E0061]/50' 
                                   : 'text-gray-400 hover:text-white hover:bg-gray-700/50'
                               }`}
                             >
