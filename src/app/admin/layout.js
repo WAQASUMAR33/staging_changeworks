@@ -1,13 +1,21 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { usePathname } from 'next/navigation';
 import Sidebar from './components/sidebar';
 import Header from './components/header';
 
 export default function AdminLayout({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const pathname = usePathname();
 
   useEffect(() => {
+    // Skip authentication check for login page to prevent infinite loop
+    if (pathname === '/admin/login') {
+      setIsAdmin(false);
+      return;
+    }
+
     // Check if user has admin token or is an admin user
     const adminToken = localStorage.getItem('adminToken');
     const regularToken = localStorage.getItem('token');
@@ -37,7 +45,12 @@ export default function AdminLayout({ children }) {
     
     // If no valid admin access, redirect to admin login
     window.location.replace('/admin/login');
-  }, []);
+  }, [pathname]);
+
+  // For login page, render children without admin layout
+  if (pathname === '/admin/login') {
+    return children;
+  }
 
   // If not admin, don't render anything (redirect will happen)
   if (!isAdmin) {
