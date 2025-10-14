@@ -78,6 +78,18 @@ export default function OrganizationDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    // Store organization data in sessionStorage for header access
+    useEffect(() => {
+        if (organization) {
+            const orgUser = JSON.parse(sessionStorage.getItem('orgUser') || '{}');
+            const updatedOrgUser = { ...orgUser, imageUrl: organization.imageUrl };
+            sessionStorage.setItem('orgUser', JSON.stringify(updatedOrgUser));
+            
+            // Dispatch custom event to notify header of update
+            window.dispatchEvent(new CustomEvent('orgUserUpdated'));
+        }
+    }, [organization]);
+
     useEffect(() => {
         fetchDashboardData();
     }, []);

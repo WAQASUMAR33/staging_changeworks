@@ -40,12 +40,38 @@ export default function OrgHeader() {
     const profileRef = useRef(null);
 
     useEffect(() => {
-        const org = JSON.parse(sessionStorage.getItem('orgUser'));
-        if (org) {
-            setOrgName(org.name || 'Organization');
-            setOrgEmail(org.email || 'org@changeworks.com');
-            setOrgImageUrl(org.imageUrl || '');
-        }
+        const loadOrgData = () => {
+            const org = JSON.parse(sessionStorage.getItem('orgUser'));
+            if (org) {
+                setOrgName(org.name || 'Organization');
+                setOrgEmail(org.email || 'org@changeworks.com');
+                setOrgImageUrl(org.imageUrl || '');
+            }
+        };
+
+        // Load initial data
+        loadOrgData();
+
+        // Listen for storage changes (when dashboard updates org data)
+        const handleStorageChange = (e) => {
+            if (e.key === 'orgUser') {
+                loadOrgData();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
+        
+        // Also listen for custom events for same-tab updates
+        const handleCustomStorageUpdate = () => {
+            loadOrgData();
+        };
+
+        window.addEventListener('orgUserUpdated', handleCustomStorageUpdate);
+
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('orgUserUpdated', handleCustomStorageUpdate);
+        };
     }, []);
 
     useEffect(() => {
