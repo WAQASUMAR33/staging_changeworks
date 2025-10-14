@@ -31,6 +31,29 @@ const formatDate = (dateString) => {
   return new Date(dateString).toISOString().split('T')[0]; // Convert to YYYY-MM-DD
 };
 
+// Helper function to build organization logo URL
+const buildOrgLogoUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  
+  // If it's already a full URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // Use the environment variable for the base URL
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
+  if (!baseUrl) {
+    console.warn('NEXT_PUBLIC_IMAGE_BACK_URL is not set. Cannot build image URL.');
+    return imageUrl; // Fallback to original imageUrl if base URL is not configured
+  }
+  
+  // Ensure the base URL ends with a slash and the image URL doesn't start with one
+  const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanedImageUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+  
+  return `${cleanedBaseUrl}${cleanedImageUrl}`;
+};
+
 const convertToBase64 = (file) => {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
@@ -123,13 +146,13 @@ export default function OrganizationManagementPage() {
 
   const fetchOrganizations = useCallback(async () => {
     try {
-      const response = await fetch(`/api/organization?page=${page + 1}&limit=${rowsPerPage}`);
+      const response = await fetch(`/api/admin/organizations?page=${page + 1}&limit=${rowsPerPage}`);
       const data = await response.json();
       console.log('API Response:', data);
       if (!response.ok) {
         throw new Error(data.error || `HTTP ${response.status}: Failed to fetch organizations`);
       }
-      if (!Array.isArray(data.organizations)) {
+      if (!data.success || !Array.isArray(data.organizations)) {
         console.error('Unexpected response format:', data);
         throw new Error('Expected organizations data to be an array');
       }
@@ -483,7 +506,7 @@ export default function OrganizationManagementPage() {
                         <div className="flex items-center">
                           {org.imageUrl && (
                             <Image
-                              src={org.imageUrl}
+                              src={buildOrgLogoUrl(org.imageUrl)}
                               alt={org.name}
                               width={40}
                               height={40}
@@ -528,7 +551,7 @@ export default function OrganizationManagementPage() {
                         <div className="text-sm text-gray-900">
                           {org.imageUrl ? (
                             <Image
-                              src={org.imageUrl}
+                              src={buildOrgLogoUrl(org.imageUrl)}
                               alt={org.name}
                               width={40}
                               height={40}
@@ -790,7 +813,7 @@ export default function OrganizationManagementPage() {
                     <Box sx={{ mt: 2 }}>
                       <span className="text-sm text-gray-500">Image Preview:</span>
                       <Image
-                        src={imagePreview || formData.imageUrl}
+                        src={imagePreview || buildOrgLogoUrl(formData.imageUrl)}
                         alt="Organization preview"
                         width={80}
                         height={80}
