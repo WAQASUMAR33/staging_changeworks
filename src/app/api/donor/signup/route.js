@@ -3,7 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
-import EmailService from "../../../lib/email-service.jsx";
+import { emailService } from "../../../lib/email-service.jsx";
 
 // POST /api/donor/signup - Create a new donor account
 export async function POST(request) {
@@ -112,7 +112,6 @@ export async function POST(request) {
         select: { id: true, name: true, email: true }
       });
 
-      const emailService = new EmailService();
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
       const verificationUrl = `${baseUrl}/api/verify-donor?token=${verificationToken}`;
 
