@@ -104,7 +104,6 @@ export default function OrganizationManagementPage() {
     email: '',
     password: '',
     phone: '',
-    company: '',
     address: '',
     website: '',
     city: '',
@@ -178,7 +177,6 @@ export default function OrganizationManagementPage() {
         email: org?.email || '',
         password: '',
         phone: org?.phone || '',
-        company: org?.company || '',
         address: org?.address || '',
         website: org?.website || '',
         city: org?.city || '',
@@ -196,7 +194,6 @@ export default function OrganizationManagementPage() {
         email: '',
         password: '',
         phone: '',
-        company: '',
         address: '',
         website: '',
         city: '',
@@ -248,7 +245,7 @@ export default function OrganizationManagementPage() {
     e.preventDefault();
     setError('');
 
-    const { name, email, password, phone, company, address, website, city, state, country, postalCode, ghlId, status } = formData;
+    const { name, email, password, phone, address, website, city, state, country, postalCode, ghlId, status } = formData;
     if (modalMode === 'add' || modalMode === 'edit') {
       if (!name || !email || (modalMode === 'add' && !password)) {
         setError('Name, email, and password (for new organizations) are required');
@@ -270,7 +267,6 @@ export default function OrganizationManagementPage() {
           email,
           password,
           phone: phone || null,
-          company: company || null,
           address: address || null,
           website: website || null,
           city: city || null,
@@ -293,7 +289,6 @@ export default function OrganizationManagementPage() {
           name,
           email,
           phone: phone || null,
-          company: company || null,
           address: address || null,
           website: website || null,
           city: city || null,
@@ -471,13 +466,7 @@ export default function OrganizationManagementPage() {
                     Phone
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Company
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Website
-                  </th>
-                  <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Image
                   </th>
                   <th className="px-6 py-4 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                     Status
@@ -530,9 +519,6 @@ export default function OrganizationManagementPage() {
                         <div className="text-sm text-gray-900">{org.phone || 'N/A'}</div>
                       </td>
                       <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">{org.company || 'N/A'}</div>
-                      </td>
-                      <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
                           {org.website ? (
                             <a
@@ -545,24 +531,6 @@ export default function OrganizationManagementPage() {
                             </a>
                           ) : (
                             'N/A'
-                          )}
-                        </div>
-                      </td>
-                      <td className="px-6 py-4">
-                        <div className="text-sm text-gray-900">
-                          {org.imageUrl ? (
-                            <Image
-                              src={buildOrgLogoUrl(org.imageUrl)}
-                              alt={org.name}
-                              width={40}
-                              height={40}
-                              className="w-10 h-10 rounded-lg object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                              }}
-                            />
-                          ) : (
-                            'No Image'
                           )}
                         </div>
                       </td>
@@ -709,16 +677,6 @@ export default function OrganizationManagementPage() {
                     label="Phone"
                     name="phone"
                     value={formData.phone}
-                    onChange={handleInputChange}
-                    fullWidth
-                    margin="normal"
-                    disabled={modalMode === 'view'}
-                    sx={{ '& .MuiInputBase-input': { color: '#111827' } }}
-                  />
-                  <TextField
-                    label="Company"
-                    name="company"
-                    value={formData.company}
                     onChange={handleInputChange}
                     fullWidth
                     margin="normal"

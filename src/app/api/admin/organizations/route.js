@@ -22,7 +22,6 @@ export async function GET(req) {
         name: true,
         email: true,
         phone: true,
-        company: true,
         address: true,
         website: true,
         city: true,

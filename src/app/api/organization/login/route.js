@@ -27,6 +27,7 @@ export async function POST(request) {
         password: true,
         orgPassword: true,
         status: true,
+        imageUrl: true,
         created_at: true,
         updated_at: true,
       },

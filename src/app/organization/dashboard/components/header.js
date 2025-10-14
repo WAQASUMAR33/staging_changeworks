@@ -1,14 +1,40 @@
 'use client';
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { 
   LogOut,
-  ChevronDown
+  ChevronDown,
+  Building2
 } from 'lucide-react';
+
+// Helper function to build organization logo URL
+const buildOrgLogoUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  
+  // If it's already a full URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // Use the environment variable for the base URL
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
+  if (!baseUrl) {
+    console.warn('NEXT_PUBLIC_IMAGE_BACK_URL is not set. Cannot build image URL.');
+    return imageUrl; // Fallback to original imageUrl if base URL is not configured
+  }
+  
+  // Ensure the base URL ends with a slash and the image URL doesn't start with one
+  const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanedImageUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+  
+  return `${cleanedBaseUrl}${cleanedImageUrl}`;
+};
 
 export default function OrgHeader() {
     const [orgName, setOrgName] = useState('');
     const [orgEmail, setOrgEmail] = useState('');
+    const [orgImageUrl, setOrgImageUrl] = useState('');
     const [showProfile, setShowProfile] = useState(false);
     const [searchQuery, setSearchQuery] = useState('');
     const profileRef = useRef(null);
@@ -18,6 +44,7 @@ export default function OrgHeader() {
         if (org) {
             setOrgName(org.name || 'Organization');
             setOrgEmail(org.email || 'org@changeworks.com');
+            setOrgImageUrl(org.imageUrl || '');
         }
     }, []);
 
@@ -58,8 +85,30 @@ export default function OrgHeader() {
                     </div>
                 </div>
 
-                {/* Right Section - Profile */}
-                <div className="flex items-center space-x-3">
+                {/* Right Section - Logo and Profile */}
+                <div className="flex items-center space-x-4">
+                    {/* Organization Logo */}
+                    <div className="flex items-center">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                            {orgImageUrl ? (
+                                <Image
+                                    src={buildOrgLogoUrl(orgImageUrl)}
+                                    alt={`${orgName} logo`}
+                                    width={48}
+                                    height={48}
+                                    className="w-full h-full object-cover"
+                                    onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'flex';
+                                    }}
+                                />
+                            ) : null}
+                            <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center ${orgImageUrl ? 'hidden' : 'flex'}`}>
+                                <Building2 className="w-6 h-6 text-white" />
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Profile Dropdown */}
                     <div className="relative" ref={profileRef}>
                         <button 
@@ -89,10 +138,23 @@ export default function OrgHeader() {
                                 >
                                     <div className="p-4 border-b border-gray-100">
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                                                <span className="text-white font-medium">
-                                                    {orgName ? orgName.charAt(0).toUpperCase() : 'O'}
-                                                </span>
+                                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                                                {orgImageUrl ? (
+                                                    <Image
+                                                        src={buildOrgLogoUrl(orgImageUrl)}
+                                                        alt={`${orgName} logo`}
+                                                        width={40}
+                                                        height={40}
+                                                        className="w-full h-full object-cover"
+                                                        onError={(e) => {
+                                                            e.target.style.display = 'none';
+                                                            e.target.nextSibling.style.display = 'flex';
+                                                        }}
+                                                    />
+                                                ) : null}
+                                                <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center ${orgImageUrl ? 'hidden' : 'flex'}`}>
+                                                    <Building2 className="w-5 h-5 text-white" />
+                                                </div>
                                             </div>
                                             <div>
                                                 <p className="font-medium text-gray-900">{orgName || 'Organization'}</p>
