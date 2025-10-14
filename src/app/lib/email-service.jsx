@@ -1735,7 +1735,7 @@ Address: NY-123 Younkers, New York
 
   // Send successful verification email to donor
   async sendVerificationSuccessEmail({ donor, organization, dashboardLink }) {
-    const subject = `Email Verified Successfully - Welcome to ${organization.name}`;
+    const subject = `Welcome to ${organization.name}'s round-up community`;
     
     const html = `
       <!DOCTYPE html>
@@ -1743,7 +1743,7 @@ Address: NY-123 Younkers, New York
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Email Verified Successfully - ${organization.name}</title>
+        <title>Welcome to ${organization.name}'s round-up community</title>
         <style>
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -1763,20 +1763,20 @@ Address: NY-123 Younkers, New York
           }
           .header {
             text-align: center;
-            border-bottom: 3px solid #28a745;
+            border-bottom: 3px solid #302E56;
             padding-bottom: 25px;
             margin-bottom: 35px;
           }
           .header h1 {
-            color: #28a745;
+            color: #302E56;
             margin: 0;
             font-size: 32px;
             font-weight: 600;
             text-shadow: 0 2px 4px rgba(0,0,0,0.1);
           }
-          .success-icon {
-            font-size: 48px;
-            color: #28a745;
+          .logo {
+            max-width: 150px;
+            height: auto;
             margin-bottom: 20px;
           }
           .content {
@@ -1793,65 +1793,15 @@ Address: NY-123 Younkers, New York
             color: #212529;
             margin-bottom: 25px;
           }
-          .success-box {
-            background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
-            border: 1px solid #c3e6cb;
-            padding: 25px;
-            border-radius: 10px;
-            margin: 25px 0;
-            border-left: 4px solid #28a745;
-            text-align: center;
-          }
-          .success-box h3 {
-            color: #155724;
-            margin-top: 0;
-            margin-bottom: 15px;
-            font-size: 20px;
-            font-weight: 600;
-          }
-          .success-box p {
-            margin: 0;
-            color: #155724;
-            font-weight: 500;
-          }
-          .dashboard-button {
-            display: inline-block;
-            background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 8px;
-            font-weight: 600;
-            margin: 25px 0;
-            box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-            transition: all 0.3s ease;
-          }
-          .dashboard-button:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 6px 20px rgba(40, 167, 69, 0.4);
-          }
-          .footer {
-            border-top: 2px solid #e9ecef;
-            padding-top: 25px;
-            margin-top: 35px;
-            text-align: center;
-            color: #6c757d;
-            font-size: 14px;
-          }
-          .signature {
-            margin-top: 30px;
-            font-style: italic;
-            color: #495057;
-          }
           .features {
             background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
             padding: 25px;
             border-radius: 10px;
             margin: 25px 0;
-            border-left: 4px solid #28a745;
+            border-left: 4px solid #302E56;
           }
           .features h3 {
-            color: #28a745;
+            color: #302E56;
             margin-top: 0;
             margin-bottom: 15px;
             font-size: 18px;
@@ -1866,6 +1816,35 @@ Address: NY-123 Younkers, New York
             color: #495057;
             font-size: 15px;
           }
+          .cta-button {
+            display: inline-block;
+            background: linear-gradient(135deg, #302E56 0%, #0E0061 100%);
+            color: white;
+            padding: 15px 30px;
+            text-decoration: none;
+            border-radius: 8px;
+            font-weight: 600;
+            margin: 25px 0;
+            box-shadow: 0 4px 15px rgba(48, 46, 86, 0.3);
+            transition: all 0.3s ease;
+          }
+          .cta-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
+          }
+          .footer {
+            border-top: 2px solid #e9ecef;
+            padding-top: 25px;
+            margin-top: 35px;
+            text-align: center;
+            color: #6c757d;
+            font-size: 14px;
+          }
+          .signature {
+            margin-top: 30px;
+            font-style: italic;
+            color: #495057;
+          }
           .contact-info {
             background-color: #f8f9fa;
             padding: 20px;
@@ -1874,7 +1853,7 @@ Address: NY-123 Younkers, New York
             text-align: center;
           }
           .contact-info h4 {
-            color: #28a745;
+            color: #302E56;
             margin: 0 0 10px 0;
             font-size: 16px;
           }
@@ -1883,46 +1862,49 @@ Address: NY-123 Younkers, New York
             color: #495057;
             font-size: 14px;
           }
+          .ps-note {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 20px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #302E56;
+            font-style: italic;
+            color: #495057;
+          }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <div class="success-icon">✅</div>
-            <h1>Email Verified Successfully!</h1>
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
+            <h1>Welcome to ${organization.name}'s round-up community</h1>
           </div>
           
           <div class="content">
             <p class="greeting">Hello ${donor.name},</p>
             
-            <div class="success-box">
-              <h3>🎉 Congratulations!</h3>
-              <p>Your email address has been successfully verified. You can now access all features of your donor account with <strong>${organization.name}</strong>.</p>
-            </div>
+            <p>Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
             
-            <p>Your account is now fully activated and you can:</p>
+            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
             
             <div class="features">
-              <h3>Your Account Features:</h3>
+              <h3>Your Donor Portal Features:</h3>
               <ul>
-                <li>Access your personalized donor dashboard</li>
-                <li>Track your donations and impact</li>
-                <li>Manage your giving preferences</li>
-                <li>Receive monthly impact reports</li>
-                <li>Download donation records</li>
-                <li>Update your profile information</li>
+                <li>Track your monthly round-up totals</li>
+                <li>Adjust or pause your contributions at any time</li>
+                <li>Download donation records for your own files</li>
               </ul>
             </div>
             
-            <div style="text-align: center;">
-              <a href="${dashboardLink}" class="dashboard-button">Access Your Dashboard</a>
-            </div>
-            
-            <p>Thank you for joining our community of changemakers. Together, we're making a real difference in the world.</p>
+            <p>We're so glad to have you as part of our round-up community, where even pennies can create lasting change.</p>
             
             <div class="signature">
-              <p>Welcome aboard!<br>
+              <p>With gratitude,<br>
               <strong>${organization.name} Team</strong></p>
+            </div>
+            
+            <div class="ps-note">
+              <p><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
             </div>
           </div>
           
@@ -1945,26 +1927,24 @@ Address: NY-123 Younkers, New York
     `;
 
     const text = `
-Email Verified Successfully - Welcome to ${organization.name}
+Welcome to ${organization.name}'s round-up community
 
 Hello ${donor.name},
 
-Congratulations! Your email address has been successfully verified. You can now access all features of your donor account with ${organization.name}.
+Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
-Your account is now fully activated and you can:
-- Access your personalized donor dashboard
-- Track your donations and impact
-- Manage your giving preferences
-- Receive monthly impact reports
-- Download donation records
-- Update your profile information
+You can view your donation activity anytime through your personalized Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
 
-Access Your Dashboard: ${dashboardLink}
+- Track your monthly round-up totals
+- Adjust or pause your contributions at any time
+- Download donation records for your own files
 
-Thank you for joining our community of changemakers. Together, we're making a real difference in the world.
+We're so glad to have you as part of our round-up community, where even pennies can create lasting change.
 
-Welcome aboard!
+With gratitude,
 ${organization.name} Team
+
+P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
 
 ---
 ChangeWorks Fund
