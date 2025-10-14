@@ -54,7 +54,7 @@ const DonorSidebar = () => {
       path: '/donor/dashboard/donations',
     },
     {
-      name: 'Subscriptions',
+      name: 'Recurring Donations',
       icon: CreditCard,
       path: '/donor/dashboard/subscriptions',
     },

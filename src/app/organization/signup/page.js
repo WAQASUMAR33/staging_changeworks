@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Building2, User, Phone, MapPin, Globe, Calendar } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Building2, User, Phone, MapPin, Globe, Calendar, Upload, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function OrganizationSignupPage() {
@@ -17,6 +17,8 @@ export default function OrganizationSignupPage() {
     country: 'US', // Default to US
     postalCode: '',
     website: '',
+    logo: '', // Base64 encoded logo
+    logoUrl: '', // URL returned from PHP API
     // Organization Login Details (single password set)
     orgPassword: '',
     confirmOrgPassword: '',
@@ -39,6 +41,8 @@ export default function OrganizationSignupPage() {
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
+  const [logoPreview, setLogoPreview] = useState(null);
+  const [logoUploading, setLogoUploading] = useState(false);
   const totalSteps = 3; // Reduced steps: Basic Info, Contact/Address, Organization Login
 
   // Clear errors when component mounts and fetch countries
@@ -150,6 +154,107 @@ export default function OrganizationSignupPage() {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
+  // Logo upload functions
+  const convertToBase64 = (file) => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = error => reject(error);
+    });
+  };
+
+  const uploadLogoToAPI = async (base64Data) => {
+    try {
+      const apiUrl = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_URL || process.env.IMAGE_UPLOAD_URL;
+      
+      console.log('Logo upload attempt:', {
+        hasApiUrl: !!apiUrl,
+        apiUrl: apiUrl,
+        hasBase64Data: !!base64Data,
+        base64Length: base64Data?.length
+      });
+      
+      if (!apiUrl) {
+        console.warn('Image upload API URL not configured, skipping upload');
+        return null; // Return null instead of throwing error
+      }
+
+      const response = await fetch(apiUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          image: base64Data
+        }),
+      });
+
+      if (!response.ok) {
+        console.error('Upload API response not ok:', response.status, response.statusText);
+        return null; // Return null instead of throwing error
+      }
+
+      const data = await response.json();
+      return data.image_url;
+    } catch (error) {
+      console.error('Logo upload error:', error);
+      return null; // Return null instead of throwing error
+    }
+  };
+
+  const handleLogoChange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setErrorMsg('Please select a valid image file');
+      return;
+    }
+
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      setErrorMsg('Image size must be less than 5MB');
+      return;
+    }
+
+    setErrorMsg('');
+
+    try {
+      // Create preview
+      const previewUrl = URL.createObjectURL(file);
+      setLogoPreview(previewUrl);
+
+      // Convert to base64 and store for later upload
+      const base64Data = await convertToBase64(file);
+      
+      // Update form with base64 data (will upload on submit)
+      setForm(prev => ({
+        ...prev,
+        logo: base64Data,
+        logoUrl: '' // Will be set during upload on submit
+      }));
+
+    } catch (error) {
+      console.error('Logo processing error:', error);
+      setErrorMsg('Failed to process logo. Please try again.');
+      setLogoPreview(null);
+    }
+  };
+
+  const removeLogo = () => {
+    if (logoPreview) {
+      URL.revokeObjectURL(logoPreview);
+    }
+    setLogoPreview(null);
+    setForm(prev => ({
+      ...prev,
+      logo: '',
+      logoUrl: ''
+    }));
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     
@@ -167,10 +272,42 @@ export default function OrganizationSignupPage() {
     setErrorMsg('');
 
     try {
+      // Upload logo if present
+      let logoUrl = form.logoUrl;
+      console.log('Submit - Logo check:', {
+        hasLogo: !!form.logo,
+        hasLogoUrl: !!form.logoUrl,
+        logoLength: form.logo?.length
+      });
+      
+      if (form.logo && !form.logoUrl) {
+        console.log('Starting logo upload...');
+        setLogoUploading(true);
+        try {
+          logoUrl = await uploadLogoToAPI(form.logo);
+          if (logoUrl) {
+            console.log('Logo uploaded successfully:', logoUrl);
+          } else {
+            console.warn('Logo upload failed, proceeding without logo URL');
+          }
+        } catch (uploadError) {
+          console.error('Logo upload error:', uploadError);
+          // Continue with registration even if logo upload fails
+        } finally {
+          setLogoUploading(false);
+        }
+      }
+
+      // Prepare form data with logo URL
+      const formData = {
+        ...form,
+        logoUrl: logoUrl || form.logoUrl
+      };
+
       const res = await fetch('/api/organization', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(formData),
       });
 
       const data = await res.json();
@@ -260,6 +397,7 @@ export default function OrganizationSignupPage() {
                 )}
               </AnimatePresence>
             </motion.div>
+
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
@@ -616,16 +754,54 @@ export default function OrganizationSignupPage() {
               </AnimatePresence>
             </motion.div>
 
-            <motion.div variants={itemVariants} className="bg-green-50 border border-green-200 rounded-xl p-6">
-              <div className="flex items-center space-x-3 mb-2">
-                <CheckCircle className="w-6 h-6 text-green-600" />
-                <h3 className="text-lg font-semibold text-green-900">Account Setup Complete</h3>
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Organization Logo (Optional)
+              </label>
+              <div className="space-y-4">
+                {logoPreview ? (
+                  <div className="relative inline-block">
+                    <div className="w-32 h-32 border-2 border-gray-200 rounded-xl overflow-hidden bg-gray-50">
+                      <Image
+                        src={logoPreview}
+                        alt="Logo preview"
+                        width={128}
+                        height={128}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={removeLogo}
+                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600 transition-colors"
+                      disabled={logoUploading}
+                    >
+                      <X className="w-4 h-4" />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 text-center hover:border-gray-400 transition-colors relative">
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600 mb-2">Upload your organization logo</p>
+                    <p className="text-xs text-gray-500">PNG, JPG, GIF up to 5MB</p>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleLogoChange}
+                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                      disabled={logoUploading || isSubmitting}
+                    />
+                  </div>
+                )}
+                {logoUploading && (
+                  <div className="flex items-center justify-center space-x-2 text-blue-600">
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    <span className="text-sm">Uploading logo...</span>
+                  </div>
+                )}
               </div>
-              <p className="text-green-800 text-sm">
-                Your organization account will be created with all the information you&apos;ve provided. 
-                You&apos;ll be able to access your dashboard immediately after signup.
-              </p>
             </motion.div>
+
           </motion.div>
         );
 
@@ -756,13 +932,13 @@ export default function OrganizationSignupPage() {
                 
                   <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || logoUploading}
                   className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                 >
-                  {loading ? (
+                  {loading || logoUploading ? (
                     <div className="flex items-center justify-center space-x-2">
                       <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Creating Account...</span>
+                      <span>{logoUploading ? 'Uploading Logo...' : 'Creating Account...'}</span>
                     </div>
                   ) : currentStep === totalSteps ? (
                     'Create Account'

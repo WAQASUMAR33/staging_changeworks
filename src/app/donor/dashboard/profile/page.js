@@ -21,8 +21,6 @@ export default function DonorProfilePage() {
     name: '',
     email: '',
     phone: '',
-    address: '',
-    city: '',
     postal_code: '',
     country: ''
   });
@@ -68,8 +66,6 @@ export default function DonorProfilePage() {
             name: data.donor.name || '',
             email: data.donor.email || '',
             phone: data.donor.phone || '',
-            address: data.donor.address || '',
-            city: data.donor.city || '',
             postal_code: data.donor.postal_code || '',
             country: data.donor.country || ''
           });
@@ -406,41 +402,7 @@ export default function DonorProfilePage() {
               </div>
             </div>
 
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Address
-              </label>
-              <div className="relative">
-                <MapPin className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="address"
-                  type="text"
-                  placeholder="Enter your address"
-                  value={formData.address}
-                  onChange={handleInputChange}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
-                />
-              </div>
-            </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  City
-                </label>
-                <input
-                  name="city"
-                  type="text"
-                  placeholder="Enter city"
-                  value={formData.city}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
-                />
-              </div>
-              <div />
-            </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>

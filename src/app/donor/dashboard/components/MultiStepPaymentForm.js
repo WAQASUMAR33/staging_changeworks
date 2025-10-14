@@ -16,14 +16,15 @@ import {
   Search,
   Heart
 } from 'lucide-react';
+import { buildOrgLogoUrl } from '@/lib/image-utils';
 
 const CARD_ELEMENT_OPTIONS = {
   style: {
     base: {
       fontSize: '16px',
-      color: '#424770',
+      color: '#000000',
       '::placeholder': {
-        color: '#aab7c4',
+        color: '#666666',
       },
     },
     invalid: {
@@ -76,14 +77,6 @@ export default function MultiStepPaymentForm({
     );
   }
   
-  // Step 3: Checkout
-
-  const steps = [
-    { id: 1, title: 'Donation Amount', icon: DollarSign },
-    { id: 2, title: 'Select Organization', icon: Building2 },
-    { id: 3, title: 'Checkout', icon: CreditCard },
-  ];
-
   const fetchOrganizations = async () => {
     try {
       setLoadingOrgs(true);
@@ -126,13 +119,13 @@ export default function MultiStepPaymentForm({
   };
 
   const handleNext = () => {
-    if (currentStep === 1) {
+    if (currentStep === 2) {
       const error = validateAmount(donationAmount);
       if (error) {
         setAmountError(error);
         return;
       }
-    } else if (currentStep === 2) {
+    } else if (currentStep === 3) {
       if (!selectedOrganization) {
         setError('Please select an organization');
         return;
@@ -225,43 +218,6 @@ export default function MultiStepPaymentForm({
     }
   };
 
-  const renderStepIndicator = () => (
-    <div className="flex items-center justify-center space-x-4 mb-8">
-      {steps.map((step, index) => {
-        const Icon = step.icon;
-        const isActive = currentStep === step.id;
-        const isCompleted = currentStep > step.id;
-        
-        return (
-          <div key={step.id} className="flex items-center">
-            <div className={`flex items-center justify-center w-10 h-10 rounded-full border-2 transition-all duration-200 ${
-              isCompleted 
-                ? 'bg-green-500 border-green-500 text-white' 
-                : isActive 
-                  ? 'bg-blue-600 border-blue-600 text-white' 
-                  : 'bg-gray-100 border-gray-300 text-gray-400'
-            }`}>
-              {isCompleted ? (
-                <CheckCircle className="w-5 h-5" />
-              ) : (
-                <Icon className="w-5 h-5" />
-              )}
-            </div>
-            <span className={`ml-2 text-sm font-medium ${
-              isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
-            }`}>
-              {step.title}
-            </span>
-            {index < steps.length - 1 && (
-              <div className={`w-8 h-0.5 mx-4 ${
-                isCompleted ? 'bg-green-500' : 'bg-gray-300'
-              }`} />
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
 
   const renderStep1 = () => (
     <motion.div
@@ -272,24 +228,72 @@ export default function MultiStepPaymentForm({
     >
       <div className="text-center">
         <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="w-8 h-8 text-blue-600" />
+        </div>
+        <h3 className="text-xl font-semibold text-black mb-2">Important Information</h3>
+        <p className="text-black">Please read the following disclaimer before proceeding</p>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-start space-x-4">
+            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-sm font-bold">i</span>
+            </div>
+            <div className="text-sm text-blue-800 space-y-3">
+              <p className="font-semibold text-lg mb-4">Disclaimer:</p>
+              <p>
+                To process your round-up donations securely, ChangeWorks uses Plaid to connect your bank account and Stripe to handle payment processing.
+              </p>
+              <p>
+                Plaid is used by thousands of companies such as AMEX, Acorns, and Venmo. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify.
+              </p>
+              <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 mt-4">
+                <p className="font-semibold text-blue-900 text-base">
+                  Your banking information is collected only for verification and transaction purposes and is never shared with ChangeWorks or your chosen charity.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <p className="text-sm text-black">
+          By clicking &quot;Next&quot;, you acknowledge that you have read and understood this disclaimer.
+        </p>
+      </div>
+    </motion.div>
+  );
+
+  const renderStep2 = () => (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="space-y-6"
+    >
+      <div className="text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <DollarSign className="w-8 h-8 text-blue-600" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Enter Donation Amount</h3>
-        <p className="text-gray-600">How much would you like to donate?</p>
+        <h3 className="text-xl font-semibold text-black mb-2">Enter Donation Amount</h3>
+        <p className="text-black">How much would you like to donate?</p>
       </div>
 
       <div className="max-w-md mx-auto">
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-black mb-2">
           Donation Amount *
         </label>
         <div className="relative">
-          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 text-lg">$</span>
+          <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-black text-lg">$</span>
           <input
             type="number"
             value={donationAmount}
             onChange={handleAmountChange}
             placeholder="0.00"
-            className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-lg ${
+            className={`w-full pl-8 pr-4 py-3 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-lg text-black ${
               amountError ? 'border-red-300' : 'border-gray-300'
             }`}
             min="1"
@@ -316,8 +320,8 @@ export default function MultiStepPaymentForm({
             }}
             className={`p-3 rounded-lg border-2 transition-all duration-200 ${
               donationAmount === amount.toString()
-                ? 'border-blue-500 bg-blue-50 text-blue-700'
-                : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                ? 'border-blue-500 bg-blue-50 text-black'
+                : 'border-gray-200 hover:border-gray-300 text-black'
             }`}
           >
             <span className="font-semibold">${amount}</span>
@@ -327,7 +331,7 @@ export default function MultiStepPaymentForm({
     </motion.div>
   );
 
-  const renderStep2 = () => (
+  const renderStep3 = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -338,8 +342,8 @@ export default function MultiStepPaymentForm({
         <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <Building2 className="w-8 h-8 text-green-600" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Select Organization</h3>
-        <p className="text-gray-600">Choose which organization will receive your donation</p>
+        <h3 className="text-xl font-semibold text-black mb-2">Select Organization</h3>
+        <p className="text-black">Choose which organization will receive your donation</p>
       </div>
 
       <div className="max-w-2xl mx-auto">
@@ -350,7 +354,7 @@ export default function MultiStepPaymentForm({
             placeholder="Search organizations..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
           />
         </div>
 
@@ -372,14 +376,27 @@ export default function MultiStepPaymentForm({
                 }`}
               >
                 <div className="flex items-center space-x-3">
-                  <div className="w-12 h-12 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-6 h-6 text-white" />
+                  <div className="w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                    {org.imageUrl ? (
+                      <img 
+                        src={buildOrgLogoUrl(org.imageUrl)} 
+                        alt={`${org.name} logo`}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.nextSibling.style.display = 'flex';
+                        }}
+                      />
+                    ) : null}
+                    <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
+                      <Heart className="w-6 h-6 text-white" />
+                    </div>
                   </div>
                   <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 truncate">{org.name}</h4>
-                    <p className="text-sm text-gray-600 truncate">{org.email}</p>
+                    <h4 className="font-semibold text-black truncate">{org.name}</h4>
+                    <p className="text-sm text-black truncate">{org.email}</p>
                     {org.description && (
-                      <p className="text-xs text-gray-500 mt-1 line-clamp-2">{org.description}</p>
+                      <p className="text-xs text-black mt-1 line-clamp-2">{org.description}</p>
                     )}
                   </div>
                   {selectedOrganization?.id === org.id && (
@@ -391,8 +408,8 @@ export default function MultiStepPaymentForm({
           ) : (
             <div className="text-center py-8">
               <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-              <p className="text-gray-600">No organizations found</p>
-              <p className="text-sm text-gray-400">Try adjusting your search terms</p>
+              <p className="text-black">No organizations found</p>
+              <p className="text-sm text-black">Try adjusting your search terms</p>
             </div>
           )}
         </div>
@@ -400,7 +417,7 @@ export default function MultiStepPaymentForm({
     </motion.div>
   );
 
-  const renderStep3 = () => (
+  const renderStep4 = () => (
     <motion.div
       initial={{ opacity: 0, x: 20 }}
       animate={{ opacity: 1, x: 0 }}
@@ -411,26 +428,26 @@ export default function MultiStepPaymentForm({
         <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
           <CreditCard className="w-8 h-8 text-purple-600" />
         </div>
-        <h3 className="text-xl font-semibold text-gray-900 mb-2">Complete Payment</h3>
-        <p className="text-gray-600">Enter your payment details to complete the donation</p>
+        <h3 className="text-xl font-semibold text-black mb-2">Complete Payment</h3>
+        <p className="text-black">Enter your payment details to complete the donation</p>
       </div>
 
       <div className="max-w-md mx-auto space-y-6">
         {/* Donation Summary */}
         <div className="bg-gray-50 rounded-lg p-4">
-          <h4 className="font-semibold text-gray-900 mb-3">Donation Summary</h4>
+          <h4 className="font-semibold text-black mb-3">Donation Summary</h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-gray-600">Amount:</span>
+              <span className="text-black">Amount:</span>
               <span className="font-semibold">${donationAmount}</span>
             </div>
             <div className="flex justify-between">
-              <span className="text-gray-600">Organization:</span>
+              <span className="text-black">Organization:</span>
               <span className="font-semibold text-right max-w-48 truncate">{selectedOrganization?.name}</span>
             </div>
             <div className="border-t pt-2 mt-2">
               <div className="flex justify-between">
-                <span className="font-semibold text-gray-900">Total:</span>
+                <span className="font-semibold text-black">Total:</span>
                 <span className="font-bold text-lg text-blue-600">${donationAmount}</span>
               </div>
             </div>
@@ -440,7 +457,7 @@ export default function MultiStepPaymentForm({
 
         {/* Card Element */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-black mb-2">
             Payment Information *
           </label>
           <div className="p-4 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500/20 focus-within:border-blue-500 transition-all duration-200">
@@ -458,16 +475,16 @@ export default function MultiStepPaymentForm({
         className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
       >
         <ArrowLeft className="w-4 h-4" />
-        <span>{currentStep === 1 ? 'Cancel' : 'Back'}</span>
+        <span className="text-black">{currentStep === 1 ? 'Cancel' : 'Back'}</span>
       </button>
 
-      {currentStep < 3 ? (
+      {currentStep < 4 ? (
         <button
           onClick={handleNext}
           disabled={loading}
           className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          <span>Next</span>
+          <span className="text-white">Next</span>
           <ArrowRight className="w-4 h-4" />
         </button>
       ) : (
@@ -479,11 +496,11 @@ export default function MultiStepPaymentForm({
           {loading ? (
             <>
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span>Processing...</span>
+              <span className="text-white">Processing...</span>
             </>
           ) : (
             <>
-              <span>Complete Donation</span>
+              <span className="text-white">Complete Donation</span>
               <CheckCircle className="w-4 h-4" />
             </>
           )}
@@ -509,8 +526,6 @@ export default function MultiStepPaymentForm({
 
   return (
     <div className="space-y-6">
-      {renderStepIndicator()}
-      
       {error && (
         <div className="p-4 bg-red-50 border border-red-200 rounded-lg flex items-center space-x-2">
           <AlertCircle className="w-5 h-5 text-red-500 flex-shrink-0" />
@@ -522,6 +537,7 @@ export default function MultiStepPaymentForm({
         {currentStep === 1 && renderStep1()}
         {currentStep === 2 && renderStep2()}
         {currentStep === 3 && renderStep3()}
+        {currentStep === 4 && renderStep4()}
       </AnimatePresence>
 
       {renderNavigation()}

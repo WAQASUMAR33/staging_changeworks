@@ -1,10 +1,13 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
 import { useRouter } from 'next/navigation';
+import { fetchCountries } from '@/lib/countries-api';
+import { PhoneInput } from 'react-international-phone';
+import 'react-international-phone/style.css';
 
 export default function DonorSignupPage() {
   const router = useRouter();
@@ -12,10 +15,8 @@ export default function DonorSignupPage() {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    phone: '',
+    phone: '+1',
     country: 'US',
-    city: '',
-    address: '',
     postal_code: '',
     password: '',
     confirmPassword: '',
@@ -29,11 +30,51 @@ export default function DonorSignupPage() {
   const [error, setError] = useState('');
   const [message, setMessage] = useState('');
   const [errors, setErrors] = useState({});
+  const [countries, setCountries] = useState([]);
+  const [countriesLoading, setCountriesLoading] = useState(true);
+  const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
+  const countryDropdownRef = useRef(null);
 
   const filteredOrganizations = useMemo(() => {
     const q = orgSearch.toLowerCase();
     return organizations.filter(o => (o.name || '').toLowerCase().includes(q));
   }, [orgSearch, organizations]);
+
+
+  // Load countries on component mount
+  useEffect(() => {
+    const loadCountries = async () => {
+      try {
+        setCountriesLoading(true);
+        const countriesData = await fetchCountries();
+        setCountries(countriesData);
+        console.log(`✅ Loaded ${countriesData.length} countries`);
+        
+        // Phone auto-fill is now handled by react-international-phone
+      } catch (error) {
+        console.error('❌ Failed to load countries:', error);
+        setError('Failed to load countries. Please refresh the page.');
+      } finally {
+        setCountriesLoading(false);
+      }
+    };
+
+    loadCountries();
+  }, []);
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (countryDropdownRef.current && !countryDropdownRef.current.contains(event.target)) {
+        setIsCountryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   useEffect(() => {
     if (currentStep === 4 && organizations.length === 0) {
@@ -93,8 +134,6 @@ export default function DonorSignupPage() {
     
     if (step === 2) {
       if (!formData.country) newErrors.country = 'Country is required';
-      if (!formData.city.trim()) newErrors.city = 'City is required';
-      if (!formData.address.trim()) newErrors.address = 'Address is required';
       if (!formData.postal_code.trim()) newErrors.postal_code = 'Postal code is required';
     }
     
@@ -143,8 +182,6 @@ export default function DonorSignupPage() {
           email: formData.email.trim().toLowerCase(),
           password: formData.password,
           phone: formData.phone.trim(),
-          city: formData.city.trim(),
-          address: formData.address.trim(),
           postal_code: formData.postal_code.trim(),
           country: formData.country,
           organization_id: Number(formData.organization_id)
@@ -188,7 +225,7 @@ export default function DonorSignupPage() {
 
   const steps = [
     { id: 1, title: 'Personal Info' },
-    { id: 2, title: 'Address' },
+    { id: 2, title: 'Location' },
     { id: 3, title: 'Security' },
     { id: 4, title: 'Organization' },
     { id: 5, title: 'Review' }
@@ -420,19 +457,54 @@ export default function DonorSignupPage() {
 
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Phone Number *
+                        Mobile Number *
                       </label>
-                      <input
-                        name="phone"
-                        type="tel"
-                        placeholder="+1234567890"
+                      <PhoneInput
+                        defaultCountry="us"
                         value={formData.phone}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.phone 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
+                        onChange={(phone) => {
+                          setFormData(prev => ({ ...prev, phone }));
+                          // Clear phone error when user starts typing
+                          if (errors.phone) {
+                            setErrors(prev => ({ ...prev, phone: '' }));
+                          }
+                          // Clear general error message when user starts typing
+                          if (error) {
+                            setError('');
+                          }
+                        }}
+                        className={`w-full ${errors.phone ? 'error' : ''}`}
+                        inputStyle={{
+                          width: '100%',
+                          padding: '12px 16px',
+                          border: `2px solid ${errors.phone ? '#fca5a5' : '#e5e7eb'}`,
+                          borderRadius: '12px',
+                          fontSize: '16px',
+                          outline: 'none',
+                          transition: 'all 0.2s',
+                          backgroundColor: errors.phone ? '#fef2f2' : 'white',
+                          height: '48px',
+                          display: 'flex',
+                          alignItems: 'center'
+                        }}
+                        countrySelectorStyleProps={{
+                          buttonStyle: {
+                            border: `2px solid ${errors.phone ? '#fca5a5' : '#e5e7eb'}`,
+                            borderRight: 'none',
+                            borderRadius: '12px 0 0 12px',
+                            backgroundColor: errors.phone ? '#fef2f2' : 'white',
+                            padding: '12px 8px',
+                            height: '48px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center'
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'stretch'
+                        }}
                       />
                       <AnimatePresence>
                         {errors.phone && (
@@ -451,7 +523,7 @@ export default function DonorSignupPage() {
                   </motion.div>
                 )}
 
-                {/* Step 2: Address */}
+                {/* Step 2: Location */}
                 {currentStep === 2 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
@@ -459,94 +531,118 @@ export default function DonorSignupPage() {
                     exit={{ opacity: 0, x: -20 }}
                     className="space-y-4"
                   >
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          Country *
-                        </label>
-                        <select
-                          name="country"
-                          value={formData.country}
-                          onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.country 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
-                        >
-                          <option value="US">United States</option>
-                          <option value="CA">Canada</option>
-                          <option value="GB">United Kingdom</option>
-                          <option value="AU">Australia</option>
-                          <option value="DE">Germany</option>
-                          <option value="FR">France</option>
-                          <option value="other">Other</option>
-                        </select>
-                        <AnimatePresence>
-                          {errors.country && (
-                            <motion.p 
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                            >
-                              <AlertCircle className="w-3 h-3" />
-                              <span>{errors.country}</span>
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
-                      </div>
-
-                      <div>
-                        <label className="block text-sm font-semibold text-gray-700 mb-2">
-                          City *
-                        </label>
-                        <input
-                          name="city"
-                          type="text"
-                          placeholder="Enter your city"
-                          value={formData.city}
-                          onChange={handleInputChange}
-                          className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.city 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
-                        />
-                        <AnimatePresence>
-                          {errors.city && (
-                            <motion.p 
-                              initial={{ opacity: 0, y: -5 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              exit={{ opacity: 0, y: -5 }}
-                              className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                            >
-                              <AlertCircle className="w-3 h-3" />
-                              <span>{errors.city}</span>
-                            </motion.p>
-                          )}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Address *
+                        Country *
                       </label>
-                      <input
-                        name="address"
-                        type="text"
-                        placeholder="123 Main Street"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.address 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
-                      />
+                      
+                      {countriesLoading ? (
+                        <div className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 flex items-center justify-center">
+                          <Loader2 className="w-5 h-5 animate-spin text-gray-400 mr-2" />
+                          <span className="text-gray-500">Loading countries...</span>
+                        </div>
+                      ) : (
+                        <div className="relative" ref={countryDropdownRef}>
+                          {/* Custom Dropdown Button */}
+                          <button
+                            type="button"
+                            onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
+                            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-left flex items-center justify-between ${
+                              errors.country 
+                                ? 'border-red-300 bg-red-50' 
+                                : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                            }`}
+                          >
+                            <div className="flex items-center space-x-3">
+                              {formData.country ? (
+                                <>
+                                  <span className={`fi ${countries.find(c => c.code === formData.country)?.flagClass || ''} w-6 h-4`}></span>
+                                  <span className="text-black">{countries.find(c => c.code === formData.country)?.name || formData.country}</span>
+                                </>
+                              ) : (
+                                <span className="text-black">Select a country...</span>
+                              )}
+                            </div>
+                            <ArrowRight className={`w-4 h-4 transition-transform ${isCountryDropdownOpen ? 'rotate-90' : ''}`} />
+                          </button>
+
+                          {/* Dropdown Options */}
+                          <AnimatePresence>
+                            {isCountryDropdownOpen && (
+                              <motion.div
+                                initial={{ opacity: 0, y: -10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+                              >
+                                {(() => {
+                                  // Priority countries to show at the top
+                                  const priorityCountries = ['MX', 'US', 'CA', 'GB'];
+                                  const priorityList = countries.filter(c => priorityCountries.includes(c.code));
+                                  const otherCountries = countries.filter(c => !priorityCountries.includes(c.code));
+                                  
+                                  // Sort priority countries by the specified order
+                                  const sortedPriorityList = priorityCountries.map(code => 
+                                    priorityList.find(c => c.code === code)
+                                  ).filter(Boolean);
+                                  
+                                  return { priorityList: sortedPriorityList, otherCountries };
+                                })().priorityList.map(country => (
+                                  <button
+                                    key={country.code}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData(prev => ({ ...prev, country: country.code }));
+                                      setIsCountryDropdownOpen(false);
+                                    }}
+                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${
+                                      formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
+                                    }`}
+                                  >
+                                    <span className={`fi ${country.flagClass} w-6 h-4`}></span>
+                                    <span>{country.name}</span>
+                                  </button>
+                                ))}
+                                
+                                {/* Separator */}
+                                {(() => {
+                                  const priorityCountries = ['MX', 'US', 'CA', 'GB'];
+                                  const priorityList = countries.filter(c => priorityCountries.includes(c.code));
+                                  const otherCountries = countries.filter(c => !priorityCountries.includes(c.code));
+                                  return otherCountries.length > 0;
+                                })() && (
+                                  <div className="border-t border-gray-200 my-1"></div>
+                                )}
+                                
+                                {(() => {
+                                  // Priority countries to show at the top
+                                  const priorityCountries = ['MX', 'US', 'CA', 'GB'];
+                                  const otherCountries = countries.filter(c => !priorityCountries.includes(c.code));
+                                  return otherCountries;
+                                })().map(country => (
+                                  <button
+                                    key={country.code}
+                                    type="button"
+                                    onClick={() => {
+                                      setFormData(prev => ({ ...prev, country: country.code }));
+                                      setIsCountryDropdownOpen(false);
+                                    }}
+                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${
+                                      formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
+                                    }`}
+                                  >
+                                    <span className={`fi ${country.flagClass} w-6 h-4`}></span>
+                                    <span>{country.name}</span>
+                                  </button>
+                                ))}
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
+                        </div>
+                      )}
+                      
                       <AnimatePresence>
-                        {errors.address && (
+                        {errors.country && (
                           <motion.p 
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
@@ -554,7 +650,7 @@ export default function DonorSignupPage() {
                             className="text-red-500 text-sm mt-1 flex items-center space-x-1"
                           >
                             <AlertCircle className="w-3 h-3" />
-                            <span>{errors.address}</span>
+                            <span>{errors.country}</span>
                           </motion.p>
                         )}
                       </AnimatePresence>
@@ -763,35 +859,40 @@ export default function DonorSignupPage() {
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
                         <div>
                           <span className="font-medium text-gray-700">Name:</span>
-                          <p className="text-gray-900">{formData.name}</p>
+                          <p className="text-black">{formData.name}</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Email:</span>
-                          <p className="text-gray-900">{formData.email}</p>
+                          <p className="text-black">{formData.email}</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Phone:</span>
-                          <p className="text-gray-900">{formData.phone}</p>
+                          <p className="text-black">{formData.phone}</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Country:</span>
-                          <p className="text-gray-900">{formData.country}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">City:</span>
-                          <p className="text-gray-900">{formData.city}</p>
-                        </div>
-                        <div>
-                          <span className="font-medium text-gray-700">Address:</span>
-                          <p className="text-gray-900">{formData.address}</p>
+                          <p className="text-black flex items-center space-x-2">
+                            {(() => {
+                              const selectedCountry = countries.find(c => c.code === formData.country);
+                              if (selectedCountry) {
+                                return (
+                                  <>
+                                    <span className={`fi ${selectedCountry.flagClass} w-6 h-4`}></span>
+                                    <span className="text-black">{selectedCountry.name}</span>
+                                  </>
+                                );
+                              }
+                              return <span className="text-black">{formData.country}</span>;
+                            })()}
+                          </p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Postal Code:</span>
-                          <p className="text-gray-900">{formData.postal_code}</p>
+                          <p className="text-black">{formData.postal_code}</p>
                         </div>
                         <div>
                           <span className="font-medium text-gray-700">Organization:</span>
-                          <p className="text-gray-900">
+                          <p className="text-black">
                             {organizations.find(o => String(o.id) === String(formData.organization_id))?.name || 'Not selected'}
                           </p>
                         </div>

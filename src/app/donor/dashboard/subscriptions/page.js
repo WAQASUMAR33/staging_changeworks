@@ -292,7 +292,7 @@ export default function DonorSubscriptionsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Subscriptions</h1>
+          <h1 className="text-3xl font-bold text-gray-900">My Recurring Donations</h1>
           <p className="text-gray-600 mt-2">Manage your recurring donations</p>
         </div>
         <div className="mt-4 sm:mt-0">
@@ -301,7 +301,7 @@ export default function DonorSubscriptionsPage() {
             className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
-            <span>New Subscription</span>
+            <span>New Recurring Donation</span>
           </button>
         </div>
       </motion.div>
@@ -340,7 +340,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
+              <p className="text-sm font-medium text-gray-600">Active Recurring Donations</p>
               <p className="text-2xl font-bold text-gray-900">
                 {subscriptions.filter(sub => sub.status === 'ACTIVE').length}
               </p>
@@ -372,7 +372,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Subscriptions</p>
+              <p className="text-sm font-medium text-gray-600">Total Recurring Donations</p>
               <p className="text-2xl font-bold text-gray-900">{subscriptions.length}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">

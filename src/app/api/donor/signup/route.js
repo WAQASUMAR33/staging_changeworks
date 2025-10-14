@@ -13,15 +13,13 @@ export async function POST(request) {
       email, 
       password, 
       phone, 
-      city,
-      address,
       postal_code,
       country = 'US',
       organization_id
     } = body;
 
     // Validate required fields
-    if (!name || !email || !password || !phone || !address || !city || !postal_code || !organization_id) {
+    if (!name || !email || !password || !phone || !postal_code || !organization_id) {
       return NextResponse.json(
         { success: false, error: 'All required fields must be provided' },
         { status: 400 }
@@ -72,8 +70,8 @@ export async function POST(request) {
         email: email.toLowerCase().trim(),
         password: hashedPassword,
         phone: phone.trim(),
-        address: address.trim(),
-        city: city.trim(),
+        address: null, // No longer required
+        city: null, // No longer required
         postal_code: String(postal_code).trim(),
         country: country,
         status: false, // false means not verified yet

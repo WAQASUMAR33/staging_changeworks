@@ -4,12 +4,13 @@ import { useState, useCallback, useEffect } from 'react';
 import { usePlaidLink } from 'react-plaid-link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, X, Loader2, CheckCircle, AlertCircle, Building2, Search, Heart, ArrowLeft, ArrowRight } from 'lucide-react';
+import { buildOrgLogoUrl } from '@/lib/image-utils';
 
 const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1); // 1: Select Organization, 2: Connect Bank
+  const [currentStep, setCurrentStep] = useState(1); // 1: Disclaimer, 2: Select Organization, 3: Connect Bank
   
   // Organization selection state
   const [organizations, setOrganizations] = useState([]);
@@ -346,19 +347,71 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
 
   const handleNext = () => {
     if (currentStep === 1) {
+      // Disclaimer step - just move to next
+      setError('');
+      setCurrentStep(2);
+    } else if (currentStep === 2) {
       if (!selectedOrganization) {
         setError('Please select an organization');
         return;
       }
       setError('');
-      setCurrentStep(2);
+      setCurrentStep(3);
     }
   };
 
   const handleBack = () => {
     setError('');
-    setCurrentStep(1);
+    setCurrentStep(currentStep - 1);
   };
+
+  const renderDisclaimerStep = () => (
+    <motion.div
+      initial={{ opacity: 0, x: 20 }}
+      animate={{ opacity: 1, x: 0 }}
+      exit={{ opacity: 0, x: -20 }}
+      className="space-y-6"
+    >
+      <div className="text-center">
+        <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
+          <AlertCircle className="w-8 h-8 text-blue-600" />
+        </div>
+        <h3 className="text-xl font-semibold text-black mb-2">Important Information</h3>
+        <p className="text-black">Please read the following disclaimer before proceeding</p>
+      </div>
+
+      {/* Disclaimer */}
+      <div className="max-w-3xl mx-auto">
+        <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
+          <div className="flex items-start space-x-4">
+            <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+              <span className="text-white text-sm font-bold">i</span>
+            </div>
+            <div className="text-sm text-blue-800 space-y-3">
+              <p className="font-semibold text-lg mb-4">Disclaimer:</p>
+              <p>
+                To process your round-up donations securely, ChangeWorks uses Plaid to connect your bank account and Stripe to handle payment processing.
+              </p>
+              <p>
+                Plaid is used by thousands of companies such as AMEX, Acorns, and Venmo. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify.
+              </p>
+              <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 mt-4">
+                <p className="font-semibold text-blue-900 text-base">
+                  Your banking information is collected only for verification and transaction purposes and is never shared with ChangeWorks or your chosen charity.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="text-center">
+        <p className="text-sm text-black">
+          By clicking &quot;Next&quot;, you acknowledge that you have read and understood this disclaimer.
+        </p>
+      </div>
+    </motion.div>
+  );
 
   const filteredOrganizations = organizations.filter(org =>
     org.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -381,7 +434,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.9, opacity: 0 }}
           transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-lg max-h-[90vh] overflow-y-auto mx-4"
+          className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto mx-4"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="flex items-center justify-between mb-6">
@@ -390,7 +443,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                 <Target className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h3 className="text-xl font-bold text-gray-800">Plaid Integration</h3>
+                <h3 className="text-xl font-bold text-gray-800">Start Donate Change</h3>
                 <p className="text-sm text-gray-600">Connect your bank account securely</p>
               </div>
             </div>
@@ -411,11 +464,19 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                     ? 'bg-blue-600 border-blue-600 text-white' 
                     : 'bg-gray-100 border-gray-300 text-gray-400'
                 }`}>
-                  <Building2 className="w-4 h-4" />
+                  <AlertCircle className="w-4 h-4" />
                 </div>
                 <div className={`w-8 h-0.5 ${currentStep >= 2 ? 'bg-blue-600' : 'bg-gray-300'}`} />
                 <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-200 ${
                   currentStep >= 2 
+                    ? 'bg-blue-600 border-blue-600 text-white' 
+                    : 'bg-gray-100 border-gray-300 text-gray-400'
+                }`}>
+                  <Building2 className="w-4 h-4" />
+                </div>
+                <div className={`w-8 h-0.5 ${currentStep >= 3 ? 'bg-blue-600' : 'bg-gray-300'}`} />
+                <div className={`flex items-center justify-center w-8 h-8 rounded-full border-2 transition-all duration-200 ${
+                  currentStep >= 3 
                     ? 'bg-blue-600 border-blue-600 text-white' 
                     : 'bg-gray-100 border-gray-300 text-gray-400'
                 }`}>
@@ -431,9 +492,11 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
               )}
 
               <AnimatePresence mode="wait">
-                {currentStep === 1 && (
+                {currentStep === 1 && renderDisclaimerStep()}
+                
+                {currentStep === 2 && (
                   <motion.div
-                    key="step1"
+                    key="step2"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
@@ -443,8 +506,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                       <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Building2 className="w-8 h-8 text-blue-600" />
                       </div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Select Organization</h4>
-                      <p className="text-gray-600 text-sm">Choose which organization will receive your bank connection</p>
+                      <h4 className="text-lg font-semibold text-black mb-2">Select Organization</h4>
+                      <p className="text-black text-sm">Choose which organization will receive your bank connection</p>
                     </div>
 
                     <div className="max-w-2xl mx-auto">
@@ -455,7 +518,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                           placeholder="Search organizations..."
                           value={searchTerm}
                           onChange={(e) => setSearchTerm(e.target.value)}
-                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                          className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
                         />
                       </div>
 
@@ -463,7 +526,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                         {loadingOrgs ? (
                           <div className="text-center py-8">
                             <Loader2 className="w-6 h-6 animate-spin text-blue-600 mx-auto mb-2" />
-                            <p className="text-gray-600">Loading organizations...</p>
+                            <p className="text-black">Loading organizations...</p>
                           </div>
                         ) : filteredOrganizations.length > 0 ? (
                           filteredOrganizations.map((org) => (
@@ -480,12 +543,25 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                               }`}
                             >
                               <div className="flex items-center space-x-3">
-                                <div className="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                                  <Heart className="w-5 h-5 text-white" />
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                  {org.imageUrl ? (
+                                    <img 
+                                      src={buildOrgLogoUrl(org.imageUrl)} 
+                                      alt={`${org.name} logo`}
+                                      className="w-full h-full object-cover"
+                                      onError={(e) => {
+                                        e.target.style.display = 'none';
+                                        e.target.nextSibling.style.display = 'flex';
+                                      }}
+                                    />
+                                  ) : null}
+                                  <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}>
+                                    <Heart className="w-5 h-5 text-white" />
+                                  </div>
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                  <h5 className="font-semibold text-gray-900 truncate">{org.name}</h5>
-                                  <p className="text-sm text-gray-600 truncate">{org.email}</p>
+                                  <h5 className="font-semibold text-black truncate">{org.name}</h5>
+                                  <p className="text-sm text-black truncate">{org.email}</p>
                                 </div>
                                 {selectedOrganization?.id === org.id && (
                                   <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
@@ -496,8 +572,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                         ) : (
                           <div className="text-center py-8">
                             <Building2 className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                            <p className="text-gray-600">No organizations found</p>
-                            <p className="text-sm text-gray-400">Try adjusting your search terms</p>
+                            <p className="text-black">No organizations found</p>
+                            <p className="text-sm text-black">Try adjusting your search terms</p>
                           </div>
                         )}
                       </div>
@@ -505,9 +581,9 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                   </motion.div>
                 )}
 
-                {currentStep === 2 && (
+                {currentStep === 3 && (
                   <motion.div
-                    key="step2"
+                    key="step3"
                     initial={{ opacity: 0, x: 20 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -20 }}
@@ -517,8 +593,8 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                       <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
                         <Target className="w-8 h-8 text-purple-600" />
                       </div>
-                      <h4 className="text-lg font-semibold text-gray-900 mb-2">Connect Your Bank Account</h4>
-                      <p className="text-gray-600 text-sm">
+                      <h4 className="text-lg font-semibold text-black mb-2">Connect Your Bank Account</h4>
+                      <p className="text-black text-sm">
                         Securely link your bank account using Plaid for {selectedOrganization?.name}
                       </p>
                       
@@ -536,14 +612,14 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                     </div>
 
                     <div className="bg-gray-50 rounded-lg p-4">
-                      <h5 className="font-semibold text-gray-900 mb-2">Selected Organization:</h5>
+                      <h5 className="font-semibold text-black mb-2">Selected Organization:</h5>
                       <div className="flex items-center space-x-3">
                         <div className="w-8 h-8 bg-gradient-to-r from-blue-500 to-purple-500 rounded-lg flex items-center justify-center">
                           <Heart className="w-4 h-4 text-white" />
                         </div>
                         <div>
-                          <p className="font-medium text-gray-900">{selectedOrganization?.name}</p>
-                          <p className="text-sm text-gray-600">{selectedOrganization?.email}</p>
+                          <p className="font-medium text-black">{selectedOrganization?.name}</p>
+                          <p className="text-sm text-black">{selectedOrganization?.email}</p>
                         </div>
                       </div>
                     </div>
@@ -551,7 +627,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                     <div className="flex justify-center">
                       <button
                         onClick={handleBack}
-                        className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                        className="flex items-center space-x-2 px-4 py-2 text-black hover:text-gray-800 transition-colors duration-200"
                       >
                         <ArrowLeft className="w-4 h-4" />
                         <span>Change Organization</span>
@@ -574,7 +650,7 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                     </button>
 
                     <div className="p-3 bg-gray-50 rounded-lg">
-                      <p className="text-xs text-gray-600">
+                      <p className="text-xs text-black">
                         <strong>Note:</strong> This will open Plaid Link in a secure popup window to connect your bank account.
                       </p>
                     </div>
@@ -586,16 +662,16 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
               <div className="flex justify-between items-center pt-6 border-t border-gray-200">
                 <button
                   onClick={currentStep === 1 ? onClose : handleBack}
-                  className="flex items-center space-x-2 px-4 py-2 text-gray-600 hover:text-gray-800 transition-colors duration-200"
+                  className="flex items-center space-x-2 px-4 py-2 text-black hover:text-gray-800 transition-colors duration-200"
                 >
                   <ArrowLeft className="w-4 h-4" />
                   <span>{currentStep === 1 ? 'Cancel' : 'Back'}</span>
                 </button>
 
-                {currentStep === 1 && (
+                {(currentStep === 1 || currentStep === 2) && (
                   <button
                     onClick={handleNext}
-                    disabled={!selectedOrganization}
+                    disabled={currentStep === 2 && !selectedOrganization}
                     className="flex items-center space-x-2 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <span>Next</span>
@@ -609,11 +685,11 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
               <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <CheckCircle className="w-8 h-8 text-green-600" />
               </div>
-              <h4 className="text-xl font-bold text-gray-900 mb-2">Bank Account Connected!</h4>
-              <p className="text-gray-600 mb-4">
+              <h4 className="text-xl font-bold text-black mb-2">Bank Account Connected!</h4>
+              <p className="text-black mb-4">
                 Your bank account has been successfully connected through Plaid.
               </p>
-              <div className="flex items-center justify-center space-x-2 text-sm text-gray-500">
+              <div className="flex items-center justify-center space-x-2 text-sm text-black">
                 <Loader2 className="w-4 h-4 animate-spin" />
                 <span>Returning to dashboard...</span>
               </div>

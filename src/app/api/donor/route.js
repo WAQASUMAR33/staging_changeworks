@@ -11,8 +11,6 @@ const donorSchema = z.object({
   email: z.string().email("Invalid email").max(100),
   password: z.string().min(6, "Password must be at least 6 characters"),
   phone: z.string().optional(),
-  city: z.string().optional(),
-  address: z.string().optional(),
   postal_code: z.string().optional(),
   imageUrl: z.string().optional(),
   organization_id: z.number().int().positive("Organization ID is required"),
@@ -21,7 +19,7 @@ const donorSchema = z.object({
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { name, email, password, phone, city, address, postal_code, imageUrl, organization_id } = donorSchema.parse(body);
+    const { name, email, password, phone, postal_code, imageUrl, organization_id } = donorSchema.parse(body);
 
     // Check for existing donor
     const existingDonor = await prisma.donor.findUnique({ where: { email } });
@@ -45,8 +43,8 @@ export async function POST(request) {
         email,
         password: hashedPassword,
         phone,
-        city,
-        address,
+        city: null, // No longer required
+        address: null, // No longer required
         postal_code,
         imageUrl,
         status: false,

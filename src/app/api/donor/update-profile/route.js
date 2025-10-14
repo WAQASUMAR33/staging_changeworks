@@ -5,8 +5,6 @@ import jwt from "jsonwebtoken";
 
 const updateProfileSchema = z.object({
   phone: z.string().optional(),
-  city: z.string().optional(),
-  address: z.string().optional(),
   postal_code: z.string().optional(),
   country: z.string().optional(),
   imageUrl: z.string().url("Invalid image URL").optional().or(z.literal("")),
@@ -15,7 +13,7 @@ const updateProfileSchema = z.object({
 export async function PUT(request) {
   try {
     const body = await request.json();
-    const { phone, city, address, postal_code, country, imageUrl } = updateProfileSchema.parse(body);
+    const { phone, postal_code, country, imageUrl } = updateProfileSchema.parse(body);
 
     console.log('🔍 Profile update request received');
 
@@ -51,8 +49,6 @@ export async function PUT(request) {
         name: true,
         email: true,
         phone: true,
-        city: true,
-        address: true,
         postal_code: true,
         country: true,
         imageUrl: true,
@@ -80,12 +76,6 @@ export async function PUT(request) {
     if (phone !== undefined) {
       updateData.phone = phone || null; // Allow clearing phone
     }
-    if (city !== undefined) {
-      updateData.city = city || null; // Allow clearing city
-    }
-    if (address !== undefined) {
-      updateData.address = address || null; // Allow clearing address
-    }
     if (postal_code !== undefined) {
       updateData.postal_code = postal_code || null; // Allow clearing postal_code
     }
@@ -104,7 +94,7 @@ export async function PUT(request) {
       return NextResponse.json({
         success: false,
         error: "No valid fields to update",
-        message: "Please provide at least one field to update (phone, city, address, postal_code, country, or imageUrl)"
+        message: "Please provide at least one field to update (phone, postal_code, country, or imageUrl)"
       }, { status: 400 });
     }
 
@@ -117,8 +107,6 @@ export async function PUT(request) {
         name: true,
         email: true,
         phone: true,
-        city: true,
-        address: true,
         postal_code: true,
         country: true,
         imageUrl: true,

@@ -371,70 +371,64 @@ export default function DonorDashboard() {
         })}
       </motion.div>
 
-      {/* Recent Activity */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Recent Donations</h3>
-          <div className="space-y-3 sm:space-y-4">
-            {recentActivity.length > 0 ? (
-              recentActivity.map((activity, index) => (
-                <div key={index} className="flex items-center space-x-3 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
-                  <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{activity.description}</p>
-                    <p className="text-xs text-gray-500">{activity.date}</p>
-                  </div>
-                  <div className="text-xs sm:text-sm font-semibold text-green-600 flex-shrink-0">
-                    ${activity.amount}
-                  </div>
+      {/* Quick Actions - Full Width */}
+      <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Donate Now */}
+          <motion.button 
+            onClick={handleStripePayment}
+            whileHover={{ scale: 1.05, y: -2 }}
+            whileTap={{ scale: 0.95 }}
+            className="group relative overflow-hidden bg-gradient-to-br from-blue-500 via-blue-600 to-[#0E0061] hover:from-blue-600 hover:via-blue-700 hover:to-[#0C0055] shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+          >
+            <div className="relative z-10">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                  <DollarSign className="w-6 h-6 text-white" />
                 </div>
-              ))
-            ) : (
-              <div className="text-center py-6 sm:py-8">
-                <Heart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500 text-sm sm:text-base">No recent donations found</p>
-                <p className="text-xs sm:text-sm text-gray-400">Your donation history will appear here</p>
+                <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                </div>
               </div>
-            )}
-          </div>
-        </div>
-
-        <div className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-          <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Quick Actions</h3>
-          <div className="space-y-2 sm:space-y-3">
-            <button 
-              onClick={handleStripePayment}
-              className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors duration-200 text-left"
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold text-white">Donate Now</h4>
+                <p className="text-sm text-blue-100">Make a One Time Donation</p>
+              </div>
+            </div>
+            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+          </motion.button>
+          
+          {/* Recurring Donations */}
+          {subscriptionStatus.loading ? (
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-400 rounded-xl flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
+                <p className="text-sm text-gray-500">Loading subscription status</p>
+              </div>
+            </div>
+          ) : subscriptionStatus.hasActiveSubscription ? (
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
             >
-              <div className="w-7 h-7 sm:w-8 sm:h-8 bg-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                <DollarSign className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-              </div>
-              <div className="min-w-0">
-                <p className="text-xs sm:text-sm font-medium text-gray-900">One Time Payment</p>
-                <p className="text-xs text-gray-500">Make a one-time donation</p>
-              </div>
-            </button>
-            
-            {subscriptionStatus.loading ? (
-              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-gray-50">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 animate-spin" />
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900">Checking Status...</p>
-                  <p className="text-xs text-gray-500">Loading subscription status</p>
-                </div>
-              </div>
-            ) : subscriptionStatus.hasActiveSubscription ? (
-              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 border border-green-200">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-green-900">Active Recurrent Donations</p>
-                  <p className="text-xs text-green-600">
+                <div className="space-y-2 mb-4">
+                  <h4 className="text-lg font-bold text-white">Active Recurring Donations</h4>
+                  <p className="text-sm text-green-100">
                     {subscriptionStatus.subscriptions.length > 0 
                       ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
                       : 'Recurring donations active'
@@ -443,44 +437,68 @@ export default function DonorDashboard() {
                 </div>
                 <button
                   onClick={() => window.location.href = '/donor/dashboard/subscriptions'}
-                  className="px-2 py-1 text-xs bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors duration-200"
+                  className="w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors duration-200 text-sm font-semibold"
                 >
                   Manage
                 </button>
               </div>
-            ) : (
-              <button 
-                onClick={handleStripeSubscription}
-                className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 hover:bg-green-100 transition-colors duration-200 text-left"
-              >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+            </motion.div>
+          ) : (
+            <motion.button 
+              onClick={handleStripeSubscription}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="group relative overflow-hidden bg-gradient-to-br from-green-500 via-green-600 to-emerald-700 hover:from-green-600 hover:via-green-700 hover:to-emerald-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <TrendingUp className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900">Stripe Subscription</p>
-                  <p className="text-xs text-gray-500">Set up recurring donations</p>
-                </div>
-              </button>
-            )}
-            
-            {plaidConnectionStatus.loading ? (
-              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-gray-50">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-gray-300 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Loader2 className="w-3 h-3 sm:w-4 sm:h-4 text-gray-600 animate-spin" />
-                </div>
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900">Checking Status...</p>
-                  <p className="text-xs text-gray-500">Loading Plaid connection</p>
+                <div className="space-y-2">
+                  <h4 className="text-lg font-bold text-white">Start Recurring Donations</h4>
+                  <p className="text-sm text-green-100">Set Up Recurring Donations</p>
                 </div>
               </div>
-            ) : plaidConnectionStatus.isConnected ? (
-              <div className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-green-50 border border-green-200">
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+            </motion.button>
+          )}
+          
+          {/* Start Change Donation Now */}
+          {plaidConnectionStatus.loading ? (
+            <div className="bg-gradient-to-br from-gray-100 to-gray-200 border border-gray-300 rounded-2xl p-6 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className="w-12 h-12 bg-gray-400 rounded-xl flex items-center justify-center">
+                  <Loader2 className="w-6 h-6 text-white animate-spin" />
                 </div>
-                <div className="min-w-0 flex-1">
-                  <p className="text-xs sm:text-sm font-medium text-green-900">Start Change Donation Now</p>
-                  <p className="text-xs text-green-600">
+              </div>
+              <div className="space-y-2">
+                <h4 className="text-lg font-bold text-gray-700">Checking Status...</h4>
+                <p className="text-sm text-gray-500">Loading Plaid connection</p>
+              </div>
+            </div>
+          ) : plaidConnectionStatus.isConnected ? (
+            <motion.div 
+              whileHover={{ scale: 1.05, y: -2 }}
+              className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <CheckCircle className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                  </div>
+                </div>
+                <div className="space-y-2 mb-4">
+                  <h4 className="text-lg font-bold text-white">Start Change Donation Now</h4>
+                  <p className="text-sm text-purple-100">
                     {plaidConnectionStatus.connections.length > 0 
                       ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
                       : 'Bank account connected'
@@ -489,26 +507,66 @@ export default function DonorDashboard() {
                 </div>
                 <button
                   onClick={() => setShowPlaidDisconnectModal(true)}
-                  className="px-2 py-1 text-xs bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors duration-200"
+                  className="w-full bg-red-500/80 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-red-600/80 transition-colors duration-200 text-sm font-semibold"
                 >
                   Cancel
                 </button>
               </div>
-            ) : (
-              <button 
-                onClick={handlePlaidIntegration}
-                className="w-full flex items-center space-x-3 p-2 sm:p-3 rounded-lg bg-purple-50 hover:bg-purple-100 transition-colors duration-200 text-left"
-              >
-                <div className="w-7 h-7 sm:w-8 sm:h-8 bg-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
-                  <Target className="w-3 h-3 sm:w-4 sm:h-4 text-white" />
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+            </motion.div>
+          ) : (
+            <motion.button 
+              onClick={handlePlaidIntegration}
+              whileHover={{ scale: 1.05, y: -2 }}
+              whileTap={{ scale: 0.95 }}
+              className="group relative overflow-hidden bg-gradient-to-br from-purple-500 via-purple-600 to-violet-700 hover:from-purple-600 hover:via-purple-700 hover:to-violet-800 shadow-lg hover:shadow-xl border-0 rounded-2xl p-6 transition-all duration-300 text-left"
+            >
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="w-12 h-12 bg-white/20 backdrop-blur-sm rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                    <Target className="w-6 h-6 text-white" />
+                  </div>
+                  <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                    <div className="w-3 h-3 bg-white/30 rounded-full"></div>
+                  </div>
                 </div>
-                <div className="min-w-0">
-                  <p className="text-xs sm:text-sm font-medium text-gray-900">Plaid Integration</p>
-                  <p className="text-xs text-gray-500">Connect your bank account</p>
+                <div className="space-y-2">
+                  <h4 className="text-lg font-bold text-white">Start Change Donation Now</h4>
+                  <p className="text-sm text-purple-100">Connect your bank account</p>
                 </div>
-              </button>
-            )}
-          </div>
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
+            </motion.button>
+          )}
+        </div>
+      </motion.div>
+
+      {/* Recent Activity */}
+      <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+        <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Recent Donations</h3>
+        <div className="space-y-3 sm:space-y-4">
+          {recentActivity.length > 0 ? (
+            recentActivity.map((activity, index) => (
+              <div key={index} className="flex items-center space-x-3 p-2 sm:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200">
+                <div className="w-8 h-8 sm:w-10 sm:h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                  <Heart className="w-4 h-4 sm:w-5 sm:h-5 text-green-600" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-xs sm:text-sm font-medium text-gray-900 truncate">{activity.description}</p>
+                  <p className="text-xs text-gray-500">{activity.date}</p>
+                </div>
+                <div className="text-xs sm:text-sm font-semibold text-green-600 flex-shrink-0">
+                  ${activity.amount}
+                </div>
+              </div>
+            ))
+          ) : (
+            <div className="text-center py-6 sm:py-8">
+              <Heart className="w-10 h-10 sm:w-12 sm:h-12 text-gray-300 mx-auto mb-3" />
+              <p className="text-gray-500 text-sm sm:text-base">No recent donations found</p>
+              <p className="text-xs sm:text-sm text-gray-400">Your donation history will appear here</p>
+            </div>
+          )}
         </div>
       </motion.div>
 

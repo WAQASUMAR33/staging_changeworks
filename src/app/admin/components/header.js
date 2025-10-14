@@ -41,7 +41,7 @@ export default function Header() {
 
     const handleLogout = () => {
         clearAdminAuth();
-        router.push('/login');
+        router.push('/admin/secure/admin-secure-2025-abbe1ee7-487120-2ae2f7ba/login');
     };
 
 

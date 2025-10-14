@@ -18,6 +18,8 @@ const organizationSchema = z.object({
   postalCode: z.string().optional(),
   ghlId: z.string().optional(),
   imageUrl: z.string().optional(),
+  logo: z.string().optional(), // Base64 encoded logo
+  logoUrl: z.string().optional(), // URL returned from PHP API
   // Organization Login Details (single password)
   orgPassword: z.string().min(6, "Organization password must be at least 6 characters"),
   confirmOrgPassword: z.string(),
@@ -60,7 +62,7 @@ export async function POST(req) {
         country: input.country,
         postalCode: input.postalCode,
         ghlId: input.ghlId,
-        imageUrl: input.imageUrl,
+        imageUrl: input.logoUrl || input.imageUrl, // Use logoUrl if available, fallback to imageUrl
         orgPassword: hashedOrgPassword, // Store same password in orgPassword field
       },
     });
