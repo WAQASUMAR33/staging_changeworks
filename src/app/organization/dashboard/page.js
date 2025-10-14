@@ -1,6 +1,7 @@
 'use client';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { 
   DollarSign, 
   Building2, 
@@ -13,6 +14,28 @@ import {
   Zap
 } from 'lucide-react';
 
+// Helper function to build organization logo URL
+const buildOrgLogoUrl = (imageUrl) => {
+  if (!imageUrl) return null;
+  
+  // If it's already a full URL, return as-is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    return imageUrl;
+  }
+  
+  // Use the environment variable for the base URL
+  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
+  if (!baseUrl) {
+    console.warn('NEXT_PUBLIC_IMAGE_BACK_URL is not set. Cannot build image URL.');
+    return imageUrl; // Fallback to original imageUrl if base URL is not configured
+  }
+  
+  // Ensure the base URL ends with a slash and the image URL doesn't start with one
+  const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+  const cleanedImageUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+  
+  return `${cleanedBaseUrl}${cleanedImageUrl}`;
+};
 
 const getColorClasses = (color) => {
     const colors = {
@@ -51,6 +74,7 @@ const getColorClasses = (color) => {
 export default function OrganizationDashboard() {
     const [stats, setStats] = useState([]);
     const [recentActivity, setRecentActivity] = useState([]);
+    const [organization, setOrganization] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
@@ -98,6 +122,7 @@ export default function OrganizationDashboard() {
                 
                 setStats(transformedStats);
                 setRecentActivity(data.recentActivity || []);
+                setOrganization(data.organization);
             } else {
                 setError(data.error || 'Failed to load dashboard data');
             }
@@ -149,11 +174,26 @@ export default function OrganizationDashboard() {
                     transition={{ delay: 0.1, duration: 0.6 }}
                     className="text-center"
                 >
-                    <div className="inline-flex items-center justify-center w-16 h-16 bg-[#0E0061] rounded-2xl mb-4 shadow-lg">
-                        <Building2 className="w-8 h-8 text-white" />
+                    <div className="inline-flex items-center justify-center w-20 h-20 bg-[#0E0061] rounded-2xl mb-4 shadow-lg overflow-hidden">
+                        {organization?.imageUrl ? (
+                            <Image
+                                src={buildOrgLogoUrl(organization.imageUrl)}
+                                alt={`${organization.name} logo`}
+                                width={80}
+                                height={80}
+                                className="w-full h-full object-cover"
+                                onError={(e) => {
+                                    e.target.style.display = 'none';
+                                    e.target.nextSibling.style.display = 'flex';
+                                }}
+                            />
+                        ) : null}
+                        <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center ${organization?.imageUrl ? 'hidden' : 'flex'}`}>
+                            <Building2 className="w-8 h-8 text-white" />
+                        </div>
                     </div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-3">
-                        Organization Dashboard
+                        {organization?.name || 'Organization'} Dashboard
                     </h1>
                     <p className="text-gray-600 max-w-2xl mx-auto text-lg">
                         Welcome to your ChangeWorks organization Dashboard. Manage your donors, and track donations.
@@ -161,7 +201,7 @@ export default function OrganizationDashboard() {
                 </motion.div>
 
                 {/* Modern Stats Cards */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
                     {stats.map((stat, index) => {
                         const colors = getColorClasses(stat.color);
                         return (

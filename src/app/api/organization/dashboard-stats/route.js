@@ -22,6 +22,19 @@ export async function GET(request) {
     const startOfLastMonth = new Date(today.getFullYear(), today.getMonth() - 1, 1);
     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
 
+    // Get organization data
+    const organization = await prisma.organization.findUnique({
+      where: { id: orgId },
+      select: { id: true, name: true, email: true, imageUrl: true }
+    });
+
+    if (!organization) {
+      return NextResponse.json({
+        success: false,
+        error: 'Organization not found'
+      }, { status: 404 });
+    }
+
     // Get organization-specific statistics
     const [
       totalDonors,
@@ -211,6 +224,7 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
+      organization,
       stats,
       recentActivity: formattedActivity.slice(0, 3)
     });
