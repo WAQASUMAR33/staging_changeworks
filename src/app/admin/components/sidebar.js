@@ -64,7 +64,7 @@ const Sidebar = () => {
   const handleLogout = () => {
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    router.push('/login');
+    router.push('/admin/secure-portal');
   };
 
   const togglePin = () => {
