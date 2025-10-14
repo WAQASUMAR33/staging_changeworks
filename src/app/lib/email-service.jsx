@@ -55,8 +55,9 @@ class EmailService {
   }
 
   // Send verification email to donor
-  async sendVerificationEmail({ donor, verificationToken, verificationLink }) {
-    const subject = `Verify Your Email - ChangeWorks Fund`;
+  async sendVerificationEmail({ donor, verificationToken, verificationLink, organization }) {
+    const orgName = organization?.name || 'ChangeWorks Fund';
+    const subject = `Welcome to ${orgName}'s round-up community`;
     
     const html = `
       <!DOCTYPE html>
@@ -64,7 +65,7 @@ class EmailService {
       <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>Verify Your Email - ChangeWorks Fund</title>
+        <title>Welcome to ${orgName}'s round-up community</title>
         <style>
           body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -140,6 +141,28 @@ class EmailService {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
           }
+          .features {
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 10px;
+            margin: 25px 0;
+            border-left: 4px solid #302E56;
+          }
+          .features h3 {
+            color: #302E56;
+            margin-top: 0;
+            margin-bottom: 15px;
+            font-size: 18px;
+            font-weight: 600;
+          }
+          .features ul {
+            margin: 0;
+            padding-left: 20px;
+            color: #495057;
+          }
+          .features li {
+            margin-bottom: 8px;
+          }
           .footer {
             border-top: 2px solid #e9ecef;
             padding-top: 25px;
@@ -148,18 +171,13 @@ class EmailService {
             color: #6c757d;
             font-size: 14px;
           }
-          .security-note {
-            background: linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%);
-            border: 1px solid #ffeaa7;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 25px 0;
-            border-left: 4px solid #ffc107;
+          .logo-section {
+            text-align: center;
+            margin: 30px 0;
           }
-          .security-note p {
-            margin: 0;
-            color: #856404;
-            font-weight: 500;
+          .logo-section img {
+            max-width: 200px;
+            height: auto;
           }
           .contact-info {
             background-color: #f8f9fa;
@@ -178,45 +196,57 @@ class EmailService {
             color: #495057;
             font-size: 14px;
           }
+          .ps-note {
+            background: linear-gradient(135deg, #e8f4fd 0%, #d1ecf1 100%);
+            border: 1px solid #bee5eb;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 25px 0;
+            border-left: 4px solid #302E56;
+          }
+          .ps-note p {
+            margin: 0;
+            color: #0c5460;
+            font-weight: 500;
+          }
         </style>
       </head>
       <body>
         <div class="container">
           <div class="header">
-            <h1>Verify Your Email</h1>
+            <h1>Welcome to ${orgName}'s round-up community</h1>
           </div>
           
           <div class="content">
             <p class="greeting">Hello ${donor.name},</p>
             
-            <p>Thank you for signing up with ChangeWorks Fund! To complete your registration and start making a difference, please verify your email address.</p>
+            <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
             
-            <div class="verification-box">
-              <h3>Email Verification Required</h3>
-              <p>Click the button below to verify your email address and activate your account:</p>
-              
-              <a href="${verificationLink}" class="verify-button">Verify My Email Address</a>
-              
-              <p style="margin-top: 15px; font-size: 14px; color: #666;">
-                Or copy and paste this link into your browser:<br>
-                <span style="word-break: break-all; color: #302E56;">${verificationLink}</span>
-              </p>
+            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${verificationLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+            
+            <div class="features">
+              <h3>Your Donor Portal Features:</h3>
+              <ul>
+                <li>Track your monthly round-up totals</li>
+                <li>Adjust or pause your contributions at any time</li>
+                <li>Download donation records for your own files</li>
+              </ul>
             </div>
             
-            <p>Once verified, you'll be able to:</p>
-            <ul style="color: #495057; padding-left: 20px;">
-              <li>Access your donor dashboard</li>
-              <li>Track your donations and impact</li>
-              <li>Manage your giving preferences</li>
-              <li>Receive updates about your contributions</li>
-            </ul>
+            <p>We're so glad to have you as part of our round-up community, where even pennies can create lasting change.</p>
             
-            <div class="security-note">
-              <p><strong>Security Note:</strong> This verification link will expire in 24 hours for your security. If you didn't create an account with us, please ignore this email.</p>
+            <p><strong>With gratitude,<br>${orgName} Team</strong></p>
+            
+            <div class="ps-note">
+              <p><strong>P.S.</strong> At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.</p>
             </div>
           </div>
           
           <div class="footer">
+            <div class="logo-section">
+              <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" />
+            </div>
+            
             <div class="contact-info">
               <h4>ChangeWorks Fund</h4>
               <p>Your trusted platform partner for charitable giving</p>
@@ -235,24 +265,24 @@ class EmailService {
     `;
 
     const text = `
-Verify Your Email - ChangeWorks Fund
+Welcome to ${orgName}'s round-up community
 
 Hello ${donor.name},
 
-Thank you for signing up with ChangeWorks Fund! To complete your registration and start making a difference, please verify your email address.
+Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
-Email Verification Required:
-Click the link below to verify your email address and activate your account:
+You can view your donation activity anytime through your personalized Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
 
-${verificationLink}
+- Track your monthly round-up totals
+- Adjust or pause your contributions at any time
+- Download donation records for your own files
 
-Once verified, you'll be able to:
-- Access your donor dashboard
-- Track your donations and impact
-- Manage your giving preferences
-- Receive updates about your contributions
+We're so glad to have you as part of our round-up community, where even pennies can create lasting change.
 
-Security Note: This verification link will expire in 24 hours for your security. If you didn't create an account with us, please ignore this email.
+With gratitude,
+${orgName} Team
+
+P.S. At the end of each month, we'll send you an update with your 30-day total, so you can see the difference you've made.
 
 ---
 ChangeWorks Fund
