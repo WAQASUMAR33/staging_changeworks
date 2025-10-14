@@ -127,6 +127,7 @@ export async function POST(req) {
         // Create GHL contact for the organization
         try {
           console.log('Creating GHL contact for organization:', organization.id);
+          console.log('Using GHL Location ID:', ghlLocationId);
           
           // Prepare contact data for the organization
           const contactData = {
@@ -160,20 +161,87 @@ export async function POST(req) {
             }
           };
 
-          // Create contact in GHL sub-account
-          const contactResult = await ghlClient.createContact(
+          console.log('Contact data prepared:', JSON.stringify(contactData, null, 2));
+
+          // Try creating contact using GHL client first
+          let contactResult = await ghlClient.createContact(
             ghlLocationId,
             contactData,
             process.env.GHL_AGENCY_API_KEY
           );
 
-          if (contactResult.success) {
-            console.log('GHL contact created successfully:', contactResult.contactId);
+          console.log('Contact creation result:', contactResult);
+
+          // If GHL client fails, try direct API call as fallback
+          if (!contactResult.success) {
+            console.log('GHL client failed, trying direct API call...');
+            
+            try {
+              const directApiUrl = 'https://services.leadconnectorhq.com/contacts/';
+              const directApiKey = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+              
+              console.log('Direct API URL:', directApiUrl);
+              console.log('Using API key:', directApiKey ? `${directApiKey.substring(0, 10)}...` : 'NOT SET');
+              
+              const directResponse = await fetch(directApiUrl, {
+                method: 'POST',
+                headers: {
+                  'Authorization': `Bearer ${directApiKey}`,
+                  'Content-Type': 'application/json',
+                  'Accept': 'application/json',
+                  'Version': '2021-07-28',
+                  'Location-Id': ghlLocationId
+                },
+                body: JSON.stringify({
+                  firstName: contactData.firstName,
+                  lastName: contactData.lastName,
+                  email: contactData.email,
+                  phone: contactData.phone,
+                  address: contactData.address,
+                  city: contactData.city,
+                  state: contactData.state,
+                  country: contactData.country,
+                  postalCode: contactData.postalCode,
+                  source: contactData.source,
+                  tags: contactData.tags,
+                  customFields: contactData.customFields
+                })
+              });
+
+              console.log('Direct API response status:', directResponse.status);
+              const directData = await directResponse.json();
+              console.log('Direct API response data:', directData);
+
+              if (directResponse.ok) {
+                contactResult = {
+                  success: true,
+                  contactId: directData.id || directData.contactId,
+                  data: directData
+                };
+                console.log('✅ GHL contact created successfully via direct API:', contactResult.contactId);
+              } else {
+                console.error('❌ Direct API contact creation failed:', directData);
+                contactResult = {
+                  success: false,
+                  error: directData.message || 'Direct API call failed',
+                  details: directData,
+                  statusCode: directResponse.status
+                };
+              }
+            } catch (directError) {
+              console.error('❌ Direct API contact creation error:', directError);
+              contactResult = {
+                success: false,
+                error: directError.message,
+                details: directError
+              };
+            }
           } else {
-            console.error('GHL contact creation failed:', contactResult.error);
+            console.log('✅ GHL contact created successfully via client:', contactResult.contactId);
           }
         } catch (contactError) {
-          console.error('GHL contact creation error:', contactError);
+          console.error('❌ GHL contact creation error:', contactError);
+          console.error('Contact error stack:', contactError.stack);
           // Don't fail the entire signup if contact creation fails
         }
       } else {
