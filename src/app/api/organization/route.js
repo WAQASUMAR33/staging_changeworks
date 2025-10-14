@@ -72,7 +72,7 @@ export async function POST(req) {
 
     // Automatically create GHL account using organization information
     try {
-      const ghlClient = new GHLClient();
+      const ghlClient = new GHLClient(process.env.GHL_AGENCY_API_KEY);
       
       const ghlData = {
         businessName: input.name, // Use organization name as business name
@@ -87,7 +87,7 @@ export async function POST(req) {
         postalCode: input.postalCode || '',
         website: input.website || '',
         timezone: 'Europe/London', // Default timezone
-        companyId: process.env.GHL_COMPANY_ID
+        companyId: 'HegBO6PzXMfyDn0yFiFn' // Use the provided GHL ID
       };
 
       console.log('Creating GHL account for organization:', organization.id);
@@ -123,6 +123,59 @@ export async function POST(req) {
         });
 
         console.log('GHL account created successfully:', ghlLocationId);
+
+        // Create GHL contact for the organization
+        try {
+          console.log('Creating GHL contact for organization:', organization.id);
+          
+          // Prepare contact data for the organization
+          const contactData = {
+            firstName: input.name.split(' ')[0] || input.name,
+            lastName: input.name.split(' ').slice(1).join(' ') || 'Organization',
+            email: input.email,
+            phone: input.phone || '',
+            address: input.address || '',
+            city: input.city || '',
+            state: input.state || '',
+            country: input.country || 'GB',
+            postalCode: input.postalCode || '',
+            source: 'ChangeWorks',
+            tags: ['ChangeWorks', 'Organization', 'Admin'],
+            customFields: {
+              organization_id: organization.id,
+              organization_name: input.name,
+              organization_email: input.email,
+              organization_phone: input.phone || '',
+              organization_website: input.website || '',
+              organization_address: input.address || '',
+              organization_city: input.city || '',
+              organization_state: input.state || '',
+              organization_country: input.country || 'GB',
+              organization_postal_code: input.postalCode || '',
+              ghl_location_id: ghlLocationId,
+              created_via: 'ChangeWorks Organization Registration',
+              created_at: new Date().toISOString(),
+              organization_status: 'Active',
+              registration_source: 'Web Signup'
+            }
+          };
+
+          // Create contact in GHL sub-account
+          const contactResult = await ghlClient.createContact(
+            ghlLocationId,
+            contactData,
+            process.env.GHL_AGENCY_API_KEY
+          );
+
+          if (contactResult.success) {
+            console.log('GHL contact created successfully:', contactResult.contactId);
+          } else {
+            console.error('GHL contact creation failed:', contactResult.error);
+          }
+        } catch (contactError) {
+          console.error('GHL contact creation error:', contactError);
+          // Don't fail the entire signup if contact creation fails
+        }
       } else {
         console.error('GHL account creation failed:', ghlResult.error);
       }
