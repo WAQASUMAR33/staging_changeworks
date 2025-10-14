@@ -1,6 +1,7 @@
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, Shield, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -16,7 +17,7 @@ export default function SecureAdminLoginPage() {
   const [tokenError, setTokenError] = useState('');
 
   // Valid security tokens (you can add more or generate dynamically)
-  const validTokens = [
+  const validTokens = useMemo(() => [
     'admin-secure-2025-abbe1ee7-487120-2ae2f7ba',
     'admin-secure-2025-1a34c3c2-48e421-8c696bd8',
     'admin-secure-2025-22602e53-f17f33-efad94fd',
@@ -26,7 +27,7 @@ export default function SecureAdminLoginPage() {
     'secure-portal-2025-z1x3c5v7b',
     'admin-access-n8m7k6j5h4',
     'secure-login-2025-p9o8i7u6y'
-  ];
+  ], []);
 
   // Check if token is valid
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function SecureAdminLoginPage() {
     } else {
       setTokenError('Unauthorized access token');
     }
-  }, [params.token]);
+  }, [params.token, validTokens]);
 
   // Check if already logged in as admin
   useEffect(() => {
@@ -159,12 +160,12 @@ export default function SecureAdminLoginPage() {
                 Please contact your system administrator for the correct URL.
               </p>
             </div>
-            <a
+            <Link
               href="/"
               className="text-sm text-white/70 hover:text-white transition-colors inline-flex items-center gap-1"
             >
               ← Back to main site
-            </a>
+            </Link>
           </motion.div>
         </div>
       </div>
@@ -320,12 +321,12 @@ export default function SecureAdminLoginPage() {
 
           {/* Back to Home Link */}
           <div className="mt-6 text-center">
-            <a
+            <Link
               href="/"
               className="text-sm text-white/70 hover:text-white transition-colors inline-flex items-center gap-1"
             >
               ← Back to main site
-            </a>
+            </Link>
           </div>
         </div>
 

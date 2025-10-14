@@ -5,6 +5,7 @@ import { usePlaidLink } from 'react-plaid-link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Target, X, Loader2, CheckCircle, AlertCircle, Building2, Search, Heart, ArrowLeft, ArrowRight } from 'lucide-react';
 import { buildOrgLogoUrl } from '@/lib/image-utils';
+import Image from 'next/image';
 
 const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
   const [loading, setLoading] = useState(false);
@@ -545,9 +546,11 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                               <div className="flex items-center space-x-3">
                                 <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
                                   {org.imageUrl ? (
-                                    <img 
+                                    <Image 
                                       src={buildOrgLogoUrl(org.imageUrl)} 
                                       alt={`${org.name} logo`}
+                                      width={40}
+                                      height={40}
                                       className="w-full h-full object-cover"
                                       onError={(e) => {
                                         e.target.style.display = 'none';

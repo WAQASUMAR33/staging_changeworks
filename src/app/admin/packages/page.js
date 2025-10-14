@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import {
   Plus,
@@ -56,7 +56,7 @@ const PackagesPage = () => {
   };
 
   // Fetch packages
-  const fetchPackages = async () => {
+  const fetchPackages = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams();
@@ -77,11 +77,11 @@ const PackagesPage = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [searchTerm, categoryFilter, statusFilter]);
 
   useEffect(() => {
     fetchPackages();
-  }, [searchTerm, categoryFilter, statusFilter]);
+  }, [searchTerm, categoryFilter, statusFilter, fetchPackages]);
 
   // Create package
   const handleCreatePackage = async (e) => {

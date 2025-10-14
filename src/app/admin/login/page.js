@@ -1,6 +1,7 @@
 'use client';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -248,12 +249,12 @@ export default function AdminLoginPage() {
 
           {/* Back to Home Link */}
           <div className="mt-6 text-center">
-            <a
+            <Link
               href="/"
               className="text-sm text-white/70 hover:text-white transition-colors inline-flex items-center gap-1"
             >
               ← Back to main site
-            </a>
+            </Link>
           </div>
         </div>
 

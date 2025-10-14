@@ -1,6 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import Image from 'next/image';
 import {
   Box,
   TextField,
@@ -106,7 +107,7 @@ export default function OrganizationManagementPage() {
   // Fetch organizations on mount and when page/rowsPerPage change
   useEffect(() => {
     fetchOrganizations();
-  }, [page, rowsPerPage]);
+  }, [page, rowsPerPage, fetchOrganizations]);
 
   // Apply filters
   useEffect(() => {
@@ -120,7 +121,7 @@ export default function OrganizationManagementPage() {
     setFilteredOrganizations(filtered);
   }, [organizations, filterName, filterEmail, filterCity, filterStatus]);
 
-  const fetchOrganizations = async () => {
+  const fetchOrganizations = useCallback(async () => {
     try {
       const response = await fetch(`/api/organization?page=${page + 1}&limit=${rowsPerPage}`);
       const data = await response.json();
@@ -142,7 +143,7 @@ export default function OrganizationManagementPage() {
       setLoading(false);
       console.error('Fetch error:', err);
     }
-  };
+  }, [page, rowsPerPage]);
 
   const handleModalOpen = (mode, org = null) => {
     setModalMode(mode);
@@ -481,9 +482,11 @@ export default function OrganizationManagementPage() {
                       <td className="px-6 py-4">
                         <div className="flex items-center">
                           {org.imageUrl && (
-                            <img
+                            <Image
                               src={org.imageUrl}
                               alt={org.name}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 rounded-lg object-cover mr-3"
                               onError={(e) => {
                                 e.target.style.display = 'none';
@@ -524,9 +527,11 @@ export default function OrganizationManagementPage() {
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
                           {org.imageUrl ? (
-                            <img
+                            <Image
                               src={org.imageUrl}
                               alt={org.name}
+                              width={40}
+                              height={40}
                               className="w-10 h-10 rounded-lg object-cover"
                               onError={(e) => {
                                 e.target.style.display = 'none';
@@ -784,9 +789,11 @@ export default function OrganizationManagementPage() {
                   {(imagePreview || formData.imageUrl) && (
                     <Box sx={{ mt: 2 }}>
                       <span className="text-sm text-gray-500">Image Preview:</span>
-                      <img
+                      <Image
                         src={imagePreview || formData.imageUrl}
                         alt="Organization preview"
+                        width={80}
+                        height={80}
                         className="h-20 w-20 object-cover rounded-lg mt-2"
                       />
                     </Box>

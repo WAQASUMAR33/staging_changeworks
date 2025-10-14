@@ -169,7 +169,7 @@ export default function UserManagementPage() {
     }, 300);
     
     setSearchTimeout(timeout);
-  }, [users, filterNameEmail, filterRole]);
+  }, [users, filterNameEmail, filterRole, searchTimeout]);
 
   // Calculate summary stats
   const totalUsers = users.length;
