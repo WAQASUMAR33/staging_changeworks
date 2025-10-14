@@ -35,8 +35,8 @@ export default function AdminLayout({ children }) {
       }
     }
     
-    // If no valid admin access, redirect to secure token-based admin login
-    window.location.replace('/admin/secure/admin-secure-2025-abbe1ee7-487120-2ae2f7ba/login');
+    // If no valid admin access, redirect to admin login
+    window.location.replace('/admin/login');
   }, []);
 
   // If not admin, don't render anything (redirect will happen)
