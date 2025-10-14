@@ -129,8 +129,33 @@ export default function OrganizationManagementPage() {
 
   // Fetch organizations on mount and when page/rowsPerPage change
   useEffect(() => {
+    const fetchOrganizations = async () => {
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/admin/organizations?page=${page + 1}&limit=${rowsPerPage}`);
+        const data = await response.json();
+        console.log('API Response:', data);
+        if (!response.ok) {
+          throw new Error(data.error || `HTTP ${response.status}: Failed to fetch organizations`);
+        }
+        if (!data.success || !Array.isArray(data.organizations)) {
+          console.error('Unexpected response format:', data);
+          throw new Error('Expected organizations data to be an array');
+        }
+        setOrganizations(data.organizations);
+        setTotalCount(data.totalCount || 0);
+        setLoading(false);
+      } catch (err) {
+        setError(`Failed to load organizations: ${err.message}`);
+        setOrganizations([]);
+        setTotalCount(0);
+        setLoading(false);
+        console.error('Fetch error:', err);
+      }
+    };
+
     fetchOrganizations();
-  }, [page, rowsPerPage, fetchOrganizations]);
+  }, [page, rowsPerPage]);
 
   // Apply filters
   useEffect(() => {
@@ -143,30 +168,6 @@ export default function OrganizationManagementPage() {
     });
     setFilteredOrganizations(filtered);
   }, [organizations, filterName, filterEmail, filterCity, filterStatus]);
-
-  const fetchOrganizations = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/admin/organizations?page=${page + 1}&limit=${rowsPerPage}`);
-      const data = await response.json();
-      console.log('API Response:', data);
-      if (!response.ok) {
-        throw new Error(data.error || `HTTP ${response.status}: Failed to fetch organizations`);
-      }
-      if (!data.success || !Array.isArray(data.organizations)) {
-        console.error('Unexpected response format:', data);
-        throw new Error('Expected organizations data to be an array');
-      }
-      setOrganizations(data.organizations);
-      setTotalCount(data.totalCount || 0);
-      setLoading(false);
-    } catch (err) {
-      setError(`Failed to load organizations: ${err.message}`);
-      setOrganizations([]);
-      setTotalCount(0);
-      setLoading(false);
-      console.error('Fetch error:', err);
-    }
-  }, [page, rowsPerPage]);
 
   const handleModalOpen = (mode, org = null) => {
     setModalMode(mode);
@@ -320,7 +321,7 @@ export default function OrganizationManagementPage() {
       if (!response.ok) throw new Error(data.error || `HTTP ${response.status}: Operation failed`);
 
       setPage(0);
-      await fetchOrganizations();
+      // Refresh organizations by triggering useEffect
       handleModalClose();
     } catch (err) {
       setError(`Operation failed: ${err.message}`);
