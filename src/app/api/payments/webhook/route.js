@@ -56,6 +56,9 @@ export async function POST(request) {
     }
 
     // Handle the event
+    console.log(`🔍 Webhook received: ${event.type}`);
+    console.log(`🔍 Event ID: ${event.id}`);
+    
     switch (event.type) {
       case 'payment_intent.succeeded':
         await handlePaymentIntentSucceeded(event.data.object);
@@ -255,7 +258,8 @@ async function handlePaymentIntentProcessing(paymentIntent) {
 // Subscription event handlers
 async function handleSubscriptionCreated(subscription) {
   try {
-    console.log('Subscription created:', subscription.id);
+    console.log('🔍 Subscription created webhook:', subscription.id);
+    console.log('🔍 Subscription metadata:', subscription.metadata);
 
     const donorId = parseInt(subscription.metadata.donor_id);
     const organizationId = parseInt(subscription.metadata.organization_id);

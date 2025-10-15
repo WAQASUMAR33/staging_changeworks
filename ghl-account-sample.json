@@ -1,0 +1,17 @@
+{
+  "name": "Sample Organization",
+  "phone": "1234567890",
+  "companyId": "HegBO6PzXMfyDn0yFiFn",
+  "address": "123 Main Street",
+  "city": "New York",
+  "state": "NY",
+  "country": "US",
+  "postalCode": "10001",
+  "website": "https://sample-org.com",
+  "timezone": "America/New_York",
+  "prospectInfo": {
+    "firstName": "John",
+    "lastName": "Doe",
+    "email": "john.doe@sample-org.com"
+  }
+}

@@ -3,23 +3,75 @@ import axios from 'axios';
 class GHLClient {
   constructor(customToken) {
     // Use the correct GHL API endpoint from documentation
-    const baseURL = process.env.GHL_BASE_URL || 'https://services.leadconnectorhq.com';
+    const baseURL = process.env.GHL_BASE_URL || 'https://rest.gohighlevel.com/v1';
+    
+    // Validate that customToken is provided
+    if (!customToken) {
+      console.error('❌ GHL Client Error: customToken is required but not provided');
+      throw new Error('GHL Client requires a customToken parameter');
+    }
+
+    // Validate API key format
+    if (customToken.length < 200) {
+      console.warn('⚠️ GHL API key seems short. Agency API keys are typically 250+ characters.');
+    }
+
+    console.log('✅ GHL Client initialized with custom token');
     
     this.client = axios.create({
       baseURL: baseURL,
       headers: {
-        'Authorization': `Bearer ${customToken || process.env.GHL_API_KEY}`,
+        'Authorization': `Bearer ${customToken}`,
         'Content-Type': 'application/json',
         'Accept': 'application/json',
         'Version': '2021-07-28'
       }
     });
+  }
 
-    // Validate API key
-    if (!(customToken || process.env.GHL_API_KEY)) {
-      console.error('GHL_API_KEY is not set in environment variables');
-    } else if ((customToken || process.env.GHL_API_KEY).length < 200) {
-      console.warn('GHL API key seems short. Agency API keys are typically 250+ characters. You may need an Agency API key to create sub-accounts.');
+  async generateLocationToken(locationId) {
+    try {
+      console.log('=== GENERATING LOCATION TOKEN ===');
+      console.log('Location ID:', locationId);
+      
+      const tokenEndpoint = 'https://services.leadconnectorhq.com/oauth/locationToken';
+      const agencyToken = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+      
+      console.log('Token Endpoint:', tokenEndpoint);
+      console.log('Using Agency Token:', agencyToken ? `${agencyToken.substring(0, 20)}...` : 'NOT SET');
+      
+      const response = await axios.post(tokenEndpoint, {
+        locationId: locationId
+      }, {
+        headers: {
+          'Authorization': `Bearer ${agencyToken}`,
+          'Content-Type': 'application/json',
+          'Version': '2021-07-28'
+        },
+        timeout: 30000
+      });
+
+      console.log('=== LOCATION TOKEN SUCCESS ===');
+      console.log('Status:', response.status);
+      console.log('Token:', response.data.access_token ? `${response.data.access_token.substring(0, 20)}...` : 'NOT FOUND');
+      
+      return {
+        success: true,
+        accessToken: response.data.access_token,
+        data: response.data
+      };
+    } catch (error) {
+      console.error('=== LOCATION TOKEN ERROR ===');
+      console.error('Error Message:', error.message);
+      console.error('Status:', error.response?.status);
+      console.error('Error Data:', JSON.stringify(error.response?.data, null, 2));
+      
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        statusCode: error.response?.status || 500,
+        details: error.response?.data || null
+      };
     }
   }
 
@@ -28,6 +80,7 @@ class GHLClient {
       // Build request data according to GHL API documentation
       const requestData = {
         name: data.businessName,
+        businessName : data.businessName,
         phone: data.phone || '',
         companyId: data.companyId || process.env.GHL_COMPANY_ID, // REQUIRED field
         address: data.address || '',
@@ -50,11 +103,12 @@ class GHLClient {
       };
 
       console.log('=== GHL API REQUEST ===');
-      console.log('URL:', `${this.client.defaults.baseURL}/locations/`);
+      const subAccountApiUrl = process.env.GHL_SUB_ACCOUNT_CREATION_API_URL || 'https://rest.gohighlevel.com/v1/locations/';
+      console.log('Sub-Account Creation API URL:', subAccountApiUrl);
       console.log('Headers:', this.client.defaults.headers);
       console.log('Request Data:', JSON.stringify(requestData, null, 2));
 
-      const response = await this.client.post('/locations/', requestData);
+      const response = await this.client.post(subAccountApiUrl, requestData);
 
       console.log('=== GHL API SUCCESS RESPONSE ===');
       console.log('Status:', response.status);
@@ -96,7 +150,8 @@ class GHLClient {
 
   async getSubAccount(locationId) {
     try {
-      const response = await this.client.get(`/locations/${locationId}`);
+      const locationsEndpoint = process.env.GHL_LOCATIONS_ENDPOINT || '/v1/locations/';
+      const response = await this.client.get(`${locationsEndpoint}${locationId}`);
       return {
         success: true,
         data: response.data
@@ -112,7 +167,8 @@ class GHLClient {
 
   async updateSubAccount(locationId, data) {
     try {
-      const response = await this.client.put(`/locations/${locationId}`, data);
+      const locationsEndpoint = process.env.GHL_LOCATIONS_ENDPOINT || '/v1/locations/';
+      const response = await this.client.put(`${locationsEndpoint}${locationId}`, data);
       return {
         success: true,
         data: response.data
@@ -128,7 +184,8 @@ class GHLClient {
 
   async deleteSubAccount(locationId) {
     try {
-      const response = await this.client.delete(`/locations/${locationId}`);
+      const locationsEndpoint = process.env.GHL_LOCATIONS_ENDPOINT || '/v1/locations/';
+      const response = await this.client.delete(`${locationsEndpoint}${locationId}`);
       return {
         success: true,
         data: response.data
@@ -144,7 +201,9 @@ class GHLClient {
 
   async createContact(locationId, contactData, overrideToken) {
     try {
-      // Build request data according to GHL API documentation
+      // Use the sub-account API key directly (no need for location token generation)
+      console.log('=== CREATING CONTACT WITH SUB-ACCOUNT API KEY ===');
+      
       const requestData = {
         firstName: contactData.firstName,
         lastName: contactData.lastName,
@@ -160,17 +219,38 @@ class GHLClient {
         ...(contactData.source && { source: contactData.source })
       };
 
-      console.log('=== GHL CONTACT API REQUEST ===');
-      console.log('URL:', `${this.client.defaults.baseURL}/contacts/`);
+      const contactsApiUrl = process.env.GHL_CONTACT_CREATE_API_URL || 'https://rest.gohighlevel.com/v1/contacts/';
+      const apiKey = overrideToken || this.client.defaults.headers.Authorization?.replace('Bearer ', '');
+      
+      if (!apiKey) {
+        console.error('❌ GHL Contact Creation Error: No API key available');
+        throw new Error('GHL Contact creation requires a valid API key');
+      }
+      
+      console.log('Contact API URL:', contactsApiUrl);
       console.log('Location ID:', locationId);
+      console.log('API Key:', apiKey ? `${apiKey.substring(0, 20)}...` : 'NOT FOUND');
       console.log('Request Data:', JSON.stringify(requestData, null, 2));
 
-      const response = await this.client.post('/contacts/', requestData, {
-        headers: {
-          ...this.client.defaults.headers,
-          ...(overrideToken ? { 'Authorization': `Bearer ${overrideToken}` } : {}),
-          'Location-Id': locationId
-        }
+      // Prepare headers with all required fields
+      const headers = {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        'Version': '2021-07-28',
+        'Authorization': `Bearer ${apiKey}`,
+        'Location-Id': locationId
+      };
+
+      console.log('=== REQUEST HEADERS ===');
+      console.log('Content-Type:', headers['Content-Type']);
+      console.log('Accept:', headers['Accept']);
+      console.log('Version:', headers['Version']);
+      console.log('Authorization:', headers['Authorization'].substring(0, 30) + '...');
+      console.log('Location-Id:', headers['Location-Id']);
+      console.log('=======================');
+
+      const response = await this.client.post(contactsApiUrl, requestData, {
+        headers: headers
       });
 
       console.log('=== GHL CONTACT API SUCCESS RESPONSE ===');
@@ -180,7 +260,7 @@ class GHLClient {
       return {
         success: true,
         data: response.data,
-        contactId: response.data.id || response.data.contactId
+        contactId: response.data.contact?.id || response.data.id || response.data.contactId
       };
     } catch (error) {
       console.error('=== GHL CONTACT API ERROR RESPONSE ===');

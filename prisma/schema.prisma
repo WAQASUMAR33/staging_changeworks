@@ -65,6 +65,7 @@ model Organization {
   country       String?            @db.VarChar(100)
   postalCode    String?            @db.VarChar(20)
   ghlId         String?            @db.VarChar(100)
+  ghlApiKey     String?            @db.Text
   balance       Float              @default(0)
   status        Boolean            @default(true)
   created_at    DateTime           @default(now())

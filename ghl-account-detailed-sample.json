@@ -1,0 +1,46 @@
+{
+  "name": "ChangeWorks Foundation",
+  "phone": "+1-555-123-4567",
+  "companyId": "HegBO6PzXMfyDn0yFiFn",
+  "address": "456 Charity Lane",
+  "city": "San Francisco",
+  "state": "CA",
+  "country": "US",
+  "postalCode": "94105",
+  "website": "https://changeworksfoundation.org",
+  "timezone": "America/Los_Angeles",
+  "prospectInfo": {
+    "firstName": "Sarah",
+    "lastName": "Johnson",
+    "email": "sarah.johnson@changeworksfoundation.org",
+    "phone": "+1-555-123-4567",
+    "address": "456 Charity Lane",
+    "city": "San Francisco",
+    "state": "CA",
+    "country": "US",
+    "postalCode": "94105",
+    "website": "https://changeworksfoundation.org",
+    "tags": ["Non-Profit", "Charity", "Foundation"],
+    "customFields": {
+      "organization_type": "Non-Profit",
+      "tax_id": "12-3456789",
+      "founded_year": "2020",
+      "mission": "Empowering communities through technology",
+      "focus_areas": ["Education", "Healthcare", "Environment"]
+    }
+  },
+  "settings": {
+    "currency": "USD",
+    "dateFormat": "MM/DD/YYYY",
+    "timeFormat": "12",
+    "weekStart": "Monday"
+  },
+  "features": {
+    "sms": true,
+    "email": true,
+    "calls": true,
+    "calendar": true,
+    "pipelines": true,
+    "automations": true
+  }
+}

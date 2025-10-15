@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
-import nodemailer from "nodemailer";
 import crypto from "crypto";
+import emailService from "../../../lib/email-service";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -65,45 +65,24 @@ export async function POST(request) {
     let emailError = null;
 
     try {
-      // Check if email server is configured
-      if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const transport = nodemailer.createTransport({
-          host: process.env.EMAIL_SERVER_HOST,
-          port: Number(process.env.EMAIL_SERVER_PORT),
-          auth: {
-            user: process.env.EMAIL_SERVER_USER,
-            pass: process.env.EMAIL_SERVER_PASSWORD,
-          },
-        });
+      const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`;
 
-        const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`;
+      const emailResult = await emailService.sendPasswordResetEmail({
+        donor: {
+          name: donor.name,
+          email: donor.email
+        },
+        resetToken,
+        resetLink: resetUrl,
+        organization: donor.organization
+      });
 
-        await transport.sendMail({
-          to: email,
-          from: process.env.EMAIL_FROM,
-          subject: "Reset Your Donor Account Password",
-          text: `Hello ${donor.name},\n\nYou requested a password reset for your donor account with ${donor.organization.name}.\n\nClick the link below to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nChangeWorks Team`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #302E56;">Password Reset Request</h2>
-              <p>Hello ${donor.name},</p>
-              <p>You requested a password reset for your donor account with <strong>${donor.organization.name}</strong>.</p>
-              <p>Click the button below to reset your password:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetUrl}" style="background-color: #302E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
-              </div>
-              <p><strong>This link will expire in 1 hour.</strong></p>
-              <p>If you didn't request this password reset, please ignore this email.</p>
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;">
-              <p style="color: #666; font-size: 14px;">Best regards,<br>ChangeWorks Team</p>
-            </div>
-          `,
-        });
-
+      if (emailResult.success) {
         emailSent = true;
         console.log('✅ Password reset email sent successfully');
       } else {
-        console.log('⚠️ Email server not configured, skipping email');
+        emailError = emailResult.error || 'Failed to send password reset email';
+        console.error('❌ Password reset email sending failed:', emailError);
       }
     } catch (emailErr) {
       emailError = emailErr.message;

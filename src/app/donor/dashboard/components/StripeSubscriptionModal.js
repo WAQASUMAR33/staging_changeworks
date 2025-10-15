@@ -87,12 +87,19 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
 
       const data = await response.json();
       
+      console.log('🔍 Stripe Subscription Response:', data);
+      
       if (data.success) {
-        setSubscriptionStatus('success');
-        // Redirect to Stripe checkout
+        console.log('✅ Subscription creation successful');
+        console.log('🔍 Checkout URL:', data.checkout_url);
+        
+        // Directly redirect to Stripe checkout without showing success message
         if (data.checkout_url) {
+          console.log('🔄 Redirecting to Stripe checkout...');
           // Open checkout in same window to handle success callback
           window.location.href = data.checkout_url;
+        } else {
+          console.log('❌ No checkout URL received');
         }
         // Don't close modal immediately - let the redirect handle it
       } else {
@@ -109,6 +116,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
   useEffect(() => {
     if (isOpen) {
       setCurrentStep(1); // Reset to disclaimer step
+      setSubscriptionStatus(''); // Reset subscription status
       fetchProducts();
     }
   }, [isOpen]);
@@ -249,14 +257,6 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
                         Try Again
                       </button>
                     </div>
-                  ) : subscriptionStatus === 'success' ? (
-                    <div className="text-center py-12">
-                      <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-                      <h3 className="text-xl font-semibold text-black mb-2">Recurring Donation Created!</h3>
-                      <p className="text-black mb-4">
-                        You will be redirected to complete your recurring donation setup.
-                      </p>
-                    </div>
                   ) : (
                     <div className="space-y-4">
                       <div className="text-center mb-6">
@@ -357,7 +357,7 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
               </>
             ) : (
               <>
-                {!loading && !error && subscriptionStatus !== 'success' && products.length > 0 && (
+                {!loading && !error && products.length > 0 && (
                   <>
                     <div className="text-sm text-black">
                       {selectedProduct ? (

@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GHL API Key Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #302E56;
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+            color: #333;
+        }
+        input, textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #ddd;
+            border-radius: 5px;
+            font-size: 14px;
+            box-sizing: border-box;
+        }
+        textarea {
+            height: 100px;
+            resize: vertical;
+        }
+        button {
+            background: linear-gradient(135deg, #302E56 0%, #0E0061 100%);
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: linear-gradient(135deg, #0E0061 0%, #302E56 100%);
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 5px;
+            display: none;
+        }
+        .success {
+            background-color: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background-color: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .info {
+            background-color: #d1ecf1;
+            border: 1px solid #bee5eb;
+            color: #0c5460;
+        }
+        .loading {
+            text-align: center;
+            color: #666;
+        }
+        .key-info {
+            background-color: #e2e3e5;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔑 GHL API Key Test</h1>
+        
+        <div class="key-info">
+            <strong>Key Types:</strong><br>
+            • <strong>Personal Access Token:</strong> ~50 chars, pit-xxxxxxxx format, cannot create sub-accounts<br>
+            • <strong>Location API Key:</strong> ~200-300 chars, JWT format, cannot create sub-accounts<br>
+            • <strong>Agency API Key:</strong> 250+ chars, JWT format, CAN create sub-accounts
+        </div>
+
+        <form id="testForm">
+            <div class="form-group">
+                <label for="apiKey">GHL API Key:</label>
+                <textarea id="apiKey" placeholder="Paste your GHL API key here..." required></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="businessName">Business Name:</label>
+                <input type="text" id="businessName" value="Test Organization" required>
+            </div>
+
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" value="test@example.com" required>
+            </div>
+
+            <div class="form-group">
+                <label for="phone">Phone:</label>
+                <input type="text" id="phone" value="1234567890">
+            </div>
+
+            <div class="form-group">
+                <label for="address">Address:</label>
+                <input type="text" id="address" value="123 Test Street">
+            </div>
+
+            <div class="form-group">
+                <label for="city">City:</label>
+                <input type="text" id="city" value="Test City">
+            </div>
+
+            <div class="form-group">
+                <label for="state">State:</label>
+                <input type="text" id="state" value="Test State">
+            </div>
+
+            <div class="form-group">
+                <label for="country">Country:</label>
+                <input type="text" id="country" value="US">
+            </div>
+
+            <div class="form-group">
+                <label for="postalCode">Postal Code:</label>
+                <input type="text" id="postalCode" value="12345">
+            </div>
+
+            <div class="form-group">
+                <label for="website">Website:</label>
+                <input type="url" id="website" value="https://test.com">
+            </div>
+
+            <button type="submit" id="testBtn">Test GHL API Key</button>
+        </form>
+
+        <div id="result" class="result"></div>
+    </div>
+
+    <script>
+        document.getElementById('testForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const testBtn = document.getElementById('testBtn');
+            const resultDiv = document.getElementById('result');
+            
+            // Get form data
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const testData = {
+                businessName: document.getElementById('businessName').value,
+                firstName: document.getElementById('businessName').value.split(' ')[0] || 'Test',
+                lastName: document.getElementById('businessName').value.split(' ').slice(1).join(' ') || 'Organization',
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                address: document.getElementById('address').value,
+                city: document.getElementById('city').value,
+                state: document.getElementById('state').value,
+                country: document.getElementById('country').value,
+                postalCode: document.getElementById('postalCode').value,
+                website: document.getElementById('website').value,
+                timezone: 'America/New_York',
+                companyId: 'HegBO6PzXMfyDn0yFiFn'
+            };
+
+            // Show loading
+            testBtn.disabled = true;
+            testBtn.textContent = 'Testing...';
+            resultDiv.style.display = 'block';
+            resultDiv.className = 'result info';
+            resultDiv.innerHTML = '<div class="loading">🔄 Testing GHL API key...</div>';
+
+            try {
+                const response = await fetch('/api/test-ghl', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        apiKey: apiKey,
+                        testData: testData
+                    })
+                });
+
+                const data = await response.json();
+
+                if (data.success) {
+                    resultDiv.className = 'result success';
+                    resultDiv.innerHTML = `
+                        <h3>✅ Success!</h3>
+                        <p><strong>Message:</strong> ${data.message}</p>
+                        <p><strong>Location ID:</strong> ${data.data.locationId}</p>
+                        <p><strong>Key Length:</strong> ${data.data.keyLength} characters</p>
+                        <p><strong>Key Type:</strong> ${data.data.keyType}</p>
+                        <p>Your API key is valid and can create GHL sub-accounts!</p>
+                    `;
+                } else {
+                    resultDiv.className = 'result error';
+                    resultDiv.innerHTML = `
+                        <h3>❌ Test Failed</h3>
+                        <p><strong>Error:</strong> ${data.error}</p>
+                        <p><strong>Details:</strong> ${data.details}</p>
+                        <p><strong>Status Code:</strong> ${data.statusCode}</p>
+                        <p><strong>Key Length:</strong> ${data.keyLength} characters</p>
+                        <p><strong>Key Type:</strong> ${data.keyType}</p>
+                        ${data.troubleshooting ? `
+                            <h4>Troubleshooting:</h4>
+                            <ul>
+                                ${Object.entries(data.troubleshooting).map(([key, value]) => 
+                                    `<li><strong>${key}:</strong> ${value}</li>`
+                                ).join('')}
+                            </ul>
+                        ` : ''}
+                    `;
+                }
+            } catch (error) {
+                resultDiv.className = 'result error';
+                resultDiv.innerHTML = `
+                    <h3>❌ Network Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                    <p>Please check your connection and try again.</p>
+                `;
+            } finally {
+                testBtn.disabled = false;
+                testBtn.textContent = 'Test GHL API Key';
+            }
+        });
+
+        // Auto-detect key type
+        document.getElementById('apiKey').addEventListener('input', function() {
+            const key = this.value.trim();
+            const keyInfo = document.querySelector('.key-info');
+            
+            if (key.length > 0) {
+                let keyType = 'Unknown';
+                if (key.startsWith('pit-') && key.length < 100) {
+                    keyType = 'Personal Access Token (cannot create sub-accounts)';
+                } else if (key.length > 200 && key.length < 300) {
+                    keyType = 'Location API Key (cannot create sub-accounts)';
+                } else if (key.length >= 300) {
+                    keyType = 'Agency API Key (can create sub-accounts)';
+                }
+                
+                keyInfo.innerHTML = `
+                    <strong>Key Types:</strong><br>
+                    • <strong>Personal Access Token:</strong> ~50 chars, pit-xxxxxxxx format, cannot create sub-accounts<br>
+                    • <strong>Location API Key:</strong> ~200-300 chars, JWT format, cannot create sub-accounts<br>
+                    • <strong>Agency API Key:</strong> 250+ chars, JWT format, CAN create sub-accounts<br><br>
+                    <strong>Your Key:</strong> ${key.length} characters - ${keyType}
+                `;
+            }
+        });
+    </script>
+</body>
+</html>

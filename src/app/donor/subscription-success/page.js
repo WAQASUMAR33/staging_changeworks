@@ -17,6 +17,18 @@ export default function SubscriptionSuccessPage() {
       setStatus('loading');
       setMessage('Processing your subscription...');
 
+      // Check if user is authenticated
+      const token = localStorage.getItem('token');
+      if (!token) {
+        console.log('❌ No authentication token found, redirecting to login');
+        setStatus('error');
+        setError('Authentication required. Please log in to continue.');
+        setTimeout(() => {
+          router.push('/donor/login');
+        }, 2000);
+        return;
+      }
+
       // Get session details from Stripe
       const response = await fetch('/api/subscriptions/checkout-session', {
         method: 'POST',
@@ -32,9 +44,12 @@ export default function SubscriptionSuccessPage() {
         setStatus('success');
         setMessage('Your subscription has been created successfully!');
         
+        console.log('✅ Subscription processed successfully, redirecting to dashboard in 3 seconds...');
+        
         // Redirect to dashboard after 3 seconds
         setTimeout(() => {
-          router.push('/donor/dashboard?subscription=success');
+          console.log('🔄 Redirecting to dashboard now...');
+          router.push('/donor/dashboard');
         }, 3000);
       } else {
         setStatus('error');
@@ -50,9 +65,16 @@ export default function SubscriptionSuccessPage() {
   useEffect(() => {
     const sessionId = searchParams.get('session_id');
     
+    console.log('🔍 Subscription Success Page Loaded');
+    console.log('🔍 Current URL:', window.location.href);
+    console.log('🔍 Search Params:', Object.fromEntries(searchParams.entries()));
+    console.log('🔍 Session ID:', sessionId);
+    
     if (sessionId) {
+      console.log('✅ Session ID found, processing subscription...');
       handleSubscriptionSuccess(sessionId);
     } else {
+      console.log('❌ No session ID found in URL');
       setStatus('error');
       setError('No session ID found');
     }
@@ -114,7 +136,16 @@ export default function SubscriptionSuccessPage() {
                 </p>
               </div>
               <button
-                onClick={() => router.push('/donor/dashboard')}
+                onClick={() => {
+                  console.log('🔄 Manual redirect to dashboard clicked');
+                  const token = localStorage.getItem('token');
+                  if (token) {
+                    router.push('/donor/dashboard');
+                  } else {
+                    console.log('❌ No token found, redirecting to login');
+                    router.push('/donor/login');
+                  }
+                }}
                 className="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
               >
                 Go to Dashboard

@@ -84,9 +84,14 @@ export async function POST(request) {
 
     // Create Stripe checkout session for subscription
     try {
-      // Determine base URL without hardcoding localhost
+      // Determine base URL using the actual request URL to avoid port mismatches
       const requestUrl = new URL(request.url);
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || `${requestUrl.protocol}//${requestUrl.host}`;
+      const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
+
+      console.log('🔍 Creating Stripe Checkout Session');
+      console.log('🔍 Request URL:', request.url);
+      console.log('🔍 Base URL:', baseUrl);
+      console.log('🔍 Success URL will be:', `${baseUrl.replace(/\/$/, '')}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`);
 
       const checkoutSession = await stripe.checkout.sessions.create({
         customer: customer.id,

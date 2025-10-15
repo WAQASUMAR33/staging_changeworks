@@ -1,0 +1,9 @@
+{
+  "name": "Minimal Test Account",
+  "businessName": "Minimal Test Account",
+  "prospectInfo": {
+    "firstName": "Test",
+    "lastName": "User",
+    "email": "test@example.com"
+  }
+}

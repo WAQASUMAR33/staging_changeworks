@@ -1,0 +1,29 @@
+{
+  "name": "Detailed Organization Account",
+  "businessName": "Detailed Organization Account",
+  "address": "456 Business Avenue, Floor 5",
+  "city": "Los Angeles",
+  "state": "CA",
+  "postalCode": "90210",
+  "country": "US",
+  "prospectInfo": {
+    "firstName": "Jane",
+    "lastName": "Smith",
+    "email": "jane.smith@company.com",
+    "phone": "+1-555-987-6543",
+    "title": "CEO",
+    "company": "Smith Enterprises"
+  },
+  "website": "https://smith-enterprises.com",
+  "timezone": "America/Los_Angeles",
+  "currency": "USD",
+  "industry": "Consulting",
+  "description": "A comprehensive test account with all available fields",
+  "tags": ["premium", "enterprise", "test"],
+  "source": "website",
+  "customFields": {
+    "company_size": "50-100",
+    "annual_revenue": "1M-5M",
+    "lead_source": "organic"
+  }
+}

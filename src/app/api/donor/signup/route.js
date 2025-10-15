@@ -4,6 +4,7 @@ import bcrypt from "bcryptjs";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import { emailService } from "../../../lib/email-service.jsx";
+import GHLClient from "../../../lib/ghl-client";
 
 // POST /api/donor/signup - Create a new donor account
 export async function POST(request) {
@@ -137,6 +138,63 @@ export async function POST(request) {
       console.error('❌ Verification email sending failed:', emailErr.message);
     }
 
+    // Create GHL contact if organization has GHL account
+    let ghlContactResult = null;
+    let ghlContactError = null;
+
+    try {
+      // Get organization's GHL details directly from organization table
+      const organization = await prisma.organization.findUnique({
+        where: { id: Number(organization_id) },
+        select: { 
+          ghlId: true, 
+          ghlApiKey: true,
+          name: true
+        }
+      });
+
+      if (organization && organization.ghlId && organization.ghlApiKey) {
+        console.log(`🔗 Creating GHL contact for donor ${donor.name} in location ${organization.ghlId}`);
+        
+        // Initialize GHL client with organization's API key
+        const ghlClient = new GHLClient(organization.ghlApiKey);
+        
+        // Prepare contact data
+        const contactData = {
+          firstName: donor.name.split(' ')[0] || donor.name,
+          lastName: donor.name.split(' ').slice(1).join(' ') || '',
+          email: donor.email,
+          phone: donor.phone,
+          address: donor.address,
+          city: donor.city,
+          country: donor.country,
+          postalCode: donor.postal_code,
+          tags: ['donor', 'signup'],
+          source: 'website'
+        };
+
+        // Create GHL contact
+        ghlContactResult = await ghlClient.createContact(
+          organization.ghlId,
+          contactData
+        );
+
+        if (ghlContactResult.success) {
+          console.log(`✅ GHL contact created successfully: ${ghlContactResult.contactId}`);
+        } else {
+          ghlContactError = ghlContactResult.error || 'Failed to create GHL contact';
+          console.error(`❌ GHL contact creation failed: ${ghlContactError}`);
+        }
+      } else {
+        console.log(`ℹ️ No GHL integration found for organization ${organization_id}, skipping GHL contact creation`);
+        console.log(`   Organization GHL ID: ${organization?.ghlId || 'NOT SET'}`);
+        console.log(`   Organization GHL API Key: ${organization?.ghlApiKey ? 'SET' : 'NOT SET'}`);
+      }
+    } catch (ghlErr) {
+      ghlContactError = ghlErr.message;
+      console.error(`❌ GHL contact creation error: ${ghlErr.message}`);
+    }
+
     console.log(`New donor created: ${email}`);
 
     return NextResponse.json({
@@ -149,6 +207,11 @@ export async function POST(request) {
         sent: emailSent,
         error: emailError,
         verification_token: emailSent ? undefined : verificationToken // Include token if email failed
+      },
+      ghl_contact_status: {
+        created: ghlContactResult?.success || false,
+        contact_id: ghlContactResult?.contactId || null,
+        error: ghlContactError
       }
     });
 

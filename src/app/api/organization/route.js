@@ -69,9 +69,18 @@ export async function POST(req) {
 
     let ghlAccount = null;
     let ghlLocationId = null;
+    let ghlApiKey = null;
 
     // Automatically create GHL account using organization information
     try {
+      // Check if we have a valid GHL Agency API key
+      if (!process.env.GHL_AGENCY_API_KEY || process.env.GHL_AGENCY_API_KEY.length < 200) {
+        console.log('⚠️ GHL Agency API key not configured or too short. Skipping GHL account creation.');
+        console.log('To enable GHL integration, add a valid GHL_AGENCY_API_KEY (250+ characters) to your environment variables.');
+        console.log('Current key appears to be a Location API key, which cannot create sub-accounts.');
+        throw new Error('GHL Agency API key not configured');
+      }
+      
       const ghlClient = new GHLClient(process.env.GHL_AGENCY_API_KEY);
       
       const ghlData = {
@@ -95,6 +104,10 @@ export async function POST(req) {
 
       if (ghlResult.success) {
         ghlLocationId = ghlResult.locationId;
+        ghlApiKey = ghlResult.data.apiKey; // Extract the sub-account API key
+        
+        console.log('GHL Location ID:', ghlLocationId);
+        console.log('GHL API Key:', ghlApiKey ? `${ghlApiKey.substring(0, 20)}...` : 'NOT FOUND');
         
         // Save GHL account details to database
         ghlAccount = await prisma.gHLAccount.create({
@@ -112,22 +125,28 @@ export async function POST(req) {
             website: input.website,
             timezone: 'Europe/London',
             ghl_data: JSON.stringify(ghlResult.data),
+            api_key: ghlApiKey, // Store the sub-account API key
             status: 'active'
           }
         });
 
-        // Update organization with GHL location ID
+        // Update organization with GHL location ID and API key
         await prisma.organization.update({
           where: { id: organization.id },
-          data: { ghlId: ghlLocationId }
+          data: { 
+            ghlId: ghlLocationId,
+            ghlApiKey: ghlApiKey
+          }
         });
 
         console.log('GHL account created successfully:', ghlLocationId);
 
-        // Create GHL contact for the organization
+        // Create GHL contact for the organization using ChangeWorks credentials
         try {
           console.log('Creating GHL contact for organization:', organization.id);
-          console.log('Using GHL Location ID:', ghlLocationId);
+          console.log('Using ChangeWorks Location ID:', process.env.CHANGEWORKS_LOCAION_ID);
+          console.log('Using ChangeWorks API Key:', process.env.CHANGEWORKS_LOCATION_API_KEY ? `${process.env.CHANGEWORKS_LOCATION_API_KEY.substring(0, 20)}...` : 'NOT SET');
+          console.log('Using Contact Create API URL:', process.env.GHL_CONTACT_CREATE_API_URL);
           
           // Prepare contact data for the organization
           const contactData = {
@@ -163,11 +182,11 @@ export async function POST(req) {
 
           console.log('Contact data prepared:', JSON.stringify(contactData, null, 2));
 
-          // Try creating contact using GHL client first
-          let contactResult = await ghlClient.createContact(
-            ghlLocationId,
-            contactData,
-            process.env.GHL_AGENCY_API_KEY
+          // Create contact using ChangeWorks GHL client
+          const changeWorksGhlClient = new GHLClient(process.env.CHANGEWORKS_LOCATION_API_KEY);
+          let contactResult = await changeWorksGhlClient.createContact(
+            process.env.CHANGEWORKS_LOCAION_ID,
+            contactData
           );
 
           console.log('Contact creation result:', contactResult);
@@ -177,11 +196,11 @@ export async function POST(req) {
             console.log('GHL client failed, trying direct API call...');
             
             try {
-              const directApiUrl = 'https://services.leadconnectorhq.com/contacts/';
-              const directApiKey = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+              const directApiUrl = process.env.GHL_CONTACT_CREATE_API_URL || 'https://rest.gohighlevel.com/v1/contacts/';
+              const directApiKey = process.env.CHANGEWORKS_LOCATION_API_KEY; // Use ChangeWorks API key
               
               console.log('Direct API URL:', directApiUrl);
-              console.log('Using API key:', directApiKey ? `${directApiKey.substring(0, 10)}...` : 'NOT SET');
+              console.log('Using ChangeWorks API key:', directApiKey ? `${directApiKey.substring(0, 20)}...` : 'NOT SET');
               
               const directResponse = await fetch(directApiUrl, {
                 method: 'POST',
@@ -190,7 +209,7 @@ export async function POST(req) {
                   'Content-Type': 'application/json',
                   'Accept': 'application/json',
                   'Version': '2021-07-28',
-                  'Location-Id': ghlLocationId
+                  'Location-Id': process.env.CHANGEWORKS_LOCAION_ID
                 },
                 body: JSON.stringify({
                   firstName: contactData.firstName,
@@ -259,7 +278,8 @@ export async function POST(req) {
         ghlId: ghlLocationId
       },
       ghlAccount: ghlAccount,
-      ghlLocationId: ghlLocationId
+      ghlLocationId: ghlLocationId,
+      ghlApiKey: ghlApiKey // Include the sub-account API key in response
     }, { status: 201 });
 
   } catch (error) {

@@ -9,7 +9,12 @@ export async function POST(request) {
     const body = await request.json();
     const { session_id } = body;
 
+    console.log('🔍 Checkout Session API Called');
+    console.log('🔍 Request Body:', body);
+    console.log('🔍 Session ID:', session_id);
+
     if (!session_id) {
+      console.log('❌ No session ID provided');
       return NextResponse.json(
         { success: false, error: 'Session ID is required' },
         { status: 400 }
@@ -192,6 +197,10 @@ export async function POST(request) {
     console.log(`   - Subscription ID: ${dbSubscription.id}`);
     console.log(`   - Transaction ID: ${transactionRecord.id}`);
     console.log(`   - Donor Transaction ID: ${donorTransaction.id}`);
+    console.log(`   - Donor ID: ${donorId}`);
+    console.log(`   - Organization ID: ${organizationId}`);
+    console.log(`   - Subscription Status: ${dbSubscription.status}`);
+    console.log(`   - Amount: ${dbSubscription.amount} ${dbSubscription.currency}`);
 
     return NextResponse.json({
       success: true,

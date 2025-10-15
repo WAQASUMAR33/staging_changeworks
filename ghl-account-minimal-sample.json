@@ -1,0 +1,10 @@
+{
+  "name": "Test Organization",
+  "phone": "1234567890",
+  "companyId": "HegBO6PzXMfyDn0yFiFn",
+  "prospectInfo": {
+    "firstName": "Test",
+    "lastName": "User",
+    "email": "test@example.com"
+  }
+}
