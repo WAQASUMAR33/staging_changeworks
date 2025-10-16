@@ -13,7 +13,19 @@ export default function AdminDashboard() {
     const fetchStats = async () => {
       try {
         setLoading(true);
-        const res = await fetch('/api/admin/dashboard-stats');
+        
+        // Get authentication token
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication required');
+        }
+        
+        const res = await fetch('/api/admin/dashboard-stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+        
         const data = await res.json();
         if (!data.success) throw new Error(data.error || 'Failed to load');
 

@@ -131,7 +131,18 @@ export default function OrganizationManagementPage() {
     const fetchOrganizations = async () => {
       try {
         setLoading(true);
-        const response = await fetch(`/api/admin/organizations?page=${page + 1}&limit=${rowsPerPage}`);
+        
+        // Get authentication token
+        const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+        if (!token) {
+          throw new Error('Authentication required');
+        }
+        
+        const response = await fetch(`/api/admin/organizations?page=${page + 1}&limit=${rowsPerPage}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
         const data = await response.json();
         console.log('API Response:', data);
         if (!response.ok) {

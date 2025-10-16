@@ -82,7 +82,18 @@ export default function OverviewCards() {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            const response = await fetch('/api/admin/dashboard-stats');
+            
+            // Get authentication token
+            const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+            if (!token) {
+                throw new Error('Authentication required');
+            }
+            
+            const response = await fetch('/api/admin/dashboard-stats', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
             const data = await response.json();
             
             if (data.success) {

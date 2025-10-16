@@ -192,7 +192,17 @@ export default function TransactionManagementPage() {
   
   const fetchDonors = async () => {
     try {
-      const response = await fetch('/api/admin/donors');
+      // Get authentication token
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+      
+      const response = await fetch('/api/admin/donors', {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
       const data = await response.json();
       if (data.donors) {
         setDonors(data.donors);
