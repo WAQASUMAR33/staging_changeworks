@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Database, Trash2, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -15,75 +15,75 @@ export default function AdminSettingsPage() {
   const router = useRouter();
 
   useEffect(() => {
-    checkAuth();
-  }, [router, checkAuth]);
-
-  const checkAuth = useCallback(async () => {
-    try {
-      const adminToken = localStorage.getItem('adminToken');
-      const regularToken = localStorage.getItem('token');
-      const adminUser = localStorage.getItem('adminUser');
-      
-      console.log('🔍 Settings Page - Auth check:', {
-        adminToken: !!adminToken,
-        regularToken: !!regularToken,
-        adminUser: !!adminUser,
-        adminUserData: adminUser ? JSON.parse(adminUser) : null
-      });
-      
-      const token = adminToken || regularToken;
-      if (!token) {
-        console.log('❌ Settings Page - No token found, redirecting to login');
-        router.push('/admin/secure-portal');
-        return;
-      }
-
-      const response = await fetch('/api/admin/dashboard-stats', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔍 Settings Page - API response:', { success: data.success, error: data.error });
+    const checkAuth = async () => {
+      try {
+        const adminToken = localStorage.getItem('adminToken');
+        const regularToken = localStorage.getItem('token');
+        const adminUser = localStorage.getItem('adminUser');
         
-        if (data.success) {
-          // Get user data from localStorage
-          if (adminUser) {
-            try {
-              const userData = JSON.parse(adminUser);
-              console.log('🔍 Settings Page - User role check:', userData.role);
-              
-              if (userData.role === 'SUPERADMIN') {
-                console.log('✅ Settings Page - SUPERADMIN access granted');
-                setUser(userData);
-              } else {
-                console.log('❌ Settings Page - Not SUPERADMIN, redirecting to admin dashboard');
-                router.push('/admin');
+        console.log('🔍 Settings Page - Auth check:', {
+          adminToken: !!adminToken,
+          regularToken: !!regularToken,
+          adminUser: !!adminUser,
+          adminUserData: adminUser ? JSON.parse(adminUser) : null
+        });
+        
+        const token = adminToken || regularToken;
+        if (!token) {
+          console.log('❌ Settings Page - No token found, redirecting to login');
+          router.push('/admin/secure-portal');
+          return;
+        }
+
+        const response = await fetch('/api/admin/dashboard-stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          console.log('🔍 Settings Page - API response:', { success: data.success, error: data.error });
+          
+          if (data.success) {
+            // Get user data from localStorage
+            if (adminUser) {
+              try {
+                const userData = JSON.parse(adminUser);
+                console.log('🔍 Settings Page - User role check:', userData.role);
+                
+                if (userData.role === 'SUPERADMIN') {
+                  console.log('✅ Settings Page - SUPERADMIN access granted');
+                  setUser(userData);
+                } else {
+                  console.log('❌ Settings Page - Not SUPERADMIN, redirecting to admin dashboard');
+                  router.push('/admin');
+                }
+              } catch (error) {
+                console.error('❌ Settings Page - Error parsing admin user:', error);
+                router.push('/admin/secure-portal');
               }
-            } catch (error) {
-              console.error('❌ Settings Page - Error parsing admin user:', error);
+            } else {
+              console.log('❌ Settings Page - No admin user data, redirecting to login');
               router.push('/admin/secure-portal');
             }
           } else {
-            console.log('❌ Settings Page - No admin user data, redirecting to login');
+            console.log('❌ Settings Page - API returned error:', data.error);
             router.push('/admin/secure-portal');
           }
         } else {
-          console.log('❌ Settings Page - API returned error:', data.error);
+          console.log('❌ Settings Page - API request failed:', response.status);
           router.push('/admin/secure-portal');
         }
-      } else {
-        console.log('❌ Settings Page - API request failed:', response.status);
+      } catch (error) {
+        console.error('Auth check failed:', error);
         router.push('/admin/secure-portal');
+      } finally {
+        setLoading(false);
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      router.push('/admin/secure-portal');
-    } finally {
-      setLoading(false);
-    }
+    };
+
+    checkAuth();
   }, [router]);
 
   const handleResetDatabase = async () => {
