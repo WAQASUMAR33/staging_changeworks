@@ -227,7 +227,7 @@ class EmailService {
               <a href="${verificationLink}" class="verify-button" style="color: white;">Verify Your Email Address</a>
             </div>
             
-            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${verificationLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${verificationLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
             
             <div class="features">
               <h3>Your Donor Portal Features:</h3>
@@ -279,7 +279,7 @@ Thank you for joining ${orgName}'s round-up program. Your everyday purchases wil
 IMPORTANT: Please verify your email address by clicking this link:
 ${verificationLink}
 
-You can view your donation activity anytime through your personalized Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
+You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
 
 - Track your monthly round-up totals
 - Adjust or pause your contributions at any time
@@ -475,7 +475,7 @@ Address: NY-123 Younkers, New York
             
             <p>Your everyday purchases made a difference in <strong>${month}</strong>. Altogether, your round-ups added up to <strong>$${totalAmount}</strong> for <strong>${organization.name}</strong>.</p>
             
-            <p>If you want to see details of your round-up donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
+            <p>If you want to see details of your round-up donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
             
             <div style="text-align: center;">
               <a href="${dashboardLink}" class="dashboard-button">Access Your Donor Portal</a>
@@ -516,7 +516,7 @@ Hello ${donor.name},
 
 Your everyday purchases made a difference in ${month}. Altogether, your round-ups added up to $${totalAmount} for ${organization.name}.
 
-If you want to see details of your round-up donations or make changes, log into your Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
+If you want to see details of your round-up donations or make changes, log into your Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
 
 Access Your Donor Portal: ${dashboardLink}
 
@@ -708,7 +708,7 @@ Address: NY-123 Younkers, New York
             
             <p>Your generous one-time donation of <strong>$${amount}</strong> to <strong>${organization.name}</strong> will make a real difference in our community.</p>
             
-            <p>If you want to see details of your donation or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
+            <p>If you want to see details of your donation or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
             
             <div style="text-align: center;">
               <a href="${dashboardLink}" class="dashboard-button" style="color: white;">Access Your Donor Portal</a>
@@ -749,7 +749,7 @@ Hello ${donor.name},
 
 Your generous one-time donation of $${amount} to ${organization.name} will make a real difference in our community.
 
-If you want to see details of your donation or make changes, log into your Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
+If you want to see details of your donation or make changes, log into your Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
 
 Access Your Donor Portal: ${dashboardLink}
 
@@ -1003,7 +1003,7 @@ Your recurring donation of $${amount} to ${organization.name} has been processed
 
 Next Payment: ${nextPaymentDate}
 
-If you want to see details of your recurring donations or make changes, log into your Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
+If you want to see details of your recurring donations or make changes, log into your Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
 
 Access Your Donor Portal: ${dashboardLink}
 
@@ -1213,7 +1213,7 @@ Address: NY-123 Younkers, New York
               <p><strong>How it works:</strong> Every time you make a purchase, the amount will be rounded up to the nearest dollar, and the difference will be donated to ${organization.name}.</p>
             </div>
             
-            <p>If you want to see details of your change donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
+            <p>If you want to see details of your change donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
             
             <div style="text-align: center;">
               <a href="${dashboardLink}" class="dashboard-button">Access Your Donor Portal</a>
@@ -1256,7 +1256,7 @@ Your recurring change donation of $${amount} to ${organization.name} is now acti
 
 How it works: Every time you make a purchase, the amount will be rounded up to the nearest dollar, and the difference will be donated to ${organization.name}.
 
-If you want to see details of your change donations or make changes, log into your Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
+If you want to see details of your change donations or make changes, log into your Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.
 
 Access Your Donor Portal: ${dashboardLink}
 
@@ -1893,7 +1893,7 @@ Address: NY-123 Younkers, New York
             
             <p>Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
             
-            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
             
             <div class="features">
               <h3>Your Donor Portal Features:</h3>
@@ -1941,7 +1941,7 @@ Hello ${donor.name},
 
 Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
-You can view your donation activity anytime through your personalized Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
+You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
 
 - Track your monthly round-up totals
 - Adjust or pause your contributions at any time
@@ -2134,7 +2134,7 @@ Address: NY-123 Younkers, New York
             
             <p>Thank you for joining <strong>${organization.name}</strong>'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
             
-            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #0E0061; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
+            <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${dashboardLink}" style="color: #0E0061; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>
             
             <div class="features">
               <h3>Your Donor Portal Features:</h3>
@@ -2186,7 +2186,7 @@ Hello ${donor.name},
 
 Thank you for joining ${organization.name}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.
 
-You can view your donation activity anytime through your personalized Donor Portal [Insert Individual's Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
+You can view your donation activity anytime through your personalized Donor Portal [Dashboard Link] on ChangeWorks, our platform partner. That's where you'll be able to:
 
 - Track your monthly round-up totals
 - Adjust or pause your contributions at any time
