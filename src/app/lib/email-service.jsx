@@ -711,7 +711,7 @@ Address: NY-123 Younkers, New York
             <p>If you want to see details of your donation or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
             
             <div style="text-align: center;">
-              <a href="${dashboardLink}" class="dashboard-button">Access Your Donor Portal</a>
+              <a href="${dashboardLink}" class="dashboard-button" style="color: white;">Access Your Donor Portal</a>
             </div>
             
             <div class="gratitude-section">
@@ -960,7 +960,7 @@ Address: NY-123 Younkers, New York
               <p><strong>Next Payment:</strong> ${nextPaymentDate}</p>
             </div>
             
-            <p>If you want to see details of your recurring donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
+            <p>If you want to see details of your recurring donations or make changes, log into your Donor Portal <a href="${dashboardLink}" style="color: #302E56; text-decoration: underline;">[Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you can see your giving history, adjust settings, or download your records anytime.</p>
             
             <div style="text-align: center;">
               <a href="${dashboardLink}" class="dashboard-button">Access Your Donor Portal</a>
