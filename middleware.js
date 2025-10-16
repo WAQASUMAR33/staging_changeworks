@@ -17,13 +17,14 @@ export function middleware(request) {
     console.log('🔍 Cookies:', request.cookies.getAll());
     console.log('🔍 Headers:', request.headers.get('authorization'));
     
-    if (!adminToken) {
-      console.log('❌ No admin token found, redirecting to login');
-      // Redirect to admin login if no token
+    // For client-side navigation, let the admin layout handle authentication
+    // Only redirect server-side requests without tokens
+    if (!adminToken && request.headers.get('accept')?.includes('text/html')) {
+      console.log('❌ No admin token found for server-side request, redirecting to login');
       return NextResponse.redirect(new URL('/admin/secure-portal', request.url));
     }
     
-    console.log('✅ Admin token found, allowing access');
+    console.log('✅ Admin token found or client-side navigation, allowing access');
   }
   
   return NextResponse.next();

@@ -20,8 +20,20 @@ export default function AdminSettingsPage() {
 
   const checkAuth = useCallback(async () => {
     try {
-      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+      const adminToken = localStorage.getItem('adminToken');
+      const regularToken = localStorage.getItem('token');
+      const adminUser = localStorage.getItem('adminUser');
+      
+      console.log('🔍 Settings Page - Auth check:', {
+        adminToken: !!adminToken,
+        regularToken: !!regularToken,
+        adminUser: !!adminUser,
+        adminUserData: adminUser ? JSON.parse(adminUser) : null
+      });
+      
+      const token = adminToken || regularToken;
       if (!token) {
+        console.log('❌ Settings Page - No token found, redirecting to login');
         router.push('/admin/secure-portal');
         return;
       }
@@ -34,28 +46,36 @@ export default function AdminSettingsPage() {
 
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 Settings Page - API response:', { success: data.success, error: data.error });
+        
         if (data.success) {
           // Get user data from localStorage
-          const adminUser = localStorage.getItem('adminUser');
           if (adminUser) {
             try {
               const userData = JSON.parse(adminUser);
+              console.log('🔍 Settings Page - User role check:', userData.role);
+              
               if (userData.role === 'SUPERADMIN') {
+                console.log('✅ Settings Page - SUPERADMIN access granted');
                 setUser(userData);
               } else {
+                console.log('❌ Settings Page - Not SUPERADMIN, redirecting to admin dashboard');
                 router.push('/admin');
               }
             } catch (error) {
-              console.error('Error parsing admin user:', error);
+              console.error('❌ Settings Page - Error parsing admin user:', error);
               router.push('/admin/secure-portal');
             }
           } else {
+            console.log('❌ Settings Page - No admin user data, redirecting to login');
             router.push('/admin/secure-portal');
           }
         } else {
+          console.log('❌ Settings Page - API returned error:', data.error);
           router.push('/admin/secure-portal');
         }
       } else {
+        console.log('❌ Settings Page - API request failed:', response.status);
         router.push('/admin/secure-portal');
       }
     } catch (error) {
