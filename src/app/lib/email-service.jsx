@@ -1974,6 +1974,12 @@ Address: NY-123 Younkers, New York
 
   // Send welcome/thank you email to donor
   async sendWelcomeEmail({ donor, organization, dashboardLink }) {
+    console.log('🔍 Welcome email - Organization data:', {
+      id: organization.id,
+      name: organization.name,
+      imageUrl: organization.imageUrl
+    });
+    
     const subject = `Welcome to ${organization.name}'s round-up community`;
     
     const html = `
