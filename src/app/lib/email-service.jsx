@@ -140,6 +140,7 @@ class EmailService {
           .verify-button:hover {
             transform: translateY(-2px);
             box-shadow: 0 6px 20px rgba(48, 46, 86, 0.4);
+            color: white;
           }
           .features {
             background-color: #f8f9fa;
