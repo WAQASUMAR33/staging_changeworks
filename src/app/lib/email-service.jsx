@@ -249,7 +249,19 @@ class EmailService {
           
           <div class="footer">
             <div class="logo-section">
-              <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" />
+              ${(() => {
+                const hasImage = organization?.imageUrl;
+                const imageUrl = organization?.imageUrl;
+                const baseUrl = process.env.IMAGE_UPLOAD_URL;
+                const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+                
+                if (hasImage) {
+                  const logoUrl = `${baseUrl}/${imageUrl}`;
+                  return `<img src="${logoUrl}" alt="${organization.name} Logo" style="max-width: 120px; height: auto;" />`;
+              } else {
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization?.name || 'Organization'} Logo</div>`;
+              }
+              })()}
             </div>
             
             <div class="contact-info">
@@ -470,8 +482,7 @@ Address: NY-123 Younkers, New York
                 const logoUrl = `${baseUrl}/${imageUrl}`;
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization.name} Logo</div>`;
               }
             })()}
             <h1>Your Monthly Impact</h1>
@@ -716,8 +727,7 @@ Address: NY-123 Younkers, New York
                 const logoUrl = `${baseUrl}/${imageUrl}`;
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization.name} Logo</div>`;
               }
             })()}
             <h1>Donation Confirmation</h1>
@@ -977,8 +987,7 @@ Address: NY-123 Younkers, New York
                 const logoUrl = `${baseUrl}/${imageUrl}`;
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization.name} Logo</div>`;
               }
             })()}
             <h1>Recurring Payment Confirmation</h1>
@@ -1243,8 +1252,7 @@ Address: NY-123 Younkers, New York
                 const logoUrl = `${baseUrl}/${imageUrl}`;
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization.name} Logo</div>`;
               }
             })()}
             <h1>Recurring Change Donation Active</h1>
@@ -1490,8 +1498,7 @@ Address: NY-123 Younkers, New York
                 const logoUrl = `${baseUrl}/${imageUrl}`;
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization.name} Logo</div>`;
               }
             })()}
             <h1>Card Update Required</h1>
@@ -1732,8 +1739,7 @@ Address: NY-123 Younkers, New York
                 const logoUrl = `${baseUrl}/${imageUrl}`;
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization.name} Logo</div>`;
               }
             })()}
             <h1>Final Reminder</h1>
@@ -1962,7 +1968,19 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
+            ${(() => {
+              const hasImage = organization.imageUrl;
+              const imageUrl = organization.imageUrl;
+              const baseUrl = process.env.IMAGE_UPLOAD_URL;
+              const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+              
+              if (hasImage) {
+                const logoUrl = `${baseUrl}/${imageUrl}`;
+                return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
+              } else {
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization?.name || 'Organization'} Logo</div>`;
+              }
+            })()}
             <h1>Welcome to ${organization.name}'s round-up community</h1>
           </div>
           
@@ -2230,15 +2248,14 @@ Address: NY-123 Younkers, New York
                 console.log('✅ Using organization logo:', logoUrl);
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
-                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                console.log('❌ No organization image found, using ChangeWorks logo:', logoUrl);
+                console.log('❌ No organization image found, using placeholder:', organization.name);
                 console.log('🔍 Organization data for debugging:', {
                   id: organization.id,
                   name: organization.name,
                   imageUrl: organization.imageUrl,
                   allOrgKeys: Object.keys(organization)
                 });
-                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization.name} Logo</div>`;
               }
             })()}
             <h1>Welcome to ${organization.name}</h1>
@@ -2359,7 +2376,19 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
+            ${(() => {
+              const hasImage = organization?.imageUrl;
+              const imageUrl = organization?.imageUrl;
+              const baseUrl = process.env.IMAGE_UPLOAD_URL;
+              const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+              
+              if (hasImage) {
+                const logoUrl = `${baseUrl}/${imageUrl}`;
+                return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
+              } else {
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization?.name || 'Organization'} Logo</div>`;
+              }
+            })()}
             <h1>Password Reset Request</h1>
           </div>
           
@@ -2440,7 +2469,19 @@ Your trusted platform partner for charitable giving
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
+            ${(() => {
+              const hasImage = organization?.imageUrl;
+              const imageUrl = organization?.imageUrl;
+              const baseUrl = process.env.IMAGE_UPLOAD_URL;
+              const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+              
+              if (hasImage) {
+                const logoUrl = `${baseUrl}/${imageUrl}`;
+                return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
+              } else {
+                return `<div style="height: 60px; background: #f8f9fa; border: 1px solid #dee2e6; display: flex; align-items: center; justify-content: center; color: #6c757d; font-size: 14px;">${organization?.name || 'Organization'} Logo</div>`;
+              }
+            })()}
             <h1>Organization Password Reset</h1>
           </div>
           
