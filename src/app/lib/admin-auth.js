@@ -5,7 +5,24 @@ const JWT_SECRET = process.env.JWT_SECRET;
 export function verifyAdminToken(token) {
   try {
     const decoded = jwt.verify(token, JWT_SECRET);
-    return decoded.type === 'admin' ? decoded : null;
+    
+    // Check if it's an admin token (type: 'admin') or a regular login token with admin role
+    if (decoded.type === 'admin') {
+      return decoded;
+    }
+    
+    // For regular login tokens, check if user has admin role
+    if (decoded.role && ['ADMIN', 'SUPERADMIN', 'MANAGER'].includes(decoded.role)) {
+      // Convert to admin token format for consistency
+      return {
+        userId: decoded.id,
+        email: decoded.email,
+        role: decoded.role,
+        type: 'admin'
+      };
+    }
+    
+    return null;
   } catch (error) {
     return null;
   }
