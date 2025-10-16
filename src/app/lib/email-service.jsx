@@ -2137,7 +2137,7 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
+            <img src="${process.env.IMAGE_BACK_URL}/${organization.imageUrl}" alt="ChangeWorks Logo" class="logo" />
             <h1>Welcome to ${organization.name}</h1>
           </div>
           
