@@ -53,6 +53,15 @@ export async function POST(request) {
       })
     ]);
 
+    // Debug logging for organization data from database
+    console.log('🔍 Setup Payment API - Organization data from database:', {
+      organizationId: organization_id,
+      organization: organization,
+      hasImageUrl: !!organization?.imageUrl,
+      imageUrlValue: organization?.imageUrl,
+      imageUrlType: typeof organization?.imageUrl
+    });
+
     if (!donor || !organization) {
       return NextResponse.json(
         { success: false, error: 'Donor or organization not found' },

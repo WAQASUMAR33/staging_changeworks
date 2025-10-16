@@ -44,6 +44,15 @@ export async function POST(request) {
       }
     });
 
+    // Debug logging for organization data from database
+    console.log('🔍 API - Organization data from database:', {
+      organizationId: parseInt(organization_id),
+      organization: organization,
+      hasImageUrl: !!organization?.imageUrl,
+      imageUrlValue: organization?.imageUrl,
+      imageUrlType: typeof organization?.imageUrl
+    });
+
     if (!organization) {
       return NextResponse.json(
         { success: false, error: 'Organization not found' },

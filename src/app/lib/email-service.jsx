@@ -2125,7 +2125,43 @@ Address: NY-123 Younkers, New York
       <body>
         <div class="container">
           <div class="header">
-            ${organization.imageUrl ? `<img src="${process.env.IMAGE_BACK_URL}/${organization.imageUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">` : `<img src="${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo">`}
+            ${(() => {
+              const hasImage = organization.imageUrl;
+              const imageUrl = organization.imageUrl;
+              const baseUrl = process.env.IMAGE_BACK_URL;
+              const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+              
+              // Debug logging for organization image
+              console.log('🔍 Welcome email - Image debug:', {
+                organizationId: organization.id,
+                organizationName: organization.name,
+                hasImage: !!hasImage,
+                imageUrl: imageUrl,
+                imageUrlType: typeof imageUrl,
+                imageUrlLength: imageUrl ? imageUrl.length : 0,
+                baseUrl: baseUrl,
+                fallbackUrl: fallbackUrl,
+                condition: !!hasImage,
+                willUseOrgLogo: !!hasImage,
+                willUseChangeWorksLogo: !hasImage
+              });
+              
+              if (hasImage) {
+                const logoUrl = `${baseUrl}/${imageUrl}`;
+                console.log('✅ Using organization logo:', logoUrl);
+                return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
+              } else {
+                const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
+                console.log('❌ No organization image found, using ChangeWorks logo:', logoUrl);
+                console.log('🔍 Organization data for debugging:', {
+                  id: organization.id,
+                  name: organization.name,
+                  imageUrl: organization.imageUrl,
+                  allOrgKeys: Object.keys(organization)
+                });
+                return `<img src="${logoUrl}" alt="ChangeWorks Logo" class="logo">`;
+              }
+            })()}
             <h1>Welcome to ${organization.name}</h1>
           </div>
           
