@@ -223,7 +223,7 @@ class EmailService {
             <p>Thank you for joining ${orgName}'s round-up program. Your everyday purchases will now round up to the nearest dollar, turning your spare change into real change for the people we serve.</p>
             
             <div style="text-align: center; margin: 30px 0;">
-              <a href="${verificationLink}" class="verify-button">Verify Your Email Address</a>
+              <a href="${verificationLink}" class="verify-button" style="color: white;">Verify Your Email Address</a>
             </div>
             
             <p>You can view your donation activity anytime through your personalized Donor Portal <a href="${verificationLink}" style="color: #302E56; text-decoration: underline;">[Insert Individual's Dashboard Link]</a> on ChangeWorks, our platform partner. That's where you'll be able to:</p>

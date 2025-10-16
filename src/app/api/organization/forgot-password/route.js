@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { PrismaClient } from '@prisma/client';
+import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
-import nodemailer from "nodemailer";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-
-const prisma = new PrismaClient();
+import { emailService } from "../../../lib/email-service.jsx";
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -62,62 +60,32 @@ export async function POST(request) {
     console.log('✅ Reset token created and stored');
 
     // Create reset URL - organization-specific reset page
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
     const resetUrl = `${baseUrl}/organization/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
-    // Try to send email (but don't fail if email service is down)
+    console.log('🔍 Reset URL created:', resetUrl);
+
+    // Send password reset email using email service
     let emailSent = false;
     let emailError = null;
 
     try {
-      // Check if email server is configured
-      if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const transport = nodemailer.createTransport({
-          host: process.env.EMAIL_SERVER_HOST,
-          port: Number(process.env.EMAIL_SERVER_PORT),
-          auth: {
-            user: process.env.EMAIL_SERVER_USER,
-            pass: process.env.EMAIL_SERVER_PASSWORD,
-          },
-        });
+      const emailResult = await emailService.sendOrganizationPasswordResetEmail({
+        organization: organization,
+        resetToken: resetToken,
+        resetLink: resetUrl
+      });
 
-        await transport.sendMail({
-          to: email,
-          from: process.env.EMAIL_FROM,
-          subject: "Reset Your Organization Password - ChangeWorks",
-          text: `Hello ${organization.name},\n\nYou requested a password reset for your organization account.\n\nClick the link below to reset your password:\n${resetUrl}\n\nThis link will expire in 1 hour.\n\nIf you didn't request this, please ignore this email.\n\nBest regards,\nChangeWorks Team`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #302E56; text-align: center;">ChangeWorks Password Reset</h2>
-              <p>Hello <strong>${organization.name}</strong>,</p>
-              <p>You requested a password reset for your organization account.</p>
-              <p>Click the button below to reset your password:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetUrl}" 
-                   style="background-color: #302E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Reset Password
-                </a>
-              </div>
-              <p>If the button doesn't work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #302E56;">${resetUrl}</p>
-              <p><strong>This link will expire in 1 hour for security reasons.</strong></p>
-              <p>If you didn't request this password reset, please ignore this email.</p>
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 14px;">
-                This is an automated message from ChangeWorks. Please do not reply to this email.
-              </p>
-            </div>
-          `,
-        });
-
+      if (emailResult.success) {
         emailSent = true;
         console.log('✅ Organization password reset email sent successfully');
       } else {
-        console.log('⚠️ Email server not configured, skipping email');
+        emailError = emailResult.error;
+        console.error('❌ Email sending failed:', emailResult.error);
       }
     } catch (emailErr) {
       emailError = emailErr.message;
-      console.error('❌ Email sending failed:', emailErr.message);
+      console.error('❌ Email sending error:', emailErr.message);
     }
 
     // Return response
@@ -156,8 +124,6 @@ export async function POST(request) {
       error: "Internal server error",
       details: error.message
     }, { status: 500 });
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
