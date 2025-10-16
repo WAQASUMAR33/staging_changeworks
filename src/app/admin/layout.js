@@ -18,11 +18,23 @@ export default function AdminLayout({ children }) {
 
     // Check if user has admin token or is an admin user
     const adminToken = localStorage.getItem('adminToken');
+    const adminUser = localStorage.getItem('adminUser');
     const regularToken = localStorage.getItem('token');
     const user = localStorage.getItem('user');
     
+    console.log('🔍 Admin Layout - Authentication check:', {
+      pathname,
+      adminToken: !!adminToken,
+      adminUser: !!adminUser,
+      regularToken: !!regularToken,
+      user: !!user,
+      adminUserData: adminUser ? JSON.parse(adminUser) : null,
+      userData: user ? JSON.parse(user) : null
+    });
+    
     // Check if user is admin through admin token
-    if (adminToken) {
+    if (adminToken && adminUser) {
+      console.log('✅ Admin Layout - Admin token found, setting isAdmin to true');
       setIsAdmin(true);
       return;
     }
@@ -32,6 +44,7 @@ export default function AdminLayout({ children }) {
       try {
         const userData = JSON.parse(user);
         if (userData.role === 'ADMIN' || userData.role === 'SUPERADMIN' || userData.role === 'MANAGER') {
+          console.log('✅ Admin Layout - Regular token with admin role found, converting to admin token');
           // Convert regular token to admin token
           localStorage.setItem('adminToken', regularToken);
           localStorage.setItem('adminUser', user);
@@ -43,6 +56,7 @@ export default function AdminLayout({ children }) {
       }
     }
     
+    console.log('❌ Admin Layout - No valid admin access, redirecting to login');
     // If no valid admin access, redirect to admin login
     window.location.replace('/admin/secure-portal');
   }, [pathname]);

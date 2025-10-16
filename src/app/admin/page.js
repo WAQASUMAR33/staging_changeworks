@@ -16,6 +16,14 @@ export default function AdminDashboard() {
         
         // Get authentication token
         const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
+        console.log('🔍 Admin Dashboard - Token check:', {
+          adminToken: localStorage.getItem('adminToken'),
+          regularToken: localStorage.getItem('token'),
+          adminUser: localStorage.getItem('adminUser'),
+          user: localStorage.getItem('user'),
+          selectedToken: token
+        });
+        
         if (!token) {
           throw new Error('Authentication required');
         }
@@ -27,6 +35,13 @@ export default function AdminDashboard() {
         });
         
         const data = await res.json();
+        console.log('🔍 Admin Dashboard - API Response:', {
+          status: res.status,
+          success: data.success,
+          error: data.error,
+          data: data
+        });
+        
         if (!data.success) throw new Error(data.error || 'Failed to load');
 
         const cards = [

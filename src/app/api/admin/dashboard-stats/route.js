@@ -6,7 +6,10 @@ export async function GET(request) {
   try {
     // Get authorization header
     const authHeader = request.headers.get('authorization');
+    console.log('🔍 Dashboard Stats API - Auth header:', authHeader);
+    
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      console.log('❌ Dashboard Stats API - No auth header');
       return NextResponse.json(
         { success: false, error: 'Authorization header missing or invalid' },
         { status: 401 }
@@ -14,9 +17,13 @@ export async function GET(request) {
     }
 
     const token = authHeader.substring(7);
+    console.log('🔍 Dashboard Stats API - Token:', token.substring(0, 20) + '...');
+    
     const decoded = verifyAdminToken(token);
+    console.log('🔍 Dashboard Stats API - Decoded token:', decoded);
     
     if (!decoded) {
+      console.log('❌ Dashboard Stats API - Token verification failed');
       return NextResponse.json(
         { success: false, error: 'Invalid or expired token' },
         { status: 401 }
