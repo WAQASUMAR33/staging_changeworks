@@ -71,8 +71,17 @@ export default function AdminLayout({ children }) {
     return children;
   }
 
+  console.log('🔍 Admin Layout Render State:', {
+    pathname,
+    isLoading,
+    isAdmin,
+    adminToken: typeof window !== 'undefined' ? localStorage.getItem('adminToken') : 'N/A',
+    adminUser: typeof window !== 'undefined' ? localStorage.getItem('adminUser') : 'N/A'
+  });
+
   // Show loading spinner while checking authentication
   if (isLoading) {
+    console.log('🔍 Admin Layout - Showing loading spinner');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -85,6 +94,7 @@ export default function AdminLayout({ children }) {
 
   // If not admin, don't render anything (redirect will happen)
   if (!isAdmin) {
+    console.log('🔍 Admin Layout - Not admin, showing redirect message');
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -94,6 +104,8 @@ export default function AdminLayout({ children }) {
       </div>
     );
   }
+
+  console.log('🔍 Admin Layout - Rendering admin dashboard');
 
   // Show admin layout with modern sidebar and header
   return (
