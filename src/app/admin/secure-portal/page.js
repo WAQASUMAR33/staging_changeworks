@@ -75,6 +75,10 @@ export default function AdminLoginPage() {
         localStorage.setItem('adminToken', data.token);
         localStorage.setItem('adminUser', JSON.stringify(data.user));
         localStorage.setItem('userRole', data.user.role);
+        
+        // Set HTTP-only cookie for server-side validation
+        document.cookie = `adminToken=${data.token}; path=/; secure; samesite=strict`;
+        
         router.push('/admin');
       } else {
         setErrorMsg('Access denied. This portal is for administrators only.');

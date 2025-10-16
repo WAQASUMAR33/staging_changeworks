@@ -7,12 +7,14 @@ import Header from './components/header';
 
 export default function AdminLayout({ children }) {
   const [isAdmin, setIsAdmin] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const pathname = usePathname();
 
   useEffect(() => {
     // Skip authentication check for login page to prevent infinite loop
     if (pathname === '/admin/secure-portal') {
       setIsAdmin(false);
+      setIsLoading(false);
       return;
     }
 
@@ -36,6 +38,7 @@ export default function AdminLayout({ children }) {
     if (adminToken && adminUser) {
       console.log('✅ Admin Layout - Admin token found, setting isAdmin to true');
       setIsAdmin(true);
+      setIsLoading(false);
       return;
     }
     
@@ -49,6 +52,7 @@ export default function AdminLayout({ children }) {
           localStorage.setItem('adminToken', regularToken);
           localStorage.setItem('adminUser', user);
           setIsAdmin(true);
+          setIsLoading(false);
           return;
         }
       } catch (error) {
@@ -57,6 +61,7 @@ export default function AdminLayout({ children }) {
     }
     
     console.log('❌ Admin Layout - No valid admin access, redirecting to login');
+    setIsLoading(false);
     // If no valid admin access, redirect to admin login
     window.location.replace('/admin/secure-portal');
   }, [pathname]);
@@ -66,9 +71,28 @@ export default function AdminLayout({ children }) {
     return children;
   }
 
+  // Show loading spinner while checking authentication
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Checking authentication...</p>
+        </div>
+      </div>
+    );
+  }
+
   // If not admin, don't render anything (redirect will happen)
   if (!isAdmin) {
-    return null;
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Redirecting to login...</p>
+        </div>
+      </div>
+    );
   }
 
   // Show admin layout with modern sidebar and header
