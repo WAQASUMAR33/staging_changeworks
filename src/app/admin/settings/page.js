@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Database, Trash2, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -16,11 +16,11 @@ export default function AdminSettingsPage() {
 
   useEffect(() => {
     checkAuth();
-  }, [router]);
+  }, [router, checkAuth]);
 
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
-      const token = localStorage.getItem('token');
+      const token = localStorage.getItem('adminToken') || localStorage.getItem('token');
       if (!token) {
         router.push('/admin/secure-portal');
         return;
@@ -34,10 +34,26 @@ export default function AdminSettingsPage() {
 
       if (response.ok) {
         const data = await response.json();
-        if (data.user && data.user.role === 'SUPERADMIN') {
-          setUser(data.user);
+        if (data.success) {
+          // Get user data from localStorage
+          const adminUser = localStorage.getItem('adminUser');
+          if (adminUser) {
+            try {
+              const userData = JSON.parse(adminUser);
+              if (userData.role === 'SUPERADMIN') {
+                setUser(userData);
+              } else {
+                router.push('/admin');
+              }
+            } catch (error) {
+              console.error('Error parsing admin user:', error);
+              router.push('/admin/secure-portal');
+            }
+          } else {
+            router.push('/admin/secure-portal');
+          }
         } else {
-          router.push('/admin');
+          router.push('/admin/secure-portal');
         }
       } else {
         router.push('/admin/secure-portal');
@@ -48,7 +64,7 @@ export default function AdminSettingsPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [router]);
 
   const handleResetDatabase = async () => {
     if (confirmationText !== 'RESET DATABASE') {
