@@ -120,6 +120,12 @@ const Sidebar = () => {
       icon: User,
       path: '/admin/profile',
     },
+    {
+      name: 'Settings',
+      icon: Settings,
+      path: '/admin/settings',
+      requiresRole: 'SUPERADMIN',
+    },
   ];
 
   // Filter menu items based on user role
