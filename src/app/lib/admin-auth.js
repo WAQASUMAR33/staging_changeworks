@@ -85,8 +85,15 @@ export function getAdminUser() {
 export function clearAdminAuth() {
   if (typeof window === 'undefined') return;
   
+  // Clear localStorage
   localStorage.removeItem('adminToken');
   localStorage.removeItem('adminUser');
+  localStorage.removeItem('userRole');
+  
+  // Clear HTTP-only cookie by setting it to expire
+  document.cookie = 'adminToken=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT; secure; samesite=strict';
+  
+  console.log('🔍 Admin auth cleared');
 }
 
 export function clearAllAuthData() {
