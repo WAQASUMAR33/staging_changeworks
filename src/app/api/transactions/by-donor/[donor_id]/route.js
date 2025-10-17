@@ -93,7 +93,8 @@ export async function GET(request, { params }) {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            imageUrl: true
           }
         }
       },

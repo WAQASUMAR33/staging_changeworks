@@ -14,6 +14,8 @@ import {
   Eye
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
+import { buildOrgLogoUrl } from '@/lib/image-utils';
 
 export default function DonorDonationsPage() {
   const [donations, setDonations] = useState([]);
@@ -24,6 +26,7 @@ export default function DonorDonationsPage() {
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [selectedDonation, setSelectedDonation] = useState(null);
+
 
   const fetchDonations = async () => {
     try {
@@ -357,8 +360,25 @@ export default function DonorDonationsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-                          <Building2 className="w-5 h-5 text-blue-600" />
+                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                          {donation.organization?.imageUrl ? (
+                            <Image
+                              src={buildOrgLogoUrl(donation.organization.imageUrl)}
+                              alt={donation.organization.name || 'Organization'}
+                              width={40}
+                              height={40}
+                              className="w-full h-full object-cover"
+                              onError={(e) => {
+                                e.target.style.display = 'none';
+                                e.target.nextSibling.style.display = 'flex';
+                              }}
+                            />
+                          ) : null}
+                          <div 
+                            className={`w-full h-full flex items-center justify-center ${donation.organization?.imageUrl ? 'hidden' : 'flex'}`}
+                          >
+                            <Building2 className="w-5 h-5 text-blue-600" />
+                          </div>
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">
@@ -451,7 +471,29 @@ export default function DonorDonationsPage() {
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
-                  <p className="text-gray-900">{selectedDonation.organization?.name || 'Unknown'}</p>
+                  <div className="flex items-center space-x-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      {selectedDonation.organization?.imageUrl ? (
+                        <Image
+                          src={buildOrgLogoUrl(selectedDonation.organization.imageUrl)}
+                          alt={selectedDonation.organization?.name || 'Organization'}
+                          width={48}
+                          height={48}
+                          className="w-full h-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                            e.target.nextSibling.style.display = 'flex';
+                          }}
+                        />
+                      ) : null}
+                      <div 
+                        className={`w-full h-full flex items-center justify-center ${selectedDonation.organization?.imageUrl ? 'hidden' : 'flex'}`}
+                      >
+                        <Building2 className="w-6 h-6 text-blue-600" />
+                      </div>
+                    </div>
+                    <p className="text-gray-900 font-medium">{selectedDonation.organization?.name || 'Unknown'}</p>
+                  </div>
                 </div>
                 
                 <div>
