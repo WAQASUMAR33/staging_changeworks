@@ -168,16 +168,8 @@ export default function StripeSubscriptionModal({ isOpen, onClose, onSuccess }) 
             <div className="text-sm text-blue-800 space-y-3">
               <p className="font-semibold text-lg mb-4">Disclaimer:</p>
               <p>
-                To process your round-up donations securely, ChangeWorks uses Plaid to connect your bank account and Stripe to handle payment processing.
+                To process your donations securely, ChangeWorks uses Stripe to handle payment processing. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify. Your banking information is collected only for verification and transaction purposes and is never shared with ChangeWorks or your chosen charity.
               </p>
-              <p>
-                Plaid is used by thousands of companies such as AMEX, Acorns, and Venmo. Stripe is used by over 300,000 companies such as Amazon, DoorDash, and Shopify.
-              </p>
-              <div className="bg-blue-100 border border-blue-300 rounded-lg p-4 mt-4">
-                <p className="font-semibold text-blue-900 text-base">
-                  Your banking information is collected only for verification and transaction purposes and is never shared with ChangeWorks or your chosen charity.
-                </p>
-              </div>
             </div>
           </div>
         </div>
