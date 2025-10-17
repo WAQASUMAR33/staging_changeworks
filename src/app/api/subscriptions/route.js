@@ -29,14 +29,16 @@ export async function GET(request) {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            imageUrl: true
           }
         },
         organization: {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            imageUrl: true
           }
         },
         package: {
@@ -258,14 +260,16 @@ export async function POST(request) {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            imageUrl: true
           }
         },
         organization: {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            imageUrl: true
           }
         },
         package: {
