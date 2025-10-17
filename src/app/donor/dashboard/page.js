@@ -13,8 +13,7 @@ import {
   X,
   CheckCircle,
   CreditCard,
-  Building2,
-  ChevronDown
+  Building2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -31,7 +30,6 @@ export default function DonorDashboard() {
   const [error, setError] = useState('');
   const [organizations, setOrganizations] = useState([]);
   const [selectedOrganization, setSelectedOrganization] = useState(null);
-  const [showOrgSelector, setShowOrgSelector] = useState(false);
   
   // Payment modal state
   const [showPaymentModal, setShowPaymentModal] = useState(false);
@@ -309,19 +307,6 @@ export default function DonorDashboard() {
     checkSubscriptionStatus();
   }, [fetchDashboardData, fetchOrganizations, checkPlaidConnection, checkSubscriptionStatus]);
 
-  // Close organization selector when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (showOrgSelector && !event.target.closest('.relative')) {
-        setShowOrgSelector(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [showOrgSelector]);
 
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -387,114 +372,6 @@ export default function DonorDashboard() {
               Track your donations, manage subscriptions, and see the difference you&apos;re making
             </p>
           </div>
-          {/* Organization Selector */}
-          {organizations.length > 0 && (
-            <div className="relative">
-              <button
-                onClick={() => setShowOrgSelector(!showOrgSelector)}
-                className="flex items-center space-x-2 bg-white/10 hover:bg-white/20 rounded-lg px-3 py-2 transition-colors duration-200"
-              >
-                {selectedOrganization ? (
-                  <>
-                    <div className="w-6 h-6 bg-white/20 rounded-lg flex items-center justify-center overflow-hidden">
-                      {selectedOrganization.imageUrl ? (
-                        <Image
-                          src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
-                          alt={selectedOrganization.name || 'Organization'}
-                          width={24}
-                          height={24}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
-                        />
-                      ) : null}
-                      <div 
-                        className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
-                      >
-                        <Building2 className="w-3 h-3 text-white" />
-                      </div>
-                    </div>
-                    <span className="text-sm font-medium truncate max-w-32">
-                      {selectedOrganization.name}
-                    </span>
-                  </>
-                ) : (
-                  <>
-                    <Building2 className="w-4 h-4" />
-                    <span className="text-sm">Select Organization</span>
-                  </>
-                )}
-                <ChevronDown className="w-4 h-4" />
-              </button>
-              
-              {/* Organization Dropdown */}
-              <AnimatePresence>
-                {showOrgSelector && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -10 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -10 }}
-                    className="absolute right-0 top-full mt-2 w-64 bg-white rounded-lg shadow-lg border border-gray-200 z-50"
-                  >
-                    <div className="p-2 max-h-64 overflow-y-auto">
-                      {organizations.map((org) => (
-                        <button
-                          key={org.id}
-                          onClick={() => {
-                            setSelectedOrganization(org);
-                            localStorage.setItem('selectedOrganization', JSON.stringify(org));
-                            window.dispatchEvent(new CustomEvent('organizationChanged', { detail: org }));
-                            setShowOrgSelector(false);
-                          }}
-                          className={`w-full p-3 rounded-lg text-left transition-colors duration-200 ${
-                            selectedOrganization?.id === org.id
-                              ? 'bg-blue-50 border border-blue-200'
-                              : 'hover:bg-gray-50'
-                          }`}
-                        >
-                          <div className="flex items-center space-x-3">
-                            <div className="w-8 h-8 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
-                              {org.imageUrl ? (
-                                <Image
-                                  src={buildOrgLogoUrl(org.imageUrl)}
-                                  alt={org.name || 'Organization'}
-                                  width={32}
-                                  height={32}
-                                  className="w-full h-full object-cover"
-                                  onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                  }}
-                                />
-                              ) : null}
-                              <div 
-                                className={`w-full h-full flex items-center justify-center ${org.imageUrl ? 'hidden' : 'flex'}`}
-                              >
-                                <Building2 className="w-4 h-4 text-gray-600" />
-                              </div>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-medium text-gray-900 truncate">
-                                {org.name}
-                              </p>
-                              <p className="text-xs text-gray-500 truncate">
-                                {org.email}
-                              </p>
-                            </div>
-                            {selectedOrganization?.id === org.id && (
-                              <CheckCircle className="w-4 h-4 text-blue-600" />
-                            )}
-                          </div>
-                        </button>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-          )}
           
           <div className="hidden sm:block ml-4">
             <Gift className="w-12 h-12 sm:w-16 sm:h-16 text-white/20" />
@@ -531,6 +408,47 @@ export default function DonorDashboard() {
           );
         })}
       </motion.div>
+
+      {/* Selected Organization Display */}
+      {selectedOrganization && (
+        <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
+                {selectedOrganization.imageUrl ? (
+                  <Image
+                    src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
+                    alt={selectedOrganization.name || 'Organization'}
+                    width={64}
+                    height={64}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div 
+                  className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
+                >
+                  <Building2 className="w-8 h-8 text-gray-600" />
+                </div>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{selectedOrganization.name}</h3>
+                <p className="text-sm text-gray-600">{selectedOrganization.email}</p>
+                <p className="text-xs text-gray-500 mt-1">Selected Organization</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                Active
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
 
       {/* Quick Actions - Full Width */}
       <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
