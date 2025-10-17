@@ -409,48 +409,11 @@ export default function DonorDashboard() {
         })}
       </motion.div>
 
-      {/* Selected Organization Display */}
-      {selectedOrganization && (
-        <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4">
-              <div className="w-16 h-16 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden">
-                {selectedOrganization.imageUrl ? (
-                  <Image
-                    src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
-                    alt={selectedOrganization.name || 'Organization'}
-                    width={64}
-                    height={64}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.target.style.display = 'none';
-                      e.target.nextSibling.style.display = 'flex';
-                    }}
-                  />
-                ) : null}
-                <div 
-                  className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
-                >
-                  <Building2 className="w-8 h-8 text-gray-600" />
-                </div>
-              </div>
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">{selectedOrganization.name}</h3>
-                <p className="text-sm text-gray-600">{selectedOrganization.email}</p>
-                <p className="text-xs text-gray-500 mt-1">Selected Organization</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                Active
-              </div>
-            </div>
-          </div>
-        </motion.div>
-      )}
-
-      {/* Quick Actions - Full Width */}
+      {/* Main Content Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Left Column - Quick Actions and Recent Activity */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Quick Actions */}
       <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
@@ -620,8 +583,8 @@ export default function DonorDashboard() {
         </div>
       </motion.div>
 
-      {/* Recent Activity */}
-      <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+          {/* Recent Activity */}
+          <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Recent Donations</h3>
         <div className="space-y-3 sm:space-y-4">
           {recentActivity.length > 0 ? (
@@ -647,7 +610,46 @@ export default function DonorDashboard() {
             </div>
           )}
         </div>
-      </motion.div>
+          </motion.div>
+        </div>
+
+        {/* Right Column - Organization Info */}
+        <div className="space-y-6">
+          {selectedOrganization && (
+            <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Selected Organization</h3>
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden mx-auto mb-4">
+                  {selectedOrganization.imageUrl ? (
+                    <Image
+                      src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
+                      alt={selectedOrganization.name || 'Organization'}
+                      width={80}
+                      height={80}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        e.target.style.display = 'none';
+                        e.target.nextSibling.style.display = 'flex';
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
+                  >
+                    <Building2 className="w-10 h-10 text-gray-600" />
+                  </div>
+                </div>
+                <h4 className="text-lg font-semibold text-gray-900 mb-2">{selectedOrganization.name}</h4>
+                <p className="text-sm text-gray-600 mb-3">{selectedOrganization.email}</p>
+                <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
+                  Active
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </div>
+      </div>
 
       {/* Multi-Step Payment Modal */}
       <AnimatePresence>
