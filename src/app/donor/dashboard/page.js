@@ -410,9 +410,9 @@ export default function DonorDashboard() {
       </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
         {/* Left Column - Quick Actions and Recent Activity */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-3 space-y-6">
           {/* Quick Actions */}
       <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
@@ -617,7 +617,7 @@ export default function DonorDashboard() {
         <div className="space-y-6">
           {selectedOrganization && (
             <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Selected Organization</h3>
+              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Primary Organization</h3>
               <div className="text-center">
                 <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden mx-auto mb-4">
                   {selectedOrganization.imageUrl ? (
