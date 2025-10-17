@@ -536,6 +536,9 @@ const PlaidIntegration = ({ isOpen, onClose, onSuccess }) => {
                               onClick={() => {
                                 console.log('Selecting organization:', org);
                                 setSelectedOrganization(org);
+                                // Save to localStorage and dispatch event
+                                localStorage.setItem('selectedOrganization', JSON.stringify(org));
+                                window.dispatchEvent(new CustomEvent('organizationChanged', { detail: org }));
                               }}
                               className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
                                 selectedOrganization?.id === org.id

@@ -361,7 +361,12 @@ export default function MultiStepPaymentForm({
             filteredOrganizations.map((org) => (
               <button
                 key={org.id}
-                onClick={() => setSelectedOrganization(org)}
+                onClick={() => {
+                  setSelectedOrganization(org);
+                  // Save to localStorage and dispatch event
+                  localStorage.setItem('selectedOrganization', JSON.stringify(org));
+                  window.dispatchEvent(new CustomEvent('organizationChanged', { detail: org }));
+                }}
                 className={`w-full p-4 rounded-lg border-2 transition-all duration-200 text-left ${
                   selectedOrganization?.id === org.id
                     ? 'border-blue-500 bg-blue-50'
