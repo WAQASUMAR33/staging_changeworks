@@ -1,109 +1,30 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Search, User, Building2 } from 'lucide-react';
-import Image from 'next/image';
-import { buildOrgLogoUrl } from '@/lib/image-utils';
+import { Search, User } from 'lucide-react';
 
 const DonorHeader = () => {
   const [user, setUser] = useState(null);
-  const [notifications, setNotifications] = useState([]);
-  const [selectedOrganization, setSelectedOrganization] = useState(null);
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
     if (userData) {
       setUser(JSON.parse(userData));
     }
-
-    // Check for selected organization in localStorage
-    const savedOrg = localStorage.getItem('selectedOrganization');
-    if (savedOrg) {
-      try {
-        setSelectedOrganization(JSON.parse(savedOrg));
-      } catch (error) {
-        console.error('Error parsing selected organization:', error);
-      }
-    }
-
-    // Listen for organization selection changes
-    const handleStorageChange = (e) => {
-      if (e.key === 'selectedOrganization') {
-        if (e.newValue) {
-          try {
-            setSelectedOrganization(JSON.parse(e.newValue));
-          } catch (error) {
-            console.error('Error parsing selected organization:', error);
-          }
-        } else {
-          setSelectedOrganization(null);
-        }
-      }
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    
-    // Also listen for custom events (for same-tab updates)
-    const handleOrgChange = (e) => {
-      setSelectedOrganization(e.detail);
-    };
-    
-    window.addEventListener('organizationChanged', handleOrgChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('organizationChanged', handleOrgChange);
-    };
   }, []);
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-3 sm:px-6 py-4">
       <div className="flex justify-between items-center">
-        {/* Left side - Welcome message and selected organization */}
+        {/* Left side - Welcome message */}
         <div className="flex-1 min-w-0">
-          <div className="flex items-center space-x-3">
-            <div>
-              <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 truncate">
-                Welcome back, {user?.name || 'Donor'}!
-              </h1>
-              <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
-                Manage your donations and track your impact
-              </p>
-            </div>
-            
-            {/* Selected Organization */}
-            {selectedOrganization && (
-              <div className="hidden lg:flex items-center space-x-2 bg-gray-50 rounded-lg px-3 py-2 border border-gray-200">
-                <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
-                  {selectedOrganization.imageUrl ? (
-                    <Image
-                      src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
-                      alt={selectedOrganization.name || 'Organization'}
-                      width={32}
-                      height={32}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div 
-                    className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
-                  >
-                    <Building2 className="w-4 h-4 text-blue-600" />
-                  </div>
-                </div>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium text-gray-800 truncate">
-                    {selectedOrganization.name}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    Selected Organization
-                  </p>
-                </div>
-              </div>
-            )}
+          <div>
+            <h1 className="text-lg sm:text-xl lg:text-2xl font-semibold text-gray-800 truncate">
+              Welcome back, {user?.name || 'Donor'}!
+            </h1>
+            <p className="text-xs sm:text-sm text-gray-600 hidden sm:block">
+              Manage your donations and track your impact
+            </p>
           </div>
         </div>
 

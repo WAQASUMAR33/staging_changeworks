@@ -12,12 +12,9 @@ import {
   AlertCircle,
   X,
   CheckCircle,
-  CreditCard,
-  Building2
+  CreditCard
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import Image from 'next/image';
-import { buildOrgLogoUrl } from '@/lib/image-utils';
 import StripeProvider from './components/StripeProvider';
 import MultiStepPaymentForm from './components/MultiStepPaymentForm';
 import StripeSubscriptionModal from './components/StripeSubscriptionModal';
@@ -187,15 +184,6 @@ export default function DonorDashboard() {
             changeType: data.stats.thisMonth.changeType,
             icon: TrendingUp,
             color: 'blue',
-            path: '/donor/dashboard/donations'
-          },
-          {
-            title: 'Organizations Supported',
-            value: data.stats.organizationsSupported.value,
-            change: data.stats.organizationsSupported.change,
-            changeType: data.stats.organizationsSupported.changeType,
-            icon: Target,
-            color: 'purple',
             path: '/donor/dashboard/donations'
           }
         ];
@@ -380,7 +368,7 @@ export default function DonorDashboard() {
       </motion.div>
 
       {/* Stats Grid */}
-      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      <motion.div variants={itemVariants} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
         {stats.map((stat, index) => {
           const Icon = stat.icon;
           return (
@@ -410,9 +398,7 @@ export default function DonorDashboard() {
       </motion.div>
 
       {/* Main Content Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Left Column - Quick Actions and Recent Activity */}
-        <div className="lg:col-span-3 space-y-6">
+      <div className="space-y-6">
           {/* Quick Actions */}
       <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
         <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
@@ -468,15 +454,15 @@ export default function DonorDashboard() {
                     <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                   </div>
                 </div>
-                <div className="space-y-2 mb-4">
-                  <h4 className="text-lg font-bold text-white">Active Recurring Donations</h4>
-                  <p className="text-sm text-green-100">
-                    {subscriptionStatus.subscriptions.length > 0 
-                      ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
-                      : 'Recurring donations active'
-                    }
-                  </p>
-                </div>
+                 <div className="space-y-2 mb-4">
+                   <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
+                   <p className="text-sm text-green-100">
+                     {subscriptionStatus.subscriptions.length > 0 
+                       ? `${subscriptionStatus.subscriptions.length} active subscription${subscriptionStatus.subscriptions.length > 1 ? 's' : ''}`
+                       : 'Recurring donations active'
+                     }
+                   </p>
+                 </div>
                 <button
                   onClick={() => window.location.href = '/donor/dashboard/subscriptions'}
                   className="w-full bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-lg hover:bg-white/30 transition-colors duration-200 text-sm font-semibold"
@@ -502,10 +488,10 @@ export default function DonorDashboard() {
                     <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-lg font-bold text-white">Start Recurring Donations</h4>
-                  <p className="text-sm text-green-100">Set Up Recurring Donations</p>
-                </div>
+                 <div className="space-y-2">
+                   <h4 className="text-lg font-bold text-white">Start and Manage your Monthly Donations</h4>
+                   <p className="text-sm text-green-100">Set Up Recurring Donations</p>
+                 </div>
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             </motion.button>
@@ -539,7 +525,7 @@ export default function DonorDashboard() {
                   </div>
                 </div>
                 <div className="space-y-2 mb-4">
-                  <h4 className="text-lg font-bold text-white">Start Change Donation Now</h4>
+                  <h4 className="text-lg font-bold text-white">Join Our Round-Up Program </h4>
                   <p className="text-sm text-purple-100">
                     {plaidConnectionStatus.connections.length > 0 
                       ? `Connected to ${plaidConnectionStatus.connections[0].institution_name || 'Bank'}`
@@ -572,10 +558,10 @@ export default function DonorDashboard() {
                     <div className="w-3 h-3 bg-white/30 rounded-full"></div>
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <h4 className="text-lg font-bold text-white">Start Change Donation Now</h4>
-                  <p className="text-sm text-purple-100">Connect your bank account</p>
-                </div>
+                 <div className="space-y-2">
+                   <h4 className="text-lg font-bold text-white">Join Our Round-Up Program</h4>
+                   <p className="text-sm text-purple-100">Connect your bank account</p>
+                 </div>
               </div>
               <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent transform -skew-x-12 -translate-x-full group-hover:translate-x-full transition-transform duration-700"></div>
             </motion.button>
@@ -611,44 +597,6 @@ export default function DonorDashboard() {
           )}
         </div>
           </motion.div>
-        </div>
-
-        {/* Right Column - Organization Info */}
-        <div className="space-y-6">
-          {selectedOrganization && (
-            <motion.div variants={itemVariants} className="bg-white rounded-xl p-4 sm:p-6 shadow-sm border border-gray-200">
-              <h3 className="text-base sm:text-lg font-semibold text-gray-900 mb-4">Primary Organization</h3>
-              <div className="text-center">
-                <div className="w-20 h-20 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden mx-auto mb-4">
-                  {selectedOrganization.imageUrl ? (
-                    <Image
-                      src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
-                      alt={selectedOrganization.name || 'Organization'}
-                      width={80}
-                      height={80}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        e.target.style.display = 'none';
-                        e.target.nextSibling.style.display = 'flex';
-                      }}
-                    />
-                  ) : null}
-                  <div 
-                    className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
-                  >
-                    <Building2 className="w-10 h-10 text-gray-600" />
-                  </div>
-                </div>
-                <h4 className="text-lg font-semibold text-gray-900 mb-2">{selectedOrganization.name}</h4>
-                <p className="text-sm text-gray-600 mb-3">{selectedOrganization.email}</p>
-                <div className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                  <div className="w-2 h-2 bg-green-500 rounded-full mr-2"></div>
-                  Active
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </div>
       </div>
 
       {/* Multi-Step Payment Modal */}

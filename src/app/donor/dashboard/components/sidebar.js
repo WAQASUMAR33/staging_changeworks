@@ -1,7 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
+import Image from 'next/image';
+import { buildOrgLogoUrl } from '@/lib/image-utils';
 import {
   LayoutDashboard,
   User,
@@ -17,6 +19,7 @@ import {
   PinOff,
   Menu,
   X,
+  Building2,
 } from 'lucide-react';
 
 const DonorSidebar = () => {
@@ -32,6 +35,55 @@ const DonorSidebar = () => {
     return true;
   });
   const [isMobileOpen, setIsMobileOpen] = useState(false);
+  const [user, setUser] = useState(null);
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
+
+  useEffect(() => {
+    // Load user data
+    const userData = localStorage.getItem('user');
+    if (userData) {
+      setUser(JSON.parse(userData));
+    }
+
+    // Load selected organization
+    const savedOrg = localStorage.getItem('selectedOrganization');
+    if (savedOrg) {
+      try {
+        setSelectedOrganization(JSON.parse(savedOrg));
+      } catch (error) {
+        console.error('Error parsing selected organization:', error);
+      }
+    }
+
+    // Listen for organization selection changes
+    const handleStorageChange = (e) => {
+      if (e.key === 'selectedOrganization') {
+        if (e.newValue) {
+          try {
+            setSelectedOrganization(JSON.parse(e.newValue));
+          } catch (error) {
+            console.error('Error parsing selected organization:', error);
+          }
+        } else {
+          setSelectedOrganization(null);
+        }
+      }
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    
+    // Also listen for custom events (for same-tab updates)
+    const handleOrgChange = (e) => {
+      setSelectedOrganization(e.detail);
+    };
+    
+    window.addEventListener('organizationChanged', handleOrgChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('organizationChanged', handleOrgChange);
+    };
+  }, []);
 
   const handleLogout = () => {
     localStorage.removeItem('token');
@@ -67,19 +119,46 @@ const DonorSidebar = () => {
 
   const SidebarContent = ({ onMobileClose }) => (
     <div className="flex flex-col h-full min-h-screen">
-      {/* Logo and Toggle */}
-      <div className="flex items-center justify-between p-6 border-b border-gray-200 flex-shrink-0">
+      {/* Header with Organization Logo, Donor Info, and Pin/Close */}
+      <div className="flex items-center justify-between p-4 border-b border-gray-200 flex-shrink-0">
+        {/* Organization Logo and Donor Info */}
         {isExpanded && (
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[#0E0061] rounded-lg flex items-center justify-center">
-              <Gift className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <h2 className="text-lg font-bold text-gray-800">Donor Portal</h2>
-              <p className="text-xs text-gray-500">ChangeWorks Fund</p>
-            </div>
+          <div className="flex items-center space-x-3 flex-1 min-w-0">
+            {/* Organization Image */}
+            {selectedOrganization && (
+              <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center overflow-hidden flex-shrink-0">
+                {selectedOrganization.imageUrl ? (
+                  <Image
+                    src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
+                    alt={selectedOrganization.name || 'Organization'}
+                    width={40}
+                    height={40}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.target.style.display = 'none';
+                      e.target.nextSibling.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div 
+                  className={`w-full h-full flex items-center justify-center ${selectedOrganization.imageUrl ? 'hidden' : 'flex'}`}
+                >
+                  <Building2 className="w-5 h-5 text-gray-600" />
+                </div>
+              </div>
+            )}
+            
+            {/* Donor Name */}
+            {user && (
+              <div className="flex-1 min-w-0">
+                <h2 className="text-sm font-bold text-gray-800 truncate">{user.name}</h2>
+                <p className="text-xs text-gray-500">Donor</p>
+              </div>
+            )}
           </div>
         )}
+        
+        {/* Pin/Close buttons */}
         <div className="flex items-center space-x-2">
           {/* Mobile close button */}
           {onMobileClose && (
