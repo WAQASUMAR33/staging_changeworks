@@ -23,6 +23,7 @@ import {
   ChevronLeft,
   Pin,
   PinOff,
+  CreditCard,
 } from 'lucide-react';
 
 const OrgSidebar = () => {
@@ -83,6 +84,11 @@ const OrgSidebar = () => {
       name: 'Dashboard', 
       icon: LayoutDashboard, 
       path: '/organization/dashboard',
+    },
+    {
+      name: 'Stripe Products',
+      icon: CreditCard,
+      path: '/organization/dashboard/stripe-products',
     },
     {
       name: 'Fund Transfers',

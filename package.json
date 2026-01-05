@@ -30,11 +30,13 @@
     "next": "^15.5.3",
     "nodemailer": "^7.0.5",
     "prisma": "^6.11.1",
+    "qrcode": "^1.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-international-phone": "^4.6.0",
     "react-plaid-link": "^4.1.1",
     "selfsigned": "^3.0.1",
+    "speakeasy": "^2.0.0",
     "stripe": "^18.5.0",
     "xlsx": "^0.18.5",
     "zod": "^3.25.76"

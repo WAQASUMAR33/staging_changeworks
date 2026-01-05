@@ -19,6 +19,7 @@ import {
   X,
   Key,
 } from 'lucide-react';
+import TwoFactorSetup from '@/app/components/TwoFactorSetup';
 
 const ProfilePage = () => {
   const [loading, setLoading] = useState(false);
@@ -531,6 +532,11 @@ const ProfilePage = () => {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Two-Factor Authentication Section */}
+      <motion.div variants={itemVariants} className="mt-6">
+        <TwoFactorSetup userType="organization" />
+      </motion.div>
     </motion.div>
   );
 };

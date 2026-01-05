@@ -4,6 +4,7 @@ import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, Shield, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TwoFactorVerification from '@/app/components/TwoFactorVerification';
 
 export default function SecureAdminLoginPage() {
   const router = useRouter();
@@ -15,6 +16,7 @@ export default function SecureAdminLoginPage() {
   const [errors, setErrors] = useState({});
   const [isValidToken, setIsValidToken] = useState(false);
   const [tokenError, setTokenError] = useState('');
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
 
   // Valid security tokens (you can add more or generate dynamically)
   const validTokens = useMemo(() => [
@@ -118,6 +120,13 @@ export default function SecureAdminLoginPage() {
         return;
       }
 
+      // Check if 2FA is required
+      if (data.requiresTwoFactor) {
+        setShowTwoFactorModal(true);
+        setLoading(false);
+        return;
+      }
+
       // Only allow admin roles
       if (data.user.role === 'SUPERADMIN' || data.user.role === 'ADMIN' || data.user.role === 'MANAGER') {
         localStorage.setItem('adminToken', data.token);
@@ -133,6 +142,44 @@ export default function SecureAdminLoginPage() {
     } catch (err) {
       console.error('Login error:', err);
       setErrorMsg('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTwoFactorVerify = async (code) => {
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          twoFactorCode: code,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid two-factor authentication code');
+      }
+
+      // Only allow admin roles
+      if (data.user.role === 'SUPERADMIN' || data.user.role === 'ADMIN' || data.user.role === 'MANAGER') {
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminUser', JSON.stringify(data.user));
+        localStorage.setItem('userRole', data.user.role);
+        router.push('/admin');
+      } else {
+        throw new Error('Access denied. This portal is for administrators only.');
+      }
+
+      setShowTwoFactorModal(false);
+    } catch (err) {
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -166,11 +213,22 @@ export default function SecureAdminLoginPage() {
             >
               ← Back to main site
             </Link>
-          </motion.div>
-        </div>
+        </motion.div>
       </div>
-    );
-  }
+
+      {/* Two-Factor Authentication Modal */}
+      <TwoFactorVerification
+        isOpen={showTwoFactorModal}
+        onClose={() => {
+          setShowTwoFactorModal(false);
+          setErrorMsg('');
+        }}
+        onVerify={handleTwoFactorVerify}
+        email={form.email}
+      />
+    </div>
+  );
+}
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0E0061] via-[#1a0a7e] to-[#0E0061] flex items-center justify-center p-4">

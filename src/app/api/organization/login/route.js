@@ -8,13 +8,14 @@ import jwt from "jsonwebtoken";
 const loginSchema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Password is required"),
+  twoFactorCode: z.string().optional(), // Optional 2FA code
 });
 
 export async function POST(request) {
   try {
     console.log('🔍 Organization login attempt');
     const body = await request.json();
-    const { email, password } = loginSchema.parse(body);
+    const { email, password, twoFactorCode } = loginSchema.parse(body);
     console.log('📧 Login email:', email);
 
     // Check if organization exists
@@ -28,6 +29,8 @@ export async function POST(request) {
         orgPassword: true,
         status: true,
         imageUrl: true,
+        twoFactorEnabled: true,
+        twoFactorSecret: true,
         created_at: true,
         updated_at: true,
       },
@@ -47,6 +50,26 @@ export async function POST(request) {
     // Check organization status
     if (organization.status !== true) {
       return NextResponse.json({ error: "Organization account is inactive" }, { status: 403 });
+    }
+
+    // If 2FA is enabled, verify the code
+    if (organization.twoFactorEnabled) {
+      if (!twoFactorCode) {
+        return NextResponse.json({
+          requiresTwoFactor: true,
+          message: "Two-factor authentication code is required",
+        }, { status: 200 });
+      }
+
+      // Verify 2FA code
+      const { verifyTwoFactorToken } = await import("../../../lib/two-factor");
+      const isValid = verifyTwoFactorToken(twoFactorCode, organization.twoFactorSecret);
+
+      if (!isValid) {
+        return NextResponse.json({ 
+          error: "Invalid two-factor authentication code" 
+        }, { status: 401 });
+      }
     }
 
     // Create JWT payload

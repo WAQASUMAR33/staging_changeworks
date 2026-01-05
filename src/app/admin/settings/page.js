@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { AlertTriangle, Database, Trash2, Shield, CheckCircle, XCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TwoFactorSetup from '@/app/components/TwoFactorSetup';
 
 export default function AdminSettingsPage() {
   const [user, setUser] = useState(null);
@@ -176,6 +177,11 @@ export default function AdminSettingsPage() {
               </span>
             </div>
           </div>
+        </div>
+
+        {/* Two-Factor Authentication Section */}
+        <div className="mb-8">
+          <TwoFactorSetup userType="user" />
         </div>
 
         {/* Database Reset Section */}

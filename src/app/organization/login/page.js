@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, X, Building2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TwoFactorVerification from '@/app/components/TwoFactorVerification';
 
 function OrganizationLoginContent() {
   const router = useRouter();
@@ -22,6 +23,9 @@ function OrganizationLoginContent() {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState('');
+
+  // Two-factor authentication state
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
 
   // Clear errors when component mounts and check for success message
   useEffect(() => {
@@ -96,6 +100,14 @@ function OrganizationLoginContent() {
         return;
       }
 
+      // Check if 2FA is required
+      if (data.requiresTwoFactor) {
+        setShowTwoFactorModal(true);
+        setLoading(false);
+        setIsSubmitting(false);
+        return;
+      }
+
       // Store user data in sessionStorage (expires when browser closes)
       sessionStorage.setItem('orgToken', data.token);
       sessionStorage.setItem('orgUser', JSON.stringify(data.organization));
@@ -113,6 +125,46 @@ function OrganizationLoginContent() {
     } finally {
       setLoading(false);
       setIsSubmitting(false);
+    }
+  };
+
+  const handleTwoFactorVerify = async (code) => {
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/organization/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          twoFactorCode: code,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid two-factor authentication code');
+      }
+
+      // Store user data in sessionStorage (expires when browser closes)
+      sessionStorage.setItem('orgToken', data.token);
+      sessionStorage.setItem('orgUser', JSON.stringify(data.organization));
+      
+      // Clear any old localStorage data
+      localStorage.removeItem('orgToken');
+      localStorage.removeItem('orgUser');
+      localStorage.removeItem('orgRememberMe');
+
+      // Redirect to organization dashboard
+      router.push('/organization/dashboard');
+
+      setShowTwoFactorModal(false);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -558,6 +610,17 @@ function OrganizationLoginContent() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Two-Factor Authentication Modal */}
+      <TwoFactorVerification
+        isOpen={showTwoFactorModal}
+        onClose={() => {
+          setShowTwoFactorModal(false);
+          setErrorMsg('');
+        }}
+        onVerify={handleTwoFactorVerify}
+        email={form.email}
+      />
     </div>
   );
 }

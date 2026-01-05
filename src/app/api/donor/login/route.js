@@ -8,17 +8,25 @@ import jwt from "jsonwebtoken";
 const donorLoginSchema = z.object({
   email: z.string().email("Invalid email"),
   password: z.string().min(6, "Password is required"),
+  twoFactorCode: z.string().optional(), // Optional 2FA code
 });
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { email, password } = donorLoginSchema.parse(body);
+    const { email, password, twoFactorCode } = donorLoginSchema.parse(body);
 
     // Check if donor exists in donors table only
     const donor = await prisma.donor.findUnique({ 
       where: { email },
-      include: {
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        password: true,
+        status: true,
+        twoFactorEnabled: true,
+        twoFactorSecret: true,
         organization: {
           select: {
             id: true,
@@ -48,6 +56,26 @@ export async function POST(request) {
       return NextResponse.json({ 
         error: "Invalid email or password" 
       }, { status: 401 });
+    }
+
+    // If 2FA is enabled, verify the code
+    if (donor.twoFactorEnabled) {
+      if (!twoFactorCode) {
+        return NextResponse.json({
+          requiresTwoFactor: true,
+          message: "Two-factor authentication code is required",
+        }, { status: 200 });
+      }
+
+      // Verify 2FA code
+      const { verifyTwoFactorToken } = await import("../../../lib/two-factor");
+      const isValid = verifyTwoFactorToken(twoFactorCode, donor.twoFactorSecret);
+
+      if (!isValid) {
+        return NextResponse.json({ 
+          error: "Invalid two-factor authentication code" 
+        }, { status: 401 });
+      }
     }
 
     // Create JWT payload

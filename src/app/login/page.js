@@ -4,6 +4,7 @@ import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, X } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TwoFactorVerification from '../components/TwoFactorVerification';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -21,6 +22,9 @@ export default function LoginPage() {
   const [forgotPasswordLoading, setForgotPasswordLoading] = useState(false);
   const [forgotPasswordError, setForgotPasswordError] = useState('');
   const [forgotPasswordSuccess, setForgotPasswordSuccess] = useState('');
+
+  // Two-factor authentication state
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
 
   // Clear errors when component mounts
   useEffect(() => {
@@ -89,6 +93,14 @@ export default function LoginPage() {
         return;
       }
 
+      // Check if 2FA is required
+      if (data.requiresTwoFactor) {
+        setShowTwoFactorModal(true);
+        setLoading(false);
+        setIsSubmitting(false);
+        return;
+      }
+
       // Store user data based on role
       if (data.user.role === 'SUPERADMIN' || data.user.role === 'MANAGER' || data.user.role === 'ADMIN') {
         // Store as admin user
@@ -116,6 +128,53 @@ export default function LoginPage() {
     } finally {
       setLoading(false);
       setIsSubmitting(false);
+    }
+  };
+
+  const handleTwoFactorVerify = async (code) => {
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          twoFactorCode: code,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid two-factor authentication code');
+      }
+
+      // Store user data based on role
+      if (data.user.role === 'SUPERADMIN' || data.user.role === 'MANAGER' || data.user.role === 'ADMIN') {
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminUser', JSON.stringify(data.user));
+        router.push('/admin');
+      } else if (data.user.role === 'DONOR') {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('/donor/dashboard');
+      } else {
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        router.push('/');
+      }
+      
+      if (rememberMe) {
+        localStorage.setItem('rememberMe', 'true');
+      }
+
+      setShowTwoFactorModal(false);
+    } catch (err) {
+      throw err;
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -545,6 +604,17 @@ export default function LoginPage() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Two-Factor Authentication Modal */}
+      <TwoFactorVerification
+        isOpen={showTwoFactorModal}
+        onClose={() => {
+          setShowTwoFactorModal(false);
+          setErrorMsg('');
+        }}
+        onVerify={handleTwoFactorVerify}
+        email={form.email}
+      />
     </div>
   );
 }

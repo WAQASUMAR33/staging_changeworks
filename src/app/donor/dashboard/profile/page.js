@@ -14,6 +14,7 @@ import {
   Loader2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TwoFactorSetup from '@/app/components/TwoFactorSetup';
 
 export default function DonorProfilePage() {
   const [user, setUser] = useState(null);
@@ -604,6 +605,14 @@ export default function DonorProfilePage() {
               )}
             </button>
           </form>
+        </motion.div>
+
+        {/* Two-Factor Authentication Section */}
+        <motion.div
+          variants={itemVariants}
+          className="mt-6"
+        >
+          <TwoFactorSetup userType="donor" />
         </motion.div>
       </div>
     </motion.div>

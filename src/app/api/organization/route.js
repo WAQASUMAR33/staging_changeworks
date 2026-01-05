@@ -3,6 +3,9 @@ import { prisma } from "../../lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import GHLClient from "../../lib/ghl-client";
+import { createOrganizationStripeProducts, createDefaultPricesForProducts } from "../../lib/stripe-products";
+import { isStripeConfigured } from "../../../lib/stripe";
+import { createStripeConnectAccount } from "../../lib/stripe-connect";
 
 // Validation schema
 const organizationSchema = z.object({
@@ -20,6 +23,14 @@ const organizationSchema = z.object({
   imageUrl: z.string().optional(),
   logo: z.string().optional(), // Base64 encoded logo
   logoUrl: z.string().optional(), // URL returned from PHP API
+  // Stripe Connect Account Information
+  createStripeAccount: z.boolean().optional().default(false),
+  stripeBusinessType: z.enum(['nonprofit', 'company', 'individual']).optional(),
+  stripeTaxId: z.string().optional(),
+  // Stripe Product Prices
+  product1Price: z.string().optional(),
+  product2Price: z.string().optional(),
+  product3Price: z.string().optional(),
   // Organization Login Details (single password)
   orgPassword: z.string().min(6, "Organization password must be at least 6 characters"),
   confirmOrgPassword: z.string(),
@@ -271,15 +282,140 @@ export async function POST(req) {
       // Don't fail the entire signup if GHL creation fails
     }
 
+    // Create 3 Stripe products for the organization
+    let stripeProducts = null;
+    let stripePrices = null;
+    
+    try {
+      // Check if Stripe is configured
+      if (!isStripeConfigured()) {
+        console.log('⚠️ Stripe not configured. Skipping Stripe product creation.');
+        console.log('To enable Stripe integration, add STRIPE_SECRET_KEY to your environment variables.');
+      } else {
+        console.log('🔵 Creating 3 Stripe products for organization:', organization.id);
+        
+        // Create the 3 products
+        stripeProducts = await createOrganizationStripeProducts(organization);
+        
+        // Parse custom prices from form (convert to cents)
+        const product1PriceCents = input.product1Price ? Math.round(parseFloat(input.product1Price) * 100) : 1000; // Default $10.00
+        const product2PriceCents = input.product2Price ? Math.round(parseFloat(input.product2Price) * 100) : 2500; // Default $25.00
+        const product3PriceCents = input.product3Price ? Math.round(parseFloat(input.product3Price) * 100) : 100; // Default $1.00
+        
+        // Create prices with custom amounts
+        stripePrices = await createDefaultPricesForProducts(stripeProducts, organization, {
+          product1Price: product1PriceCents,
+          product2Price: product2PriceCents,
+          product3Price: product3PriceCents,
+        });
+        
+        // Update organization with Stripe product IDs
+        await prisma.organization.update({
+          where: { id: organization.id },
+          data: {
+            stripeProductId1: stripeProducts.product1.id,
+            stripeProductId2: stripeProducts.product2.id,
+            stripeProductId3: stripeProducts.product3.id,
+          }
+        });
+        
+        console.log('✅ Stripe products created and stored successfully');
+        console.log('  - Product 1 (One-Time):', stripeProducts.product1.id);
+        console.log('  - Product 2 (Monthly):', stripeProducts.product2.id);
+        console.log('  - Product 3 (Round-Up):', stripeProducts.product3.id);
+      }
+    } catch (stripeError) {
+      console.error('❌ Stripe product creation error:', stripeError);
+      console.error('Stripe error details:', stripeError.message);
+      // Don't fail the entire signup if Stripe product creation fails
+      // Organization can still be created without Stripe products
+    }
+
+    // Create Stripe Connect account if requested
+    let stripeAccount = null;
+    let stripeAccountLink = null;
+    
+    if (input.createStripeAccount) {
+      try {
+        // Check if Stripe is configured
+        if (!isStripeConfigured()) {
+          console.log('⚠️ Stripe not configured. Skipping Stripe Connect account creation.');
+          console.log('To enable Stripe integration, add STRIPE_SECRET_KEY to your environment variables.');
+        } else {
+          console.log('🔵 Creating Stripe Connect account for organization:', organization.id);
+          
+          // Create Stripe Connect Express account
+          const connectResult = await createStripeConnectAccount({
+            id: organization.id,
+            name: organization.name,
+            email: organization.email,
+            country: organization.country || 'US',
+            website: organization.website,
+            phone: organization.phone,
+            businessType: input.stripeBusinessType || 'nonprofit',
+            taxId: input.stripeTaxId,
+          });
+          
+          stripeAccount = connectResult.account;
+          stripeAccountLink = connectResult.accountLink;
+          
+          // Update organization with Stripe Connect account ID
+          await prisma.organization.update({
+            where: { id: organization.id },
+            data: {
+              stripeAccountId: stripeAccount.id,
+            }
+          });
+          
+          console.log('✅ Stripe Connect account created and stored successfully');
+          console.log('  - Account ID:', stripeAccount.id);
+          if (stripeAccountLink) {
+            console.log('  - Onboarding URL:', stripeAccountLink.url);
+          }
+        }
+      } catch (connectError) {
+        console.error('❌ Stripe Connect account creation error:', connectError);
+        console.error('Stripe Connect error details:', connectError.message);
+        // Don't fail the entire signup if Stripe Connect account creation fails
+        // Organization can still be created without Stripe Connect account
+      }
+    }
+
     return NextResponse.json({
       message: "Organization registered successfully",
       organization: {
         ...organization,
-        ghlId: ghlLocationId
+        ghlId: ghlLocationId,
+        stripeProductId1: stripeProducts?.product1?.id || null,
+        stripeProductId2: stripeProducts?.product2?.id || null,
+        stripeProductId3: stripeProducts?.product3?.id || null,
+        stripeAccountId: stripeAccount?.id || null,
       },
       ghlAccount: ghlAccount,
       ghlLocationId: ghlLocationId,
-      ghlApiKey: ghlApiKey // Include the sub-account API key in response
+      ghlApiKey: ghlApiKey, // Include the sub-account API key in response
+      stripeAccount: stripeAccount ? {
+        id: stripeAccount.id,
+        type: stripeAccount.type,
+        onboardingUrl: stripeAccountLink?.url || null,
+      } : null,
+      stripeProducts: stripeProducts ? {
+        product1: {
+          id: stripeProducts.product1.id,
+          name: stripeProducts.product1.name,
+          priceId: stripePrices?.price1?.id || null
+        },
+        product2: {
+          id: stripeProducts.product2.id,
+          name: stripeProducts.product2.name,
+          priceId: stripePrices?.price2?.id || null
+        },
+        product3: {
+          id: stripeProducts.product3.id,
+          name: stripeProducts.product3.name,
+          priceId: stripePrices?.price3?.id || null
+        }
+      } : null
     }, { status: 201 });
 
   } catch (error) {

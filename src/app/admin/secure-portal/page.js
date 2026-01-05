@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Eye, EyeOff, Mail, Lock, AlertCircle, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import TwoFactorVerification from '@/app/components/TwoFactorVerification';
 
 export default function AdminLoginPage() {
   const router = useRouter();
@@ -13,6 +14,7 @@ export default function AdminLoginPage() {
   const [errorMsg, setErrorMsg] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [showTwoFactorModal, setShowTwoFactorModal] = useState(false);
 
   // Removed auto-redirect to always show login form
 
@@ -70,6 +72,13 @@ export default function AdminLoginPage() {
         return;
       }
 
+      // Check if 2FA is required
+      if (data.requiresTwoFactor) {
+        setShowTwoFactorModal(true);
+        setLoading(false);
+        return;
+      }
+
       // Only allow admin roles
       if (data.user.role === 'SUPERADMIN' || data.user.role === 'ADMIN' || data.user.role === 'MANAGER') {
         localStorage.setItem('adminToken', data.token);
@@ -89,6 +98,48 @@ export default function AdminLoginPage() {
     } catch (err) {
       console.error('Login error:', err);
       setErrorMsg('Network error. Please check your connection and try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleTwoFactorVerify = async (code) => {
+    setLoading(true);
+    setErrorMsg('');
+
+    try {
+      const res = await fetch('/api/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...form,
+          twoFactorCode: code,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || 'Invalid two-factor authentication code');
+      }
+
+      // Only allow admin roles
+      if (data.user.role === 'SUPERADMIN' || data.user.role === 'ADMIN' || data.user.role === 'MANAGER') {
+        localStorage.setItem('adminToken', data.token);
+        localStorage.setItem('adminUser', JSON.stringify(data.user));
+        localStorage.setItem('userRole', data.user.role);
+        
+        // Set HTTP-only cookie for server-side validation
+        document.cookie = `adminToken=${data.token}; path=/; secure; samesite=strict`;
+        
+        router.push('/admin');
+      } else {
+        throw new Error('Access denied. This portal is for administrators only.');
+      }
+
+      setShowTwoFactorModal(false);
+    } catch (err) {
+      throw err;
     } finally {
       setLoading(false);
     }
@@ -334,6 +385,17 @@ export default function AdminLoginPage() {
           </div>
         </motion.div>
       </motion.div>
+
+      {/* Two-Factor Authentication Modal */}
+      <TwoFactorVerification
+        isOpen={showTwoFactorModal}
+        onClose={() => {
+          setShowTwoFactorModal(false);
+          setErrorMsg('');
+        }}
+        onVerify={handleTwoFactorVerify}
+        email={form.email}
+      />
     </div>
   );
 }

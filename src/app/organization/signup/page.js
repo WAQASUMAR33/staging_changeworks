@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Building2, User, Phone, MapPin, Globe, Calendar, Upload, X } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Building2, User, Phone, MapPin, Globe, Calendar, Upload, X, CreditCard } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function OrganizationSignupPage() {
@@ -19,7 +19,16 @@ export default function OrganizationSignupPage() {
     website: '',
     logo: '', // Base64 encoded logo
     logoUrl: '', // URL returned from PHP API
-    // Organization Login Details (single password set)
+    // Stripe Connect Account Information (Step 3)
+    createStripeAccount: true, // Default to true for Step 3
+    stripeBusinessType: 'nonprofit', // nonprofit, company, individual
+    stripeTaxId: '', // EIN or Tax ID
+    stripeBankAccount: '', // Bank account number (optional, can be added later)
+    // Stripe Product Prices (Step 4)
+    product1Price: '10.00', // One-Time Donation default price
+    product2Price: '25.00', // Monthly Recurring default price
+    product3Price: '1.00', // Round-Up Program minimum price
+    // Organization Login Details (single password set) - Step 5
     orgPassword: '',
     confirmOrgPassword: '',
     // GHL Business Details (automatic - no checkbox needed)
@@ -43,7 +52,7 @@ export default function OrganizationSignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoUploading, setLogoUploading] = useState(false);
-  const totalSteps = 3; // Reduced steps: Basic Info, Contact/Address, Organization Login
+  const totalSteps = 5; // Steps: Basic Info, Address, Stripe Connect, Product Prices, Organization Login
 
   // Clear errors when component mounts and fetch countries
   useEffect(() => {
@@ -127,6 +136,25 @@ export default function OrganizationSignupPage() {
         newErrors.postalCode = 'Postal code is required';
       }
     } else if (step === 3) {
+      // Stripe Connect Account Information
+      if (form.createStripeAccount) {
+        if (!form.stripeBusinessType) {
+          newErrors.stripeBusinessType = 'Business type is required';
+        }
+        // Tax ID is optional but recommended
+      }
+    } else if (step === 4) {
+      // Stripe Product Prices
+      if (!form.product1Price || parseFloat(form.product1Price) <= 0) {
+        newErrors.product1Price = 'One-time donation price must be greater than 0';
+      }
+      if (!form.product2Price || parseFloat(form.product2Price) <= 0) {
+        newErrors.product2Price = 'Monthly donation price must be greater than 0';
+      }
+      if (!form.product3Price || parseFloat(form.product3Price) <= 0) {
+        newErrors.product3Price = 'Round-up minimum price must be greater than 0';
+      }
+    } else if (step === 5) {
       // Organization Login Details
       if (!form.orgPassword) {
         newErrors.orgPassword = 'Organization password is required';
@@ -661,6 +689,232 @@ export default function OrganizationSignupPage() {
         );
 
       case 3:
+        return (
+          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+            <motion.div variants={itemVariants} className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Stripe Connect Account</h2>
+              <p className="text-gray-600">Set up your Stripe Connect account to receive payments</p>
+            </motion.div>
+
+            {/* Enable Stripe Connect Account */}
+            <motion.div variants={itemVariants} className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+              <label className="flex items-start space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  name="createStripeAccount"
+                  checked={form.createStripeAccount}
+                  onChange={(e) => setForm(prev => ({ ...prev, createStripeAccount: e.target.checked }))}
+                  className="mt-1 w-5 h-5 text-blue-600 border-gray-300 rounded focus:ring-blue-500 focus:ring-2"
+                  disabled={isSubmitting}
+                />
+                <div className="flex-1">
+                  <div className="flex items-center space-x-2 mb-1">
+                    <CreditCard className="w-5 h-5 text-blue-600" />
+                    <span className="text-sm font-semibold text-gray-900">
+                      Create Stripe Connect Account
+                    </span>
+                  </div>
+                  <p className="text-xs text-gray-600 ml-7">
+                    Create a Stripe Connect account to receive payments directly. You&apos;ll complete onboarding after registration.
+                  </p>
+                </div>
+              </label>
+            </motion.div>
+
+            {form.createStripeAccount && (
+              <>
+                {/* Business Type */}
+                <motion.div variants={itemVariants}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Business Type *
+                  </label>
+                  <select
+                    name="stripeBusinessType"
+                    value={form.stripeBusinessType}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
+                      errors.stripeBusinessType 
+                        ? 'border-red-300 bg-red-50' 
+                        : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                    disabled={isSubmitting}
+                  >
+                    <option value="nonprofit">Nonprofit Organization</option>
+                    <option value="company">Company</option>
+                    <option value="individual">Individual</option>
+                  </select>
+                  <AnimatePresence>
+                    {errors.stripeBusinessType && (
+                      <motion.p 
+                        initial={{ opacity: 0, y: -5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -5 }}
+                        className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                      >
+                        <AlertCircle className="w-3 h-3" />
+                        <span>{errors.stripeBusinessType}</span>
+                      </motion.p>
+                    )}
+                  </AnimatePresence>
+                </motion.div>
+
+                {/* Tax ID / EIN */}
+                <motion.div variants={itemVariants}>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Tax ID / EIN (Optional but Recommended)
+                  </label>
+                  <div className="relative">
+                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      name="stripeTaxId"
+                      type="text"
+                      placeholder="Enter your Tax ID or EIN"
+                      value={form.stripeTaxId}
+                      onChange={handleChange}
+                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Required for full account verification. You can add this later during onboarding.
+                  </p>
+                </motion.div>
+              </>
+            )}
+          </motion.div>
+        );
+
+      case 4:
+        return (
+          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
+            <motion.div variants={itemVariants} className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Stripe Product Prices</h2>
+              <p className="text-gray-600">Set custom prices for your donation products</p>
+            </motion.div>
+
+            {/* Product 1: One-Time Donation */}
+            <motion.div variants={itemVariants} className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
+              <div className="flex items-center space-x-2 mb-3">
+                <CreditCard className="w-5 h-5 text-blue-600" />
+                <h3 className="text-lg font-semibold text-gray-900">One-Time Donation</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Default price for single, one-time donations</p>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                <input
+                  name="product1Price"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="10.00"
+                  value={form.product1Price}
+                  onChange={handleChange}
+                  className={`w-full pl-8 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
+                    errors.product1Price 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                  }`}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <AnimatePresence>
+                {errors.product1Price && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.product1Price}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Product 2: Monthly Recurring */}
+            <motion.div variants={itemVariants} className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
+              <div className="flex items-center space-x-2 mb-3">
+                <CreditCard className="w-5 h-5 text-green-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Monthly Recurring Donation</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Default monthly subscription price</p>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                <input
+                  name="product2Price"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="25.00"
+                  value={form.product2Price}
+                  onChange={handleChange}
+                  className={`w-full pl-8 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
+                    errors.product2Price 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                  }`}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <AnimatePresence>
+                {errors.product2Price && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.product2Price}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            {/* Product 3: Round-Up Program */}
+            <motion.div variants={itemVariants} className="p-4 bg-purple-50 border-2 border-purple-200 rounded-xl">
+              <div className="flex items-center space-x-2 mb-3">
+                <CreditCard className="w-5 h-5 text-purple-600" />
+                <h3 className="text-lg font-semibold text-gray-900">Round-Up Program</h3>
+              </div>
+              <p className="text-sm text-gray-600 mb-3">Minimum amount for round-up donations</p>
+              <div className="relative">
+                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
+                <input
+                  name="product3Price"
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  placeholder="1.00"
+                  value={form.product3Price}
+                  onChange={handleChange}
+                  className={`w-full pl-8 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
+                    errors.product3Price 
+                      ? 'border-red-300 bg-red-50' 
+                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                  }`}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <AnimatePresence>
+                {errors.product3Price && (
+                  <motion.p 
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.product3Price}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+          </motion.div>
+        );
+
+      case 5:
         return (
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">
