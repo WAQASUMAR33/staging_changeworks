@@ -1,4 +1,4 @@
-import { getStripe } from './stripe';
+import { getStripe } from '../../lib/stripe';
 
 /**
  * Create 3 custom Stripe products for an organization
