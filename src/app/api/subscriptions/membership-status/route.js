@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 // GET /api/subscriptions/membership-status - Get comprehensive membership status and payment records
 export async function GET(request) {

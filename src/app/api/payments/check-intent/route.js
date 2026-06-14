@@ -6,7 +6,7 @@ import { prisma } from "../../../lib/prisma";
 let stripe;
 try {
   if (process.env.STRIPE_SECRET_KEY) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, { apiVersion: '2023-10-16' });
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder', { apiVersion: '2023-10-16' });
   }
 } catch (e) {
   console.error('Stripe init error:', e);

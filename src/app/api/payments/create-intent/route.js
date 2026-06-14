@@ -9,7 +9,7 @@ try {
   if (!process.env.STRIPE_SECRET_KEY) {
     console.warn('STRIPE_SECRET_KEY environment variable is not set');
   } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
+    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder', {
       apiVersion: '2023-10-16',
     });
   }

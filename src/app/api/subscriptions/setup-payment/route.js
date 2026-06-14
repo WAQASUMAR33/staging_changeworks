@@ -3,7 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import Stripe from "stripe";
 import emailService from "../../../lib/email-service.jsx";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 // POST /api/subscriptions/setup-payment - Setup payment for subscription
 export async function POST(request) {
