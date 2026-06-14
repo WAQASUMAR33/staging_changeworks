@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
+import { corsHeaders } from '@/app/lib/cors';
 
 const verifyTokenSchema = z.object({
   token: z.string().min(1, "Token is required"),
@@ -79,7 +80,7 @@ export async function POST(request) {
       donor_info: {
         name: donor.name,
         email: donor.email,
-        organization: donor.organization.name
+        organization: donor.organization?.name || null
       },
       token_info: {
         expires_at: resetToken.expires,
@@ -104,4 +105,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import GHLClient from "../../lib/ghl-client";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   try {
@@ -117,4 +118,8 @@ export async function GET() {
       "Agency API Key": "250+ chars, JWT format, CAN create sub-accounts"
     }
   });
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

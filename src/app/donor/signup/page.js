@@ -3,14 +3,17 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
 import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowRight, ArrowLeft } from 'lucide-react';
-import { useRouter } from 'next/navigation';
+import { Eye, EyeOff, Loader2, CheckCircle, AlertCircle, ArrowRight, ArrowLeft, Building2, Search, Heart } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { fetchCountries } from '@/lib/countries-api';
 import { PhoneInput } from 'react-international-phone';
 import 'react-international-phone/style.css';
+import { buildOrgLogoUrl } from '@/lib/image-utils';
 
 export default function DonorSignupPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const organizationId = searchParams.get('org');
   const [currentStep, setCurrentStep] = useState(1);
   const [formData, setFormData] = useState({
     name: '',
@@ -20,10 +23,11 @@ export default function DonorSignupPage() {
     postal_code: '',
     password: '',
     confirmPassword: '',
-    organization_id: ''
   });
   const [organizations, setOrganizations] = useState([]);
-  const [orgSearch, setOrgSearch] = useState('');
+  const [loadingOrgs, setLoadingOrgs] = useState(false);
+  const [selectedOrganization, setSelectedOrganization] = useState(null);
+  const [orgSearchTerm, setOrgSearchTerm] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -35,10 +39,7 @@ export default function DonorSignupPage() {
   const [isCountryDropdownOpen, setIsCountryDropdownOpen] = useState(false);
   const countryDropdownRef = useRef(null);
 
-  const filteredOrganizations = useMemo(() => {
-    const q = orgSearch.toLowerCase();
-    return organizations.filter(o => (o.name || '').toLowerCase().includes(q));
-  }, [orgSearch, organizations]);
+
 
 
   // Load countries on component mount
@@ -49,7 +50,7 @@ export default function DonorSignupPage() {
         const countriesData = await fetchCountries();
         setCountries(countriesData);
         console.log(`✅ Loaded ${countriesData.length} countries`);
-        
+
         // Phone auto-fill is now handled by react-international-phone
       } catch (error) {
         console.error('❌ Failed to load countries:', error);
@@ -76,46 +77,39 @@ export default function DonorSignupPage() {
     };
   }, []);
 
+  // Fetch organizations
   useEffect(() => {
-    if (currentStep === 4 && organizations.length === 0) {
-      const load = async () => {
-        try {
-          // Try preferred endpoint first (array response)
-          const r1 = await fetch('/api/organizations/list');
-          if (r1.ok) {
-            const d1 = await r1.json();
-            const list1 = Array.isArray(d1) ? d1 : (d1.organizations || []);
-            if (Array.isArray(list1) && list1.length > 0) {
-              setOrganizations(list1);
-              return;
-            }
+    const fetchOrgs = async () => {
+      try {
+        setLoadingOrgs(true);
+        const res = await fetch('/api/organizations/list');
+        const data = await res.json();
+        if (data.success && Array.isArray(data.organizations)) {
+          setOrganizations(data.organizations);
+          // Pre-select if org param in URL
+          if (organizationId) {
+            const preSelected = data.organizations.find(o => o.id === Number(organizationId));
+            if (preSelected) setSelectedOrganization(preSelected);
           }
-        } catch {}
-        try {
-          // Fallback endpoint (object with organizations)
-          const r2 = await fetch('/api/organization');
-          if (r2.ok) {
-            const d2 = await r2.json();
-            const list2 = Array.isArray(d2) ? d2 : (d2.organizations || []);
-            if (Array.isArray(list2)) setOrganizations(list2);
-          }
-        } catch {
-          setOrganizations([]);
         }
-      };
-      load();
-    }
-  }, [currentStep, organizations.length]);
+      } catch {
+        // non-fatal
+      } finally {
+        setLoadingOrgs(false);
+      }
+    };
+    fetchOrgs();
+  }, [organizationId]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
-    
+
     // Clear specific field error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    
+
     // Clear general error message when user starts typing
     if (error) {
       setError('');
@@ -124,28 +118,30 @@ export default function DonorSignupPage() {
 
   const validateStep = (step) => {
     const newErrors = {};
-    
+
     if (step === 1) {
       if (!formData.name.trim()) newErrors.name = 'Full name is required';
       if (!formData.email.trim()) newErrors.email = 'Email is required';
       else if (!/\S+@\S+\.\S+/.test(formData.email)) newErrors.email = 'Enter a valid email';
       if (!formData.phone.trim()) newErrors.phone = 'Phone number is required';
     }
-    
+
     if (step === 2) {
       if (!formData.country) newErrors.country = 'Country is required';
       if (!formData.postal_code.trim()) newErrors.postal_code = 'Postal code is required';
     }
-    
+
     if (step === 3) {
       if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
       if (formData.password !== formData.confirmPassword) newErrors.confirmPassword = 'Passwords do not match';
     }
-    
+
     if (step === 4) {
-      if (!formData.organization_id) newErrors.organization_id = 'Please select an organization';
+      if (!selectedOrganization) newErrors.organization = 'Please select an organization';
     }
-    
+
+    // Step 5 is Review, no validation needed
+
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -163,16 +159,21 @@ export default function DonorSignupPage() {
     setCurrentStep(prev => Math.max(prev - 1, 1));
   };
 
-  const handleSubmit = async (e) => {
+  const handleFormSubmit = (e) => {
     e.preventDefault();
-    
+    if (currentStep < 5) {
+      goNext();
+    }
+  };
+
+  const createAccount = async () => {
     if (!validateStep(currentStep)) return;
 
-    // Final submit (step 5)
+    // Final submit (step 4)
     setLoading(true);
     setMessage('');
     setError('');
-    
+
     try {
       const response = await fetch('/api/donor/signup', {
         method: 'POST',
@@ -184,12 +185,12 @@ export default function DonorSignupPage() {
           phone: formData.phone.trim(),
           postal_code: formData.postal_code.trim(),
           country: formData.country,
-          organization_id: Number(formData.organization_id)
+          organization_id: selectedOrganization?.id ?? (organizationId ? Number(organizationId) : undefined),
         })
       });
-      
+
       const data = await response.json();
-      
+
       if (response.ok) {
         setMessage('Account created successfully! Please check your email to verify your account.');
         setTimeout(() => router.push('/donor/login'), 2000);
@@ -228,7 +229,7 @@ export default function DonorSignupPage() {
     { id: 2, title: 'Location' },
     { id: 3, title: 'Security' },
     { id: 4, title: 'Organization' },
-    { id: 5, title: 'Review' }
+    { id: 5, title: 'Review' },
   ];
 
   return (
@@ -255,30 +256,30 @@ export default function DonorSignupPage() {
             className="mb-8"
           >
             <Image
-              src="/imgs/changeworks.jpg"
+              src="/imgs/changeworks.png"
               alt="ChangeWorks Logo"
               width={200}
               height={200}
-              className="mx-auto rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              className="mx-auto"
               priority
             />
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             variants={itemVariants}
-            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4"
+            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4 pb-1"
           >
             Join ChangeWorks
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
             Create your donor account and start making a positive impact in the world
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             variants={itemVariants}
             className="flex items-center justify-center space-x-4 text-sm text-gray-500"
           >
@@ -313,14 +314,14 @@ export default function DonorSignupPage() {
               initial="hidden"
               animate="visible"
             >
-              <motion.h2 
+              <motion.h2
                 variants={itemVariants}
                 className="text-3xl font-bold text-center mb-2 bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent"
               >
                 Create Donor Account
               </motion.h2>
-              
-              <motion.p 
+
+              <motion.p
                 variants={itemVariants}
                 className="text-center text-gray-600 mb-8"
               >
@@ -333,21 +334,19 @@ export default function DonorSignupPage() {
                   {steps.map((step, index) => {
                     const isActive = currentStep === step.id;
                     const isCompleted = currentStep > step.id;
-                    
+
                     return (
                       <div key={step.id} className="flex flex-col items-center">
-                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 text-sm font-semibold transition-all duration-200 ${
-                          isActive 
-                            ? 'bg-blue-600 border-blue-600 text-white' 
-                            : isCompleted 
-                            ? 'bg-green-500 border-green-500 text-white' 
+                        <div className={`w-10 h-10 rounded-full flex items-center justify-center border-2 text-sm font-semibold transition-all duration-200 ${isActive
+                          ? 'bg-blue-600 border-blue-600 text-white'
+                          : isCompleted
+                            ? 'bg-green-500 border-green-500 text-white'
                             : 'bg-gray-100 border-gray-300 text-gray-400'
-                        }`}>
+                          }`}>
                           {step.id}
                         </div>
-                        <span className={`text-xs mt-2 font-medium ${
-                          isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
-                        }`}>
+                        <span className={`text-xs mt-2 font-medium ${isActive ? 'text-blue-600' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                          }`}>
                           {step.title}
                         </span>
                       </div>
@@ -384,7 +383,7 @@ export default function DonorSignupPage() {
                 )}
               </AnimatePresence>
 
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleFormSubmit} className="space-y-6">
                 {/* Step 1: Personal Information */}
                 {currentStep === 1 && (
                   <motion.div
@@ -403,15 +402,14 @@ export default function DonorSignupPage() {
                         placeholder="Enter your full name"
                         value={formData.name}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.name 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.name
+                          ? 'border-red-300 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                          }`}
                       />
                       <AnimatePresence>
                         {errors.name && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -434,15 +432,14 @@ export default function DonorSignupPage() {
                         placeholder="Enter your email"
                         value={formData.email}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.email 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.email
+                          ? 'border-red-300 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                          }`}
                       />
                       <AnimatePresence>
                         {errors.email && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -508,7 +505,7 @@ export default function DonorSignupPage() {
                       />
                       <AnimatePresence>
                         {errors.phone && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -535,7 +532,7 @@ export default function DonorSignupPage() {
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
                         Country *
                       </label>
-                      
+
                       {countriesLoading ? (
                         <div className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl bg-gray-50 flex items-center justify-center">
                           <Loader2 className="w-5 h-5 animate-spin text-gray-400 mr-2" />
@@ -547,11 +544,10 @@ export default function DonorSignupPage() {
                           <button
                             type="button"
                             onClick={() => setIsCountryDropdownOpen(!isCountryDropdownOpen)}
-                            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-left flex items-center justify-between ${
-                              errors.country 
-                                ? 'border-red-300 bg-red-50' 
-                                : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                            }`}
+                            className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-left flex items-center justify-between ${errors.country
+                              ? 'border-red-300 bg-red-50'
+                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                              }`}
                           >
                             <div className="flex items-center space-x-3">
                               {formData.country ? (
@@ -580,12 +576,12 @@ export default function DonorSignupPage() {
                                   const priorityCountries = ['MX', 'US', 'CA', 'GB'];
                                   const priorityList = countries.filter(c => priorityCountries.includes(c.code));
                                   const otherCountries = countries.filter(c => !priorityCountries.includes(c.code));
-                                  
+
                                   // Sort priority countries by the specified order
-                                  const sortedPriorityList = priorityCountries.map(code => 
+                                  const sortedPriorityList = priorityCountries.map(code =>
                                     priorityList.find(c => c.code === code)
                                   ).filter(Boolean);
-                                  
+
                                   return { priorityList: sortedPriorityList, otherCountries };
                                 })().priorityList.map(country => (
                                   <button
@@ -595,15 +591,14 @@ export default function DonorSignupPage() {
                                       setFormData(prev => ({ ...prev, country: country.code }));
                                       setIsCountryDropdownOpen(false);
                                     }}
-                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${
-                                      formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
-                                    }`}
+                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
+                                      }`}
                                   >
                                     <span className={`fi ${country.flagClass} w-6 h-4`}></span>
                                     <span>{country.name}</span>
                                   </button>
                                 ))}
-                                
+
                                 {/* Separator */}
                                 {(() => {
                                   const priorityCountries = ['MX', 'US', 'CA', 'GB'];
@@ -611,9 +606,9 @@ export default function DonorSignupPage() {
                                   const otherCountries = countries.filter(c => !priorityCountries.includes(c.code));
                                   return otherCountries.length > 0;
                                 })() && (
-                                  <div className="border-t border-gray-200 my-1"></div>
-                                )}
-                                
+                                    <div className="border-t border-gray-200 my-1"></div>
+                                  )}
+
                                 {(() => {
                                   // Priority countries to show at the top
                                   const priorityCountries = ['MX', 'US', 'CA', 'GB'];
@@ -627,9 +622,8 @@ export default function DonorSignupPage() {
                                       setFormData(prev => ({ ...prev, country: country.code }));
                                       setIsCountryDropdownOpen(false);
                                     }}
-                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${
-                                      formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
-                                    }`}
+                                    className={`w-full px-4 py-3 text-left hover:bg-gray-50 flex items-center space-x-3 transition-colors ${formData.country === country.code ? 'bg-blue-50 text-black' : 'text-black'
+                                      }`}
                                   >
                                     <span className={`fi ${country.flagClass} w-6 h-4`}></span>
                                     <span>{country.name}</span>
@@ -640,10 +634,10 @@ export default function DonorSignupPage() {
                           </AnimatePresence>
                         </div>
                       )}
-                      
+
                       <AnimatePresence>
                         {errors.country && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -666,15 +660,14 @@ export default function DonorSignupPage() {
                         placeholder="ZIP / Postal Code"
                         value={formData.postal_code}
                         onChange={handleInputChange}
-                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                          errors.postal_code 
-                            ? 'border-red-300 bg-red-50' 
-                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                        }`}
+                        className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.postal_code
+                          ? 'border-red-300 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                          }`}
                       />
                       <AnimatePresence>
                         {errors.postal_code && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -708,11 +701,10 @@ export default function DonorSignupPage() {
                           placeholder="Create a password"
                           value={formData.password}
                           onChange={handleInputChange}
-                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.password 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
+                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.password
+                            ? 'border-red-300 bg-red-50'
+                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                            }`}
                         />
                         <button
                           type="button"
@@ -724,7 +716,7 @@ export default function DonorSignupPage() {
                       </div>
                       <AnimatePresence>
                         {errors.password && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -748,11 +740,10 @@ export default function DonorSignupPage() {
                           placeholder="Confirm your password"
                           value={formData.confirmPassword}
                           onChange={handleInputChange}
-                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${
-                            errors.confirmPassword 
-                              ? 'border-red-300 bg-red-50' 
-                              : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                          }`}
+                          className={`w-full px-4 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 ${errors.confirmPassword
+                            ? 'border-red-300 bg-red-50'
+                            : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                            }`}
                         />
                         <button
                           type="button"
@@ -764,7 +755,7 @@ export default function DonorSignupPage() {
                       </div>
                       <AnimatePresence>
                         {errors.confirmPassword && (
-                          <motion.p 
+                          <motion.p
                             initial={{ opacity: 0, y: -5 }}
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, y: -5 }}
@@ -779,7 +770,9 @@ export default function DonorSignupPage() {
                   </motion.div>
                 )}
 
-                {/* Step 4: Organization Selection */}
+
+
+                {/* Step 4: Organization */}
                 {currentStep === 4 && (
                   <motion.div
                     initial={{ opacity: 0, x: 20 }}
@@ -789,60 +782,91 @@ export default function DonorSignupPage() {
                   >
                     <div>
                       <label className="block text-sm font-semibold text-gray-700 mb-2">
-                        Search Organization *
+                        Select Organization *
                       </label>
-                      <div className="relative">
+                      <p className="text-sm text-gray-500 mb-3">Choose the organization you want to support with your donations.</p>
+
+                      {/* Search */}
+                      <div className="relative mb-3">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                         <input
                           type="text"
-                          placeholder="Search organization..."
-                          value={orgSearch}
-                          onChange={(e) => setOrgSearch(e.target.value)}
-                          className="w-full px-4 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
+                          placeholder="Search organizations..."
+                          value={orgSearchTerm}
+                          onChange={(e) => setOrgSearchTerm(e.target.value)}
+                          className="w-full pl-10 pr-4 py-2 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200"
                         />
                       </div>
-                    </div>
 
-                    <div className="max-h-64 overflow-auto border border-gray-200 rounded-xl divide-y">
-                      {filteredOrganizations.map(org => (
-                        <button
-                          key={org.id}
-                          type="button"
-                          onClick={() => setFormData(prev => ({ ...prev, organization_id: String(org.id) }))}
-                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors duration-200 ${
-                            String(org.id) === String(formData.organization_id) ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                          }`}
-                        >
-                          <div className="flex items-center justify-between">
-                            <span className="font-medium text-gray-900">{org.name}</span>
-                            <span className={`text-xs px-2 py-1 rounded ${
-                              String(org.id) === String(formData.organization_id) 
-                                ? 'bg-blue-600 text-white' 
-                                : 'bg-gray-100 text-gray-700'
-                            }`}>
-                              {String(org.id) === String(formData.organization_id) ? 'Selected' : `ID ${org.id}`}
-                            </span>
+                      {/* List */}
+                      <div className="max-h-60 overflow-y-auto space-y-2 pr-1">
+                        {loadingOrgs ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-blue-600 mr-2" />
+                            <span className="text-gray-500 text-sm">Loading organizations...</span>
                           </div>
-                          {org.email && <p className="text-xs text-gray-600 mt-1">{org.email}</p>}
-                        </button>
-                      ))}
-                      {filteredOrganizations.length === 0 && (
-                        <div className="p-4 text-sm text-gray-600 text-center">No organizations found</div>
-                      )}
+                        ) : organizations.filter(o =>
+                            o.name.toLowerCase().includes(orgSearchTerm.toLowerCase())
+                          ).length > 0 ? (
+                          organizations
+                            .filter(o => o.name.toLowerCase().includes(orgSearchTerm.toLowerCase()))
+                            .map((org) => (
+                              <button
+                                key={org.id}
+                                type="button"
+                                onClick={() => setSelectedOrganization(org)}
+                                className={`w-full p-3 rounded-xl border-2 text-left transition-all duration-200 flex items-center space-x-3 ${
+                                  selectedOrganization?.id === org.id
+                                    ? 'border-blue-500 bg-blue-50'
+                                    : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                                }`}
+                              >
+                                <div className="w-10 h-10 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                                  {org.imageUrl ? (
+                                    <Image
+                                      src={buildOrgLogoUrl(org.imageUrl)}
+                                      alt={org.name}
+                                      width={40}
+                                      height={40}
+                                      className="w-full h-full object-contain"
+                                    />
+                                  ) : (
+                                    <div className="w-full h-full bg-blue-100 rounded-lg flex items-center justify-center">
+                                      <Heart className="w-5 h-5 text-blue-600" />
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="font-semibold text-gray-900 truncate">{org.name}</p>
+                                  {org.email && <p className="text-xs text-gray-500 truncate">{org.email}</p>}
+                                </div>
+                                {selectedOrganization?.id === org.id && (
+                                  <CheckCircle className="w-5 h-5 text-blue-600 flex-shrink-0" />
+                                )}
+                              </button>
+                            ))
+                        ) : (
+                          <div className="text-center py-8">
+                            <Building2 className="w-10 h-10 text-gray-300 mx-auto mb-2" />
+                            <p className="text-gray-500 text-sm">No organizations found</p>
+                          </div>
+                        )}
+                      </div>
+
+                      <AnimatePresence>
+                        {errors.organization && (
+                          <motion.p
+                            initial={{ opacity: 0, y: -5 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: -5 }}
+                            className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                          >
+                            <AlertCircle className="w-3 h-3" />
+                            <span>{errors.organization}</span>
+                          </motion.p>
+                        )}
+                      </AnimatePresence>
                     </div>
-                    
-                    <AnimatePresence>
-                      {errors.organization_id && (
-                        <motion.p 
-                          initial={{ opacity: 0, y: -5 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -5 }}
-                          className="text-red-500 text-sm flex items-center space-x-1"
-                        >
-                          <AlertCircle className="w-3 h-3" />
-                          <span>{errors.organization_id}</span>
-                        </motion.p>
-                      )}
-                    </AnimatePresence>
                   </motion.div>
                 )}
 
@@ -890,11 +914,30 @@ export default function DonorSignupPage() {
                           <span className="font-medium text-gray-700">Postal Code:</span>
                           <p className="text-black">{formData.postal_code}</p>
                         </div>
-                        <div>
+                        <div className="md:col-span-2">
                           <span className="font-medium text-gray-700">Organization:</span>
-                          <p className="text-black">
-                            {organizations.find(o => String(o.id) === String(formData.organization_id))?.name || 'Not selected'}
-                          </p>
+                          {selectedOrganization ? (
+                            <div className="flex items-center space-x-2 mt-1">
+                              <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden flex-shrink-0">
+                                {selectedOrganization.imageUrl ? (
+                                  <Image
+                                    src={buildOrgLogoUrl(selectedOrganization.imageUrl)}
+                                    alt={selectedOrganization.name}
+                                    width={32}
+                                    height={32}
+                                    className="w-full h-full object-contain"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <Heart className="w-4 h-4 text-blue-600" />
+                                  </div>
+                                )}
+                              </div>
+                              <p className="text-black font-medium">{selectedOrganization.name}</p>
+                            </div>
+                          ) : (
+                            <p className="text-gray-400 italic text-sm">None selected</p>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -917,7 +960,7 @@ export default function DonorSignupPage() {
                   ) : (
                     <div />
                   )}
-                  
+
                   {currentStep < 5 ? (
                     <motion.button
                       whileHover={{ scale: 1.02 }}
@@ -933,7 +976,8 @@ export default function DonorSignupPage() {
                     <motion.button
                       whileHover={{ scale: 1.02 }}
                       whileTap={{ scale: 0.98 }}
-                      type="submit"
+                      type="button"
+                      onClick={createAccount}
                       disabled={loading}
                       className="flex items-center space-x-2 px-6 py-3 bg-[#0E0061] text-white rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
                     >
@@ -953,14 +997,14 @@ export default function DonorSignupPage() {
                 </div>
               </form>
 
-              <motion.div 
+              <motion.div
                 variants={itemVariants}
                 className="mt-8 text-center"
               >
                 <p className="text-sm text-gray-600">
                   Already have a donor account?{' '}
-                  <a 
-                    href="/donor/login" 
+                  <a
+                    href="/donor/login"
                     className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
                   >
                     Sign in here
@@ -972,6 +1016,6 @@ export default function DonorSignupPage() {
         </motion.div>
       </motion.div>
     </div>
-    
+
   );
 }

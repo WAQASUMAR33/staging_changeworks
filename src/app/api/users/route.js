@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma"; // Named import
 import { hash } from "bcryptjs";
 import { z } from "zod";
-import nodemailer from "nodemailer";
+import emailService from "../../lib/email-service";
+import crypto from "crypto";
+import { corsHeaders } from '@/app/lib/cors';
 
 const signupSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -12,9 +14,10 @@ const signupSchema = z.object({
 });
 
 const updateUserSchema = z.object({
+  id: z.number().or(z.string().transform((val) => parseInt(val, 10))),
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Invalid email address").max(100, "Email too long"),
-  password: z.string().min(6, "Password must be at least 6 characters").optional(),
+  password: z.string().min(6, "Password must be at least 6 characters").optional().or(z.literal('')),
   role: z.enum(["SUPERADMIN", "MANAGER", "ADMIN"]),
 });
 
@@ -50,22 +53,12 @@ export async function POST(request) {
     });
 
     // Send verification email
-    const transport = nodemailer.createTransport({
-      host: process.env.EMAIL_SERVER_HOST,
-      port: Number(process.env.EMAIL_SERVER_PORT),
-      auth: {
-        user: process.env.EMAIL_SERVER_USER,
-        pass: process.env.EMAIL_SERVER_PASSWORD,
-      },
-    });
-
     const verificationUrl = `${process.env.NEXTAUTH_URL}/api/auth/verify-email?token=${token}`;
-    await transport.sendMail({
-      to: email,
-      from: process.env.EMAIL_FROM,
-      subject: "Verify Your Email",
-      text: `Please verify your email by clicking: ${verificationUrl}`,
-      html: `<p>Please verify your email by clicking: <a href="${verificationUrl}">${verificationUrl}</a></p>`,
+    
+    await emailService.sendAdminVerificationEmail({
+      email,
+      name,
+      verificationLink: verificationUrl
     });
 
     return NextResponse.json({ message: "User created. Please verify your email." }, { status: 201 });
@@ -83,16 +76,13 @@ export async function GET(request) {
     // Fetch all users
     const users = await prisma.user.findMany({
       orderBy: {
-        created_at: 'desc', // Optional: Order by creation date
+        created_at: 'desc',
       },
     });
 
     // Check if users exist
-    if (!users || users.length === 0) {
-      return NextResponse.json(
-        { message: 'No users found' },
-        { status: 404 }
-      );
+    if (!users) {
+      return NextResponse.json([], { status: 200 });
     }
 
     return NextResponse.json(users, { status: 200 });
@@ -102,8 +92,6 @@ export async function GET(request) {
       { error: 'Internal server error' },
       { status: 500 }
     );
-  } finally {
-    await prisma.$disconnect();
   }
 }
 
@@ -187,4 +175,8 @@ export async function DELETE(request) {
     console.error('Error deleting user:', error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

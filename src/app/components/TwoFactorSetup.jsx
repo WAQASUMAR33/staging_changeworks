@@ -6,6 +6,14 @@ import Image from 'next/image';
 
 export default function TwoFactorSetup({ userType = 'user', onSuccess }) {
   const [loading, setLoading] = useState(false);
+
+  const getToken = () => {
+    if (userType === 'organization') {
+      const orgToken = sessionStorage.getItem('orgToken');
+      if (orgToken) return orgToken;
+    }
+    return localStorage.getItem('token') || localStorage.getItem('adminToken');
+  };
   const [status, setStatus] = useState(null); // null, 'enabled', 'disabled', 'setting-up'
   const [qrCode, setQrCode] = useState(null);
   const [secret, setSecret] = useState(null);
@@ -23,7 +31,7 @@ export default function TwoFactorSetup({ userType = 'user', onSuccess }) {
 
   const checkStatus = async () => {
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const token = getToken();
       if (!token) return;
 
       const response = await fetch(`/api/two-factor/status?userType=${userType}`, {
@@ -47,7 +55,7 @@ export default function TwoFactorSetup({ userType = 'user', onSuccess }) {
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const token = getToken();
       if (!token) {
         setError('Please log in to enable two-factor authentication');
         return;
@@ -91,7 +99,7 @@ export default function TwoFactorSetup({ userType = 'user', onSuccess }) {
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const token = getToken();
       if (!token) {
         setError('Please log in to verify two-factor authentication');
         return;
@@ -140,7 +148,7 @@ export default function TwoFactorSetup({ userType = 'user', onSuccess }) {
     setSuccess('');
 
     try {
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const token = getToken();
       if (!token) {
         setError('Please log in to disable two-factor authentication');
         return;

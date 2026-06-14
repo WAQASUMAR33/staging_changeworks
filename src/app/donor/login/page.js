@@ -52,16 +52,16 @@ export default function DonorLoginPage() {
     
     // Email validation
     if (!form.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Please enter a valid email address.';
     }
 
     // Password validation
     if (!form.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Password is required.';
     } else if (form.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters long';
+      newErrors.password = 'Password must be at least 6 characters long.';
     }
 
     setErrors(newErrors);
@@ -105,7 +105,13 @@ export default function DonorLoginPage() {
       // Store donor data
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
-      
+
+      // Account was system-created — force password reset before dashboard
+      if (data.requiresPasswordReset) {
+        router.push('/donor/force-reset-password');
+        return;
+      }
+
       // Redirect to donor dashboard
       router.push('/donor/dashboard');
       
@@ -164,12 +170,12 @@ export default function DonorLoginPage() {
     e.preventDefault();
     
     if (!forgotPasswordEmail.trim()) {
-      setForgotPasswordError('Please enter your email address');
+      setForgotPasswordError('Please enter your email address.');
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotPasswordEmail.trim())) {
-      setForgotPasswordError('Please enter a valid email address');
+      setForgotPasswordError('Please enter a valid email address.');
       return;
     }
 
@@ -193,13 +199,10 @@ export default function DonorLoginPage() {
 
       // Check if we got a reset URL (for development when email sending fails)
       if (data.resetUrl) {
+        console.log('Development Reset URL:', data.resetUrl);
         setForgotPasswordSuccess(
-          `Password reset link generated! ${data.note || ''} Click the link below to reset your password:`
+          `Password reset link generated! ${data.note || ''} Check your email for instructions.`
         );
-        // Store the URL temporarily for display
-        setTimeout(() => {
-          window.open(data.resetUrl, '_blank');
-        }, 1000);
       } else {
         setForgotPasswordSuccess('Password reset link sent! Check your email for further instructions.');
       }
@@ -263,11 +266,11 @@ export default function DonorLoginPage() {
             className="mb-8"
           >
             <Image
-              src="/imgs/changeworks.jpg"
+              src="/imgs/changeworks.png"
               alt="ChangeWorks Logo"
               width={200}
               height={200}
-              className="mx-auto rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              className="mx-auto"
               priority
             />
           </motion.div>
@@ -283,7 +286,7 @@ export default function DonorLoginPage() {
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
-            Sign in to your donor account to continue making a difference in the world
+            Sign in to your donor account to continue making a difference in the world.
           </motion.p>
           
           <motion.div 
@@ -332,7 +335,7 @@ export default function DonorLoginPage() {
                 variants={itemVariants}
                 className="text-center text-gray-600 mb-8"
               >
-                Enter your donor credentials to access your account
+                Enter your donor credentials to access your account.
               </motion.p>
 
               <AnimatePresence>
@@ -542,11 +545,7 @@ export default function DonorLoginPage() {
                       <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-green-700 text-sm">{forgotPasswordSuccess}</p>
-                        {forgotPasswordSuccess.includes('Click the link below') && (
-                          <p className="text-green-600 text-xs mt-1">
-                            A new tab will open with the password reset page.
-                          </p>
-                        )}
+
                       </div>
                     </div>
                   </motion.div>

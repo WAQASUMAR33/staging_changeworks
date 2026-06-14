@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../../lib/prisma";
-import Stripe from "stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 // GET /api/subscriptions/[id]/transactions - Get subscription transactions
 export async function GET(request, { params }) {
   try {
+    const stripe = await createStripeClient();
     const subscriptionId = params.id;
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page')) || 1;
@@ -105,6 +106,7 @@ export async function GET(request, { params }) {
 // POST /api/subscriptions/[id]/transactions - Create manual transaction record
 export async function POST(request, { params }) {
   try {
+    const stripe = await createStripeClient();
     const subscriptionId = params.id;
     const body = await request.json();
     const {
@@ -181,4 +183,8 @@ export async function POST(request, { params }) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

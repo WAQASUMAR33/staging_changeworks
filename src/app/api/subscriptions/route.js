@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../lib/prisma";
-import Stripe from "stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 // GET /api/subscriptions - List all subscriptions
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const donorId = searchParams.get('donor_id');
     const organizationId = searchParams.get('organization_id');
@@ -91,6 +92,7 @@ export async function GET(request) {
 // POST /api/subscriptions - Create a new subscription
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       donor_id,
@@ -130,7 +132,7 @@ export async function POST(request) {
       }),
       prisma.organization.findUnique({
         where: { id: organization_id },
-        select: { id: true, name: true, email: true }
+        select: { id: true, name: true, email: true, stripeAccountId: true }
       })
     ]);
 
@@ -194,6 +196,10 @@ export async function POST(request) {
     try {
       const subscriptionData = {
         customer: customer.id,
+        transfer_data: organization.stripeAccountId ? {
+          destination: organization.stripeAccountId,
+          amount_percent: 90,
+        } : undefined,
         items: [{
           price_data: {
             currency: packageData.currency.toLowerCase(),
@@ -291,14 +297,18 @@ export async function POST(request) {
       subscription,
       client_secret: stripeSubscription.latest_invoice.payment_intent.client_secret,
       stripe_subscription_id: stripeSubscription.id,
-      message: 'Subscription created successfully. Complete payment to activate.'
+      message: 'Donation created successfully. Complete payment to activate.'
     });
 
   } catch (error) {
     console.error('Error creating subscription:', error);
     return NextResponse.json(
-      { success: false, error: 'Failed to create subscription' },
+      { success: false, error: 'Failed to create donation' },
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

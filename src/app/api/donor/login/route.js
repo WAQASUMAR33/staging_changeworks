@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Zod schema for donor login
 const donorLoginSchema = z.object({
@@ -17,25 +18,28 @@ export async function POST(request) {
     const { email, password, twoFactorCode } = donorLoginSchema.parse(body);
 
     // Check if donor exists in donors table only
-    const donor = await prisma.donor.findUnique({ 
-      where: { email },
-      select: {
-        id: true,
-        email: true,
-        name: true,
-        password: true,
-        status: true,
-        twoFactorEnabled: true,
-        twoFactorSecret: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
-      }
-    });
+    // Workaround for broken Prisma Client
+    const donors = await prisma.$queryRaw`SELECT * FROM donors WHERE email = ${email}`;
+    const donorRaw = donors[0];
+    
+    let organization = null;
+    if (donorRaw && donorRaw.organization_id) {
+        organization = await prisma.organization.findUnique({
+            where: { id: donorRaw.organization_id },
+            select: {
+                id: true,
+                name: true,
+                email: true
+            }
+        });
+    }
+
+    const donor = donorRaw ? { 
+      ...donorRaw, 
+      organization,
+      twoFactorEnabled: donorRaw.two_factor_enabled ? Boolean(donorRaw.two_factor_enabled) : false,
+      twoFactorSecret: donorRaw.two_factor_secret
+    } : null;
 
     if (!donor) {
       return NextResponse.json({ 
@@ -78,29 +82,39 @@ export async function POST(request) {
       }
     }
 
-    // Create JWT payload
-    const tokenPayload = {
+    const userPayload = {
       id: donor.id,
       email: donor.email,
+      name: donor.name,
       role: 'DONOR',
-      userType: 'donor'
+      organization: donor.organization
     };
 
-    // Sign token
-    const token = jwt.sign(tokenPayload, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // If account was system-created, force a password reset before entering the app
+    if (donorRaw.must_reset_password) {
+      const resetToken = jwt.sign(
+        { id: donor.id, email: donor.email, role: 'DONOR', userType: 'donor', mustResetPassword: true },
+        process.env.JWT_SECRET,
+        { expiresIn: '15m' }
+      );
+      return NextResponse.json({
+        requiresPasswordReset: true,
+        token: resetToken,
+        user: userPayload,
+      });
+    }
+
+    // Normal login — issue full 7-day token
+    const token = jwt.sign(
+      { id: donor.id, email: donor.email, role: 'DONOR', userType: 'donor' },
+      process.env.JWT_SECRET,
+      { expiresIn: '7d' }
+    );
 
     return NextResponse.json({
       message: "Donor login successful",
       token,
-      user: {
-        id: donor.id,
-        email: donor.email,
-        name: donor.name,
-        role: 'DONOR',
-        organization: donor.organization
-      },
+      user: userPayload,
     });
   } catch (error) {
     if (error instanceof z.ZodError) {
@@ -110,4 +124,8 @@ export async function POST(request) {
     console.error("Donor login error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

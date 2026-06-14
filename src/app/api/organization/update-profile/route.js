@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
+import { corsHeaders } from '@/app/lib/cors';
 
 const updateProfileSchema = z.object({
   name: z.string().min(1, "Organization name is required").optional(),
@@ -10,7 +11,7 @@ const updateProfileSchema = z.object({
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
-  website: z.string().url("Invalid website URL").optional().or(z.literal("")),
+  website: z.string().optional().or(z.literal("")),
   company: z.string().optional(),
   postalCode: z.string().optional(),
 });
@@ -181,4 +182,8 @@ export async function PUT(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,8 +1,12 @@
 import { NextResponse } from "next/server";
+import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
+import emailService from "@/app/lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
+  const plaid = await getPlaidConfig();
   try {
     // Verify JWT token
     const token = request.headers.get('authorization')?.split(' ')[1];
@@ -84,6 +88,32 @@ export async function POST(request) {
       },
     });
 
+    // Send Round Up Welcome Email
+    try {
+      // Fetch donor and organization details
+      const donor = await prisma.donor.findUnique({ where: { id: donorId } });
+      const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
+
+      if (donor && organization) {
+        let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+        const dashboardLink = `${appBase}/donor/login`;
+        
+        console.log('📧 Sending Welcome Round-Up email to:', donor.email);
+        await emailService.sendWelcomeEmail({
+          donor: {
+            name: donor.name,
+            email: donor.email
+          },
+          organization,
+          dashboardLink
+        });
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send Round Up Welcome email:', emailError);
+      // Don't fail the request if email fails
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Mock bank account connected successfully',
@@ -106,4 +136,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

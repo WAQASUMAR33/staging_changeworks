@@ -1,3 +1,4 @@
+import { corsHeaders } from '@/app/lib/cors';
 const { NextResponse } = require("next/server");
 const { prisma } = require("../../lib/prisma");
 
@@ -30,3 +31,7 @@ exports.GET = async function (req) {
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 };
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

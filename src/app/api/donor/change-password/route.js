@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import { hash, compare } from "bcryptjs";
 import jwt from "jsonwebtoken";
+import { corsHeaders } from '@/app/lib/cors';
 
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
@@ -112,7 +113,7 @@ export async function POST(request) {
       donor_info: {
         name: donor.name,
         email: donor.email,
-        organization: donor.organization.name
+        organization: donor.organization?.name || null
       },
       security_info: {
         password_updated: true,
@@ -138,4 +139,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

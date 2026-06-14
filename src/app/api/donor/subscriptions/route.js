@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -28,15 +29,18 @@ export async function GET(request) {
     // Get subscriptions
     const subscriptions = await prisma.subscription.findMany({
       where: {
-        donorId: donorId
+        donor_id: donorId
       },
       include: {
         organization: {
-          select: { id: true, name: true }
+          select: { id: true, name: true, imageUrl: true }
+        },
+        package: {
+          select: { id: true, name: true, description: true }
         }
       },
       orderBy: {
-        createdAt: 'desc'
+        created_at: 'desc'
       }
     });
 
@@ -46,10 +50,11 @@ export async function GET(request) {
       amount: subscription.amount,
       status: subscription.status,
       interval: subscription.interval || 'monthly',
-      description: subscription.description || `Recurring donation to ${subscription.organization?.name || 'Unknown Organization'}`,
-      createdAt: subscription.createdAt.toISOString(),
-      nextPaymentDate: subscription.nextPaymentDate?.toISOString(),
-      organization: subscription.organization
+      description: subscription.package?.name || `Donation to ${subscription.organization?.name}`,
+      createdAt: subscription.created_at.toISOString(),
+      nextPaymentDate: subscription.current_period_end?.toISOString(),
+      organization: subscription.organization,
+      package: subscription.package
     }));
 
     return NextResponse.json({
@@ -66,4 +71,8 @@ export async function GET(request) {
     
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

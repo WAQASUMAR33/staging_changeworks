@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { corsHeaders } from '@/app/lib/cors';
 
 const prisma = new PrismaClient();
 
@@ -148,4 +149,8 @@ export async function DELETE(request, { params }) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

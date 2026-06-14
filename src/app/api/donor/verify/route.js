@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/donor/verify - Verify donor email
 export async function POST(request) {
@@ -56,7 +58,15 @@ export async function POST(request) {
         name: true,
         email: true,
         status: true,
-        updated_at: true
+        updated_at: true,
+        organization: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            imageUrl: true
+          }
+        }
       }
     });
 
@@ -78,4 +88,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

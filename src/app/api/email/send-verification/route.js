@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
-import emailService from "../../../lib/email-service.jsx";
+import emailService from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/email/send-verification - Check email configuration
 export async function GET() {
@@ -52,7 +53,8 @@ export async function POST(request) {
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        organization: true
       }
     });
 
@@ -70,7 +72,8 @@ export async function POST(request) {
         email: donor.email
       },
       verificationToken: verification_token,
-      verificationLink: verification_link
+      verificationLink: verification_link,
+      organization: donor.organization
     });
 
     if (emailResult.success) {
@@ -100,4 +103,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

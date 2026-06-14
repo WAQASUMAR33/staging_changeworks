@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/subscriptions/donor-status - Get donor status with just donor_id
 export async function GET(request) {
@@ -88,4 +89,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

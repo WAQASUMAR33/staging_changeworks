@@ -1,19 +1,10 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import Stripe from 'stripe';
 import { prisma } from "../../../lib/prisma";
+import { emailService } from "../../../lib/email-service";
 
-// Initialize Stripe
-let stripe;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder', { apiVersion: '2023-10-16' });
-  } else {
-    console.warn('STRIPE_SECRET_KEY not set');
-  }
-} catch (e) {
-  console.error('Stripe init error:', e);
-}
+import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 const schema = z.object({
   payment_intent_id: z.string().min(1),
@@ -25,6 +16,7 @@ const schema = z.object({
 });
 
 export async function POST(request) {
+  const stripe = await createStripeClient();
   try {
     if (!stripe) {
       return NextResponse.json({ success: false, error: 'Stripe not configured' }, { status: 503 });
@@ -33,13 +25,30 @@ export async function POST(request) {
     const body = await request.json();
     const { payment_intent_id, payment_method_id, donor_id, organization_id, force_update } = schema.parse(body);
 
-    // Fetch current PI
-    let pi = await stripe.paymentIntents.retrieve(payment_intent_id, { expand: ['latest_charge'] });
+    // Fetch organization to get stripeAccountId
+    const organization = await prisma.organization.findUnique({
+      where: { id: organization_id },
+      select: { stripeAccountId: true, name: true, email: true }
+    });
+
+    if (!organization?.stripeAccountId) {
+      return NextResponse.json({ success: false, error: 'Organization Stripe account not found' }, { status: 400 });
+    }
+
+    // Fetch current PI from the platform account
+    // For Direct Charges, we might need to fetch as connected account? 
+    // Usually platform can fetch if it created it.
+    let pi = await stripe.paymentIntents.retrieve(payment_intent_id, {
+      expand: ['latest_charge'],
+      stripeAccount: organization.stripeAccountId // Important for Direct Charges
+    });
 
     // If confirmation is needed and a payment method id is provided, confirm server-side
     if ((pi.status === 'requires_confirmation' || pi.status === 'requires_payment_method') && payment_method_id) {
       pi = await stripe.paymentIntents.confirm(payment_intent_id, {
         payment_method: payment_method_id,
+      }, {
+        stripeAccount: organization.stripeAccountId // Important for Direct Charges
       });
     }
 
@@ -81,6 +90,20 @@ export async function POST(request) {
     });
 
     const amountDollars = (pi.amount_received ?? pi.amount ?? 0) / 100;
+    
+    // Determine fee strategy
+    const feeStrategy = pi.metadata.fee_strategy || 'standard';
+    const orgEmail = pi.metadata.organization_email;
+    let organizationAmountDollars;
+
+    if (feeStrategy === 'special' || (orgEmail && orgEmail.toLowerCase() === 'frankie@vallartacares.com')) {
+      const amountCents = (pi.amount_received ?? pi.amount ?? 0);
+      const stripeFeeCents = Math.round(amountCents * 0.029) + 30;
+      const organizationAmountCents = amountCents - stripeFeeCents;
+      organizationAmountDollars = organizationAmountCents / 100;
+    } else {
+      organizationAmountDollars = amountDollars * 0.9;
+    }
 
     let record;
     if (existing) {
@@ -92,10 +115,16 @@ export async function POST(request) {
         data: {
           // Only upgrade status forward unless force_update is true
           pay_status: force_update ? dbStatus : (existing.pay_status === 'completed' ? 'completed' : dbStatus),
-          trx_amount: amountDollars || undefined,
+          trx_amount: organizationAmountDollars || undefined, 
           trx_recipt_url: receiptUrl,
           updated_at: new Date(),
-          trx_details: JSON.stringify({ ...prevDetails, ...trxDetails }),
+          trx_details: JSON.stringify({ 
+            ...prevDetails, 
+            ...trxDetails,
+            fee_strategy: feeStrategy,
+            organization_amount: organizationAmountDollars,
+            platform_commission: amountDollars - organizationAmountDollars
+          }),
         }
       });
     } else {
@@ -103,22 +132,27 @@ export async function POST(request) {
         data: {
           trx_id: `pi_${pi.id}_${Date.now()}`,
           trx_date: new Date(),
-          trx_amount: amountDollars,
+          trx_amount: organizationAmountDollars, 
           trx_method: 'stripe',
           trx_donor_id: donor_id,
           trx_organization_id: organization_id,
           trx_recipt_url: receiptUrl,
-          trx_details: JSON.stringify(trxDetails),
+          trx_details: JSON.stringify({
+            ...trxDetails,
+            fee_strategy: feeStrategy,
+            organization_amount: organizationAmountDollars,
+            platform_commission: amountDollars - organizationAmountDollars
+          }),
           pay_status: dbStatus,
         }
       });
     }
 
     // If completed, increment organization balance
-    if (dbStatus === 'completed' && amountDollars > 0) {
+    if (dbStatus === 'completed' && organizationAmountDollars > 0) {
       await prisma.organization.update({
         where: { id: organization_id },
-        data: { balance: { increment: amountDollars } }
+        data: { balance: { increment: organizationAmountDollars } }
       });
     }
 
@@ -140,4 +174,6 @@ export async function POST(request) {
   }
 }
 
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

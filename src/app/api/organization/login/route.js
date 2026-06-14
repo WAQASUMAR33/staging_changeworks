@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { compare } from "bcryptjs";
 import { z } from "zod";
 import jwt from "jsonwebtoken";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Zod schema for organization login
 const loginSchema = z.object({
@@ -97,4 +98,8 @@ export async function POST(request) {
     console.error("Organization login error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

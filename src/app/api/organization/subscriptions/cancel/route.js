@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from '../../../../lib/prisma';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(req) {
   try {
@@ -67,4 +68,8 @@ export async function POST(req) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

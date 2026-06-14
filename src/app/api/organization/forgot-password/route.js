@@ -3,7 +3,8 @@ import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import crypto from "crypto";
 import bcrypt from "bcryptjs";
-import { emailService } from "../../../lib/email-service.jsx";
+import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -23,6 +24,10 @@ export async function POST(request) {
         id: true,
         name: true,
         email: true,
+        imageUrl: true,
+        firstName: true,
+        lastName: true,
+        title: true
       }
     });
 
@@ -60,21 +65,25 @@ export async function POST(request) {
     console.log('✅ Reset token created and stored');
 
     // Create reset URL - organization-specific reset page
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
     const resetUrl = `${baseUrl}/organization/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
     console.log('🔍 Reset URL created:', resetUrl);
+    console.log('🔍 Base URL used:', baseUrl);
 
     // Send password reset email using email service
     let emailSent = false;
     let emailError = null;
 
     try {
+      console.log('📧 Attempting to send organization password reset email...');
       const emailResult = await emailService.sendOrganizationPasswordResetEmail({
         organization: organization,
         resetToken: resetToken,
         resetLink: resetUrl
       });
+      
+      console.log('📧 Email service response:', JSON.stringify(emailResult, null, 2));
 
       if (emailResult.success) {
         emailSent = true;
@@ -127,3 +136,6 @@ export async function POST(request) {
   }
 }
 
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

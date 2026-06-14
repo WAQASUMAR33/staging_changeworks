@@ -1,6 +1,7 @@
 import { prisma } from "../../lib/prisma"; // Adjust this import based on your structure
 import { NextResponse } from "next/server";
 import emailService from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Helper function to create HTML response
 function createHtmlResponse(title, message, isSuccess = true, email = null, note = null) {
@@ -73,13 +74,7 @@ function createHtmlResponse(title, message, isSuccess = true, email = null, note
                 <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 4.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"></path>
                 </svg>
-                <a href="mailto:info@rapidtechpro.com" class="hover:text-gray-700 transition-colors">info@rapidtechpro.com</a>
-              </div>
-              <div class="flex items-center">
-                <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"></path>
-                </svg>
-                +923474308859
+                <a href="mailto:support@changeworksfund.org" class="hover:text-gray-700 transition-colors">support@changeworksfund.org</a>
               </div>
             </div>
             <p class="mt-2 text-xs text-gray-400">ChangeWorks Fund - Your trusted platform partner for charitable giving</p>
@@ -143,18 +138,19 @@ export async function GET(req) {
       );
     }
 
-    // Get donor information for email
-    const donor = await prisma.donor.findUnique({
-      where: { email: existingToken.identifier },
-      include: {
-        organization: {
-          select: {
-            name: true,
-            email: true
-          }
-        }
-      }
-    });
+    // Workaround for broken Prisma Client
+    const donors = await prisma.$queryRaw`SELECT * FROM donors WHERE email = ${existingToken.identifier}`;
+    const donorRaw = donors[0];
+
+    let organization = null;
+    if (donorRaw && donorRaw.organization_id) {
+        organization = await prisma.organization.findUnique({
+            where: { id: donorRaw.organization_id },
+            select: { name: true, email: true }
+        });
+    }
+
+    const donor = donorRaw ? { ...donorRaw, organization } : null;
 
     if (!donor) {
       return createHtmlResponse(
@@ -166,59 +162,24 @@ export async function GET(req) {
 
     // Mark donor as verified (set status true) and delete token in transaction
     await prisma.$transaction(async (tx) => {
-      // Update donor status
-      await tx.donor.update({
-        where: { email: existingToken.identifier },
-        data: {
-          status: true, // assuming 'status' true means verified
-        },
-      });
+      // Update donor status - Workaround for broken Prisma Client
+      await tx.$queryRaw`UPDATE donors SET status = 1 WHERE email = ${existingToken.identifier}`;
 
       // Delete token after verification
       await tx.donorVerificationToken.delete({
-        where: { token },
+        where: { id: existingToken.id },
       });
     });
 
-    // Send success verification email
-    let emailSent = false;
-    let emailError = null;
-
-    try {
-      if (process.env.EMAIL_SERVER_HOST && process.env.EMAIL_SERVER_USER && process.env.EMAIL_SERVER_PASSWORD) {
-        const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
-        
-        const emailResult = await emailService.sendVerificationSuccessEmail({
-          donor: {
-            name: donor.name,
-            email: donor.email
-          },
-          organization: donor.organization,
-          dashboardLink: dashboardLink
-        });
-
-        if (emailResult.success) {
-          emailSent = true;
-          console.log('✅ Verification success email sent successfully');
-        } else {
-          emailError = emailResult.error;
-          console.error('❌ Verification success email failed:', emailResult.error);
-        }
-      } else {
-        console.log('⚠️ Email server not configured, skipping success email');
-        emailError = 'Email server not configured';
-      }
-    } catch (emailErr) {
-      emailError = emailErr.message;
-      console.error('❌ Verification success email sending failed:', emailErr.message);
-    }
-
+    // Send success verification email - REMOVED as per requirement
+    // No welcome email should be sent upon verification
+    
     return createHtmlResponse(
       "Email Verified Successfully", 
       "Your email has been verified and your account is now active.",
       true,
       donor.email,
-      !emailSent && emailError ? "email_not_sent" : null
+      null
     );
   } catch (error) {
     console.error("Verification error:", error);
@@ -228,4 +189,8 @@ export async function GET(req) {
       false
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

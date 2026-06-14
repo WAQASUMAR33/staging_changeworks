@@ -1,22 +1,10 @@
 import { NextResponse } from "next/server";
-import Stripe from 'stripe';
-
-// Initialize Stripe with proper error handling
-let stripe;
-try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn('STRIPE_SECRET_KEY environment variable is not set');
-  } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder', {
-      apiVersion: '2023-10-16',
-    });
-  }
-} catch (error) {
-  console.error('Failed to initialize Stripe:', error);
-}
+import { createStripeClient } from '@/app/lib/payment-mode';
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/stripe/prices - Get all Stripe prices
 export async function GET(request) {
+  const stripe = await createStripeClient();
   try {
     // Check if Stripe is properly initialized
     if (!stripe) {
@@ -159,6 +147,7 @@ export async function GET(request) {
 
 // POST /api/stripe/prices - Create a new Stripe price
 export async function POST(request) {
+  const stripe = await createStripeClient();
   try {
     // Check if Stripe is properly initialized
     if (!stripe) {
@@ -270,4 +259,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

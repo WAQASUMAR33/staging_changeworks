@@ -1,11 +1,12 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       donor_id,
@@ -38,7 +39,7 @@ export async function POST(request) {
     // Get organization details
     const organization = await prisma.organization.findUnique({
       where: { id: organization_id },
-      select: { id: true, name: true, email: true }
+      select: { id: true, name: true, email: true, stripeAccountId: true }
     });
 
     if (!organization) {
@@ -88,10 +89,10 @@ export async function POST(request) {
       const requestUrl = new URL(request.url);
       const baseUrl = `${requestUrl.protocol}//${requestUrl.host}`;
 
-      console.log('🔍 Creating Stripe Checkout Session');
-      console.log('🔍 Request URL:', request.url);
-      console.log('🔍 Base URL:', baseUrl);
-      console.log('🔍 Success URL will be:', `${baseUrl.replace(/\/$/, '')}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`);
+      console.log('ðŸ” Creating Stripe Checkout Session');
+      console.log('ðŸ” Request URL:', request.url);
+      console.log('ðŸ” Base URL:', baseUrl);
+      console.log('ðŸ” Success URL will be:', `${baseUrl.replace(/\/$/, '')}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`);
 
       const checkoutSession = await stripe.checkout.sessions.create({
         customer: customer.id,
@@ -103,8 +104,8 @@ export async function POST(request) {
           },
         ],
         mode: 'subscription',
-        success_url: `${baseUrl.replace(/\/$/, '')}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${baseUrl.replace(/\/$/, '')}/donor/dashboard/subscriptions?subscription=cancelled`,
+        success_url: `${baseUrl.replace(/\/$/, '')}/donor/subscription-success?session_id={CHECKOUT_SESSION_ID}&org_id=${organization_id}`,
+        cancel_url: `${baseUrl.replace(/\/$/, '')}/donor/login`,
         metadata: {
           donor_id: donor_id.toString(),
           organization_id: organization_id.toString(),
@@ -112,6 +113,10 @@ export async function POST(request) {
           price_id: price_id
         },
         subscription_data: {
+          transfer_data: organization.stripeAccountId ? {
+            destination: organization.stripeAccountId,
+            amount_percent: 90,
+          } : undefined,
           metadata: {
             donor_id: donor_id.toString(),
             organization_id: organization_id.toString(),
@@ -144,4 +149,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

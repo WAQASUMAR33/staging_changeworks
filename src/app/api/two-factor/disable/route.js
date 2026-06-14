@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * Disable 2FA for a user
@@ -134,6 +135,6 @@ export async function POST(request) {
   }
 }
 
-
-
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

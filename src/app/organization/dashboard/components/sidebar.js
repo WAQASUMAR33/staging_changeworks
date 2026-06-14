@@ -7,23 +7,17 @@ import Link from 'next/link';
 
 import {
   Settings,
-  ArrowRightLeft,
-  LogOut,
-  CircleUserRound,
-  ChevronDown,
   ChevronRight,
   LayoutDashboard,
-  Gift,
-  Users,
   ClipboardPlus,
-  Home,
   Shield,
   Menu,
   X,
-  ChevronLeft,
-  Pin,
-  PinOff,
   CreditCard,
+  RefreshCw,
+  FileText,
+  Banknote,
+  ChevronDown,
 } from 'lucide-react';
 
 const OrgSidebar = () => {
@@ -58,19 +52,6 @@ const OrgSidebar = () => {
     }));
   };
 
-  const handleLogout = () => {
-    // Clear session storage
-    sessionStorage.removeItem('orgToken');
-    sessionStorage.removeItem('orgUser');
-    
-    // Also clear any old localStorage data
-    localStorage.removeItem('orgToken');
-    localStorage.removeItem('orgUser');
-    localStorage.removeItem('orgRememberMe');
-    
-    router.push('/organization/login');
-  };
-
   const togglePin = () => {
     const newPinState = !isPinned;
     setIsPinned(newPinState);
@@ -86,14 +67,9 @@ const OrgSidebar = () => {
       path: '/organization/dashboard',
     },
     {
-      name: 'Stripe Products',
+      name: 'Donation Options',
       icon: CreditCard,
       path: '/organization/dashboard/stripe-products',
-    },
-    {
-      name: 'Fund Transfers',
-      icon: ArrowRightLeft,
-      path: '/organization/dashboard/fund-transfers',
     },
     {
       name: 'Transactions',
@@ -101,21 +77,28 @@ const OrgSidebar = () => {
       path: '/organization/dashboard/transactions',
     },
     {
+      name: 'Monthly Donors',
+      icon: RefreshCw,
+      path: '/organization/dashboard/subscriptions',
+    },
+    {
+      name: 'Round-Up Donors',
+      icon: Banknote,
+      path: '/organization/dashboard/round-up-donors',
+    },
+    {
       name: 'Settings',
       icon: Settings,
-      path: '/organization/dashboard/settings',
-      subItems: [
-        { name: 'Profile', path: '/organization/dashboard/settings/profile' }
-      ],
+      path: '/organization/dashboard/payment-provider',
     },
   ];
 
   const SidebarContent = () => (
     <div className="flex flex-col h-full bg-gradient-to-b from-gray-900 to-gray-800 shadow-2xl">
       {/* Modern Logo Section */}
-      <div className="flex items-center justify-between h-20 px-6 border-b border-gray-700/50">
-        <div className="flex items-center space-x-4">
-          <div className="w-12 h-12 bg-[#0E0061] rounded-2xl flex items-center justify-center shadow-lg">
+      <div className={`flex items-center h-20 border-b border-gray-700/50 transition-all duration-300 ${isExpanded ? 'justify-between px-6' : 'justify-center px-2'}`}>
+        <div className={`flex items-center ${isExpanded ? 'space-x-4' : 'justify-center'}`}>
+          <div className="w-12 h-12 bg-[#0E0061] rounded-2xl flex items-center justify-center shadow-lg flex-shrink-0">
             <span className="text-white font-bold text-lg">CW</span>
           </div>
           <AnimatePresence>
@@ -153,7 +136,10 @@ const OrgSidebar = () => {
       <nav className="flex-1 px-4 py-6 overflow-y-auto">
         <ul className="space-y-2">
           {menuItems.map((item, index) => {
-            const isActive = pathname === item.path || pathname.startsWith(item.path + '/');
+            const isActive = item.path === '/organization/dashboard' 
+              ? pathname === item.path 
+              : pathname === item.path || pathname.startsWith(item.path + '/');
+              
             const hasSub = item.subItems && item.subItems.length > 0;
             const isSubmenuOpen = openSubmenus[item.name];
 
@@ -170,7 +156,7 @@ const OrgSidebar = () => {
                       router.push(item.path);
                     }
                   }}
-                  className={`group flex items-center px-4 py-4 cursor-pointer rounded-2xl transition-all duration-300 ${
+                  className={`group flex items-center ${isExpanded ? 'px-4' : 'justify-center px-2'} py-4 cursor-pointer rounded-2xl transition-all duration-300 ${
                     isActive 
                       ? 'bg-[#0E0061] text-white shadow-lg' 
                       : 'text-gray-300 hover:bg-gray-700/50 hover:text-white hover:shadow-md'
@@ -245,30 +231,54 @@ const OrgSidebar = () => {
 
       {/* Modern Bottom Section */}
       <div className="p-4 border-t border-gray-700/50">
-        {/* Modern Logout Button */}
-        <motion.button
-          whileHover={{ scale: 1.02 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleLogout}
-          className="w-full flex items-center px-4 py-4 text-red-400 hover:text-red-300 hover:bg-red-500/10 rounded-2xl transition-all duration-300 group"
-        >
-          <div className="p-2 rounded-xl bg-red-500/10 group-hover:bg-red-500/20 transition-all duration-200">
-            <LogOut className="w-5 h-5" />
-          </div>
-          <AnimatePresence>
-            {isExpanded && (
-              <motion.span
-                initial={{ opacity: 0, x: -10 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -10 }}
-                transition={{ duration: 0.3 }}
-                className="ml-4 font-semibold text-sm"
-              >
-                Logout
-              </motion.span>
-            )}
-          </AnimatePresence>
-        </motion.button>
+        <div className="space-y-1 mb-2">
+          <Link
+            href="https://changeworksfund.org/privacy-policy"
+            target="_blank"
+            className="w-full flex items-center px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-700/30 rounded-2xl transition-all duration-300 group"
+          >
+            <div className="p-2 rounded-xl bg-gray-700/30 group-hover:bg-gray-600/50 transition-all duration-200">
+              <Shield className="w-5 h-5" />
+            </div>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="ml-4 font-semibold text-sm"
+                >
+                  Privacy Policy
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+          
+          <Link
+            href="https://changeworksfund.org/terms-conditions"
+            target="_blank"
+            className="w-full flex items-center px-4 py-3 text-gray-400 hover:text-white hover:bg-gray-700/30 rounded-2xl transition-all duration-300 group"
+          >
+            <div className="p-2 rounded-xl bg-gray-700/30 group-hover:bg-gray-600/50 transition-all duration-200">
+              <FileText className="w-5 h-5" />
+            </div>
+            <AnimatePresence>
+              {isExpanded && (
+                <motion.span
+                  initial={{ opacity: 0, x: -10 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -10 }}
+                  transition={{ duration: 0.3 }}
+                  className="ml-4 font-semibold text-sm"
+                >
+                  Terms & Conditions
+                </motion.span>
+              )}
+            </AnimatePresence>
+          </Link>
+        </div>
+
       </div>
     </div>
   );

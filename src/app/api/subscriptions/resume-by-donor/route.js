@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma.jsx";
-import Stripe from "stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 // POST /api/subscriptions/resume-by-donor - Resume/reactivate subscription by donor ID
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const { donor_id } = body;
 
@@ -170,6 +171,7 @@ export async function POST(request) {
 // GET /api/subscriptions/resume-by-donor - Get resumable subscriptions for a donor
 export async function GET(request) {
   try {
+    const stripe = await createStripeClient();
     const { searchParams } = new URL(request.url);
     const donorId = searchParams.get('donor_id');
 
@@ -241,4 +243,8 @@ export async function GET(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

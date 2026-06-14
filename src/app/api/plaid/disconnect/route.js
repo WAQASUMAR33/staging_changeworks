@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
+import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { PrismaClient } from '@prisma/client';
+import emailService from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 const prisma = new PrismaClient();
 
 // Plaid configuration
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = (process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox').toLowerCase();
 
 function getPlaidBaseUrl(env) {
   switch (env) {
@@ -20,6 +20,7 @@ function getPlaidBaseUrl(env) {
 }
 
 export async function POST(request) {
+  const plaid = await getPlaidConfig();
   try {
     const { donor_id } = await request.json();
 
@@ -41,10 +42,14 @@ export async function POST(request) {
 
     console.log(`🔍 Looking for Plaid connection for donor ${donorId}`);
 
-    // Find the Plaid connection(s) for this donor
+    // Find the Plaid connection(s) for this donor (include donor + org for the email)
     const connections = await prisma.plaidConnection.findMany({
       where: {
         donor_id: donorId
+      },
+      include: {
+        donor: true,
+        organization: true
       }
     });
 
@@ -64,14 +69,14 @@ export async function POST(request) {
     for (const connection of connections) {
       try {
         // Call Plaid API to remove the item (invalidates the access token)
-        const plaidResponse = await fetch(`${getPlaidBaseUrl(PLAID_ENV)}/item/remove`, {
+        const plaidResponse = await fetch(`${plaid.baseUrl}/item/remove`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json'
           },
           body: JSON.stringify({
-            client_id: PLAID_CLIENT_ID,
-            secret: PLAID_SECRET_KEY,
+            client_id: plaid.clientId,
+            secret: plaid.secretKey,
             access_token: connection.access_token
           }),
           signal: AbortSignal.timeout(15000) // 15 second timeout
@@ -106,6 +111,19 @@ export async function POST(request) {
     });
 
     console.log(`✅ Deleted ${deletedConnection.count} Plaid connection(s) from database for donor ${donorId}`);
+
+    // Send disconnect notification email to the donor
+    if (connections.length > 0 && connections[0].donor?.email) {
+      const donor = connections[0].donor;
+      const organization = connections[0].organization;
+      const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+      const dashboardLink = `${appUrl}/donor/dashboard`;
+      emailService.sendPlaidDisconnectEmail({ donor, organization, dashboardLink })
+        .then(result => {
+          if (!result.success) console.warn('⚠️ Plaid disconnect email failed:', result.error);
+        })
+        .catch(err => console.warn('⚠️ Plaid disconnect email error:', err.message));
+    }
 
     // Prepare response
     const response = {
@@ -157,4 +175,8 @@ export async function POST(request) {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

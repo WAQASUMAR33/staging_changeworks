@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
-import nodemailer from 'nodemailer';
+import emailService from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 const prisma = new PrismaClient();
 
@@ -22,8 +23,19 @@ export async function POST(request) {
       where: { email: email.toLowerCase() }
     });
 
+    // Fetch donor with their organization (also check subscriptions as fallback)
     const donor = await prisma.donor.findUnique({
-      where: { email: email.toLowerCase() }
+      where: { email: email.toLowerCase() },
+      include: {
+        organization: true,
+        subscriptions: {
+          include: {
+            organization: true
+          },
+          take: 1,
+          orderBy: { created_at: 'desc' }
+        }
+      }
     });
 
     if (!user && !donor) {
@@ -36,7 +48,7 @@ export async function POST(request) {
     // Generate reset token
     const resetToken = crypto.randomBytes(32).toString('hex');
     const hashedToken = await bcrypt.hash(resetToken, 10);
-    
+
     // Set expiration (1 hour from now)
     const expires = new Date(Date.now() + 60 * 60 * 1000);
 
@@ -49,57 +61,39 @@ export async function POST(request) {
       }
     });
 
-    // Create reset URL - ALWAYS use reset-password endpoint
+    // Create reset URL — admin users get the admin reset page, donors get the standard one
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
-    const resetUrl = `${baseUrl}/reset-password?token=${resetToken}&email=${encodeURIComponent(email)}`;
+    const resetPath = user ? '/changeworksadmin/reset-password' : '/reset-password';
+    const resetUrl = `${baseUrl}${resetPath}?token=${resetToken}&email=${encodeURIComponent(email)}`;
 
     // Check if email configuration is available
-    const hasEmailConfig = process.env.EMAIL_SERVER_HOST && 
-                          process.env.EMAIL_SERVER_PORT && 
-                          process.env.EMAIL_SERVER_USER && 
-                          process.env.EMAIL_SERVER_PASSWORD && 
+    const hasEmailConfig = process.env.EMAIL_SERVER_HOST &&
+                          process.env.EMAIL_SERVER_PORT &&
+                          process.env.EMAIL_SERVER_USER &&
+                          process.env.EMAIL_SERVER_PASSWORD &&
                           process.env.EMAIL_FROM;
 
     if (hasEmailConfig) {
-      // Send email with reset link
       try {
-        const transport = nodemailer.createTransporter({
-          host: process.env.EMAIL_SERVER_HOST,
-          port: Number(process.env.EMAIL_SERVER_PORT),
-          auth: {
-            user: process.env.EMAIL_SERVER_USER,
-            pass: process.env.EMAIL_SERVER_PASSWORD,
-          },
-        });
-
-        await transport.sendMail({
-          to: email,
-          from: process.env.EMAIL_FROM,
-          subject: "Reset Your Password - ChangeWorks",
-          text: `You requested a password reset. Click the following link to reset your password: ${resetUrl}`,
-          html: `
-            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-              <h2 style="color: #302E56; text-align: center;">ChangeWorks Password Reset</h2>
-              <p>Hello,</p>
-              <p>You requested a password reset for your ChangeWorks account.</p>
-              <p>Click the button below to reset your password:</p>
-              <div style="text-align: center; margin: 30px 0;">
-                <a href="${resetUrl}" 
-                   style="background-color: #302E56; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
-                  Reset Password
-                </a>
-              </div>
-              <p>If the button doesn't work, copy and paste this link into your browser:</p>
-              <p style="word-break: break-all; color: #302E56;">${resetUrl}</p>
-              <p>This link will expire in 1 hour for security reasons.</p>
-              <p>If you didn't request this password reset, please ignore this email.</p>
-              <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-              <p style="color: #6b7280; font-size: 14px;">
-                This is an automated message from ChangeWorks. Please do not reply to this email.
-              </p>
-            </div>
-          `,
-        });
+        if (donor) {
+          const organization = donor.organization
+            || donor.subscriptions?.[0]?.organization
+            || null;
+          // Use email service so org name appears as the sender header
+          await emailService.sendPasswordResetEmail({
+            donor: { name: donor.name, email: donor.email },
+            resetToken,
+            resetLink: resetUrl,
+            organization,
+          });
+        } else {
+          // Admin password reset email with ChangeWorks branding
+          await emailService.sendAdminPasswordResetEmail({
+            email,
+            name: user.name || 'Admin',
+            resetLink: resetUrl,
+          });
+        }
 
         return NextResponse.json({
           message: 'Password reset link sent to your email'
@@ -107,8 +101,6 @@ export async function POST(request) {
 
       } catch (emailError) {
         console.error('Email sending error:', emailError);
-        
-        // If email sending fails, return the URL for development/testing
         return NextResponse.json({
           message: 'Password reset link generated (email sending failed)',
           resetUrl: resetUrl,
@@ -116,7 +108,6 @@ export async function POST(request) {
         });
       }
     } else {
-      // No email configuration - return URL for development
       console.log('No email configuration found. Returning reset URL for development.');
       return NextResponse.json({
         message: 'Password reset link generated',
@@ -132,4 +123,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

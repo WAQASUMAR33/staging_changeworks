@@ -4,6 +4,7 @@ import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import { emailService } from '@/app/lib/email-service';
+import { corsHeaders } from '@/app/lib/cors';
 
 function generatePassword(length = 10) {
   // Use alphanumeric only so the password is easy to type
@@ -58,9 +59,9 @@ export async function POST(request) {
     const plainPassword = generatePassword(10);
     const hashedPassword = await bcrypt.hash(plainPassword, 12);
 
-    // Create donor with status=1 (verified — no email verification needed for this flow)
+    // Create donor with status=1 (verified) and must_reset_password=1 (force reset on first login)
     await prisma.$queryRaw`
-      INSERT INTO donors (name, email, password, phone, country, organization_id, status, created_at, updated_at)
+      INSERT INTO donors (name, email, password, phone, country, organization_id, status, must_reset_password, created_at, updated_at)
       VALUES (
         ${name},
         ${normalizedEmail},
@@ -68,6 +69,7 @@ export async function POST(request) {
         ${phone?.trim() || null},
         'US',
         ${organization.id},
+        1,
         1,
         ${new Date()},
         ${new Date()}
@@ -111,4 +113,8 @@ export async function POST(request) {
     console.error('iroundup init error:', error);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

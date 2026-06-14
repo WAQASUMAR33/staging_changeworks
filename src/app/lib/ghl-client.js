@@ -3,7 +3,7 @@ import axios from 'axios';
 class GHLClient {
   constructor(customToken) {
     // Use the correct GHL API endpoint from documentation
-    const baseURL = process.env.GHL_BASE_URL || 'https://rest.gohighlevel.com/v1';
+    const baseURL = process.env.GHL_API_BASE || 'https://rest.gohighlevel.com/v1';
     
     // Validate that customToken is provided
     if (!customToken) {
@@ -35,7 +35,7 @@ class GHLClient {
       console.log('Location ID:', locationId);
       
       const tokenEndpoint = 'https://services.leadconnectorhq.com/oauth/locationToken';
-      const agencyToken = process.env.GHL_AGENCY_API_KEY || process.env.GHL_API_KEY;
+      const agencyToken = process.env.GHL_AGENCY_API_KEY;
       
       console.log('Token Endpoint:', tokenEndpoint);
       console.log('Using Agency Token:', agencyToken ? `${agencyToken.substring(0, 20)}...` : 'NOT SET');
@@ -195,6 +195,141 @@ class GHLClient {
         success: false,
         error: error.response?.data?.message || error.message,
         statusCode: error.response?.status || 500
+      };
+    }
+  }
+
+  async createUser(userData) {
+    try {
+      console.log('=== CREATING GHL USER ===');
+      const usersApiUrl = process.env.GHL_USER_CREATE_API_URL || 'https://rest.gohighlevel.com/v1/users/';
+      
+      const requestData = {
+        companyId: userData.companyId || process.env.GHL_COMPANY_ID,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        password: userData.password,
+        phone: userData.phone,
+        type: userData.type || 'account',
+        role: userData.role || 'admin',
+        locationIds: [userData.locationId],
+        permissions: userData.permissions || {}
+      };
+
+      console.log('User API URL:', usersApiUrl);
+      console.log('Request Data:', JSON.stringify({ ...requestData, password: '***' }, null, 2));
+
+      const response = await this.client.post(usersApiUrl, requestData);
+
+      console.log('=== GHL USER API SUCCESS ===');
+      console.log('Status:', response.status);
+      console.log('Response Data:', JSON.stringify(response.data, null, 2));
+
+      return {
+        success: true,
+        data: response.data,
+        userId: response.data.id
+      };
+    } catch (error) {
+      console.error('=== GHL USER API ERROR ===');
+      console.error('Error Message:', error.message);
+      console.error('Status:', error.response?.status);
+      console.error('Error Data:', JSON.stringify(error.response?.data, null, 2));
+      
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        statusCode: error.response?.status || 500,
+        details: error.response?.data || null
+      };
+    }
+  }
+
+  async getUserByEmail(email) {
+    try {
+      console.log('=== SEARCHING GHL USER BY EMAIL ===');
+      console.log('Email:', email);
+      
+      const usersApiUrl = process.env.GHL_USER_SEARCH_API_URL || 'https://rest.gohighlevel.com/v1/users/lookup';
+      
+      const response = await this.client.get(usersApiUrl, {
+        params: { email }
+      });
+
+      console.log('=== GHL USER SEARCH SUCCESS ===');
+      console.log('Status:', response.status);
+      console.log('Found:', !!response.data);
+      
+      return {
+        success: true,
+        user: response.data
+      };
+    } catch (error) {
+      console.error('=== GHL USER SEARCH ERROR ===');
+      // 404 means user not found, which is a valid result (not an error in logic)
+      if (error.response?.status === 404) {
+         console.log('User not found (404)');
+         return { success: true, user: null };
+      }
+      
+      console.error('Error Message:', error.message);
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        statusCode: error.response?.status || 500
+      };
+    }
+  }
+
+  async updateUser(userId, userData) {
+    try {
+      console.log('=== UPDATING GHL USER ===');
+      console.log('User ID:', userId);
+      
+      const usersApiUrl = `${process.env.GHL_USER_CREATE_API_URL || 'https://rest.gohighlevel.com/v1/users/'}${userId}`;
+      
+      const requestData = {
+        companyId: userData.companyId || process.env.GHL_COMPANY_ID,
+        firstName: userData.firstName,
+        lastName: userData.lastName,
+        email: userData.email,
+        phone: userData.phone,
+        type: userData.type || 'account',
+        role: userData.role || 'admin',
+        locationIds: userData.locationIds, // Array of location IDs
+        permissions: userData.permissions || {}
+      };
+
+      // Only add password if provided (updating password)
+      if (userData.password) {
+        requestData.password = userData.password;
+      }
+
+      console.log('User API URL:', usersApiUrl);
+      console.log('Request Data:', JSON.stringify({ ...requestData, password: requestData.password ? '***' : undefined }, null, 2));
+
+      const response = await this.client.put(usersApiUrl, requestData);
+
+      console.log('=== GHL USER UPDATE SUCCESS ===');
+      console.log('Status:', response.status);
+      
+      return {
+        success: true,
+        data: response.data,
+        userId: response.data.id
+      };
+    } catch (error) {
+      console.error('=== GHL USER UPDATE ERROR ===');
+      console.error('Error Message:', error.message);
+      console.error('Status:', error.response?.status);
+      console.error('Error Data:', JSON.stringify(error.response?.data, null, 2));
+      
+      return {
+        success: false,
+        error: error.response?.data?.message || error.message,
+        statusCode: error.response?.status || 500,
+        details: error.response?.data || null
       };
     }
   }

@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import { Eye, EyeOff, Lock, AlertCircle, CheckCircle, Key } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function DonorResetPasswordPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     newPassword: '',
     confirmPassword: ''
@@ -98,6 +99,11 @@ export default function DonorResetPasswordPage() {
       if (response.ok) {
         setMessage('Password has been reset successfully! You can now log in with your new password.');
         setFormData({ newPassword: '', confirmPassword: '' });
+        
+        // Redirect to login page after 2 seconds
+        setTimeout(() => {
+          router.push('/donor/login');
+        }, 2000);
       } else {
         setError(data.error || 'Failed to reset password');
       }
@@ -164,11 +170,11 @@ export default function DonorResetPasswordPage() {
             className="mb-8"
           >
             <Image
-              src="/imgs/changeworks.jpg"
+              src="/imgs/changeworks.png"
               alt="ChangeWorks Logo"
               width={200}
               height={200}
-              className="mx-auto rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              className="mx-auto"
               priority
             />
           </motion.div>

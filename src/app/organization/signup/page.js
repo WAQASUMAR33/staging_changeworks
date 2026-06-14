@@ -1,8 +1,8 @@
-'use client';
+﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿﻿'use client';
 import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Building2, User, Phone, MapPin, Globe, Calendar, Upload, X, CreditCard } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, AlertCircle, CheckCircle, Building2, User, Phone, MapPin, Globe, Calendar, Upload, X, CreditCard, ExternalLink, Copy, Check } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export default function OrganizationSignupPage() {
@@ -21,14 +21,7 @@ export default function OrganizationSignupPage() {
     logoUrl: '', // URL returned from PHP API
     // Stripe Connect Account Information (Step 3)
     createStripeAccount: true, // Default to true for Step 3
-    stripeBusinessType: 'nonprofit', // nonprofit, company, individual
-    stripeTaxId: '', // EIN or Tax ID
-    stripeBankAccount: '', // Bank account number (optional, can be added later)
-    // Stripe Product Prices (Step 4)
-    product1Price: '10.00', // One-Time Donation default price
-    product2Price: '25.00', // Monthly Recurring default price
-    product3Price: '1.00', // Round-Up Program minimum price
-    // Organization Login Details (single password set) - Step 5
+    // Organization Login Details (single password set) - Step 4
     orgPassword: '',
     confirmOrgPassword: '',
     // GHL Business Details (automatic - no checkbox needed)
@@ -52,7 +45,12 @@ export default function OrganizationSignupPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [logoPreview, setLogoPreview] = useState(null);
   const [logoUploading, setLogoUploading] = useState(false);
-  const totalSteps = 5; // Steps: Basic Info, Address, Stripe Connect, Product Prices, Organization Login
+  const [signupSuccess, setSignupSuccess] = useState(false);
+  const [onboardingLink, setOnboardingLink] = useState(null);
+  const [organizationData, setOrganizationData] = useState(null);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [showErrorPopup, setShowErrorPopup] = useState(false);
+  const totalSteps = 4; // Steps: Basic Info, Address, Stripe Connect, Organization Login
 
   // Clear errors when component mounts and fetch countries
   useEffect(() => {
@@ -61,43 +59,48 @@ export default function OrganizationSignupPage() {
     fetchCountries();
   }, []);
 
-  const fetchCountries = async () => {
-    try {
-      const response = await fetch('/api/countries?format=grouped');
-      const data = await response.json();
-      
-      if (data.success) {
-        // Combine popular countries first, then others
-        const allCountries = [
-          ...data.countries.popular,
-          { code: 'separator', name: '──────────────' }, // Visual separator
-          ...data.countries.others
-        ];
-        setCountries(allCountries);
-      }
-    } catch (error) {
-      console.error('Error fetching countries:', error);
-      // Fallback to basic countries if API fails
-      setCountries([
-        { code: "US", name: "United States", flag: "🇺🇸" },
-        { code: "GB", name: "United Kingdom", flag: "🇬🇧" },
-        { code: "CA", name: "Canada", flag: "🇨🇦" },
-        { code: "AU", name: "Australia", flag: "🇦🇺" },
-        { code: "DE", name: "Germany", flag: "🇩🇪" },
-        { code: "FR", name: "France", flag: "🇫🇷" }
-      ]);
+  // Auto-hide error popup
+  useEffect(() => {
+    if (showErrorPopup) {
+      const timer = setTimeout(() => {
+        setShowErrorPopup(false);
+      }, 3000);
+      return () => clearTimeout(timer);
     }
+  }, [showErrorPopup]);
+
+  const fetchCountries = async () => {
+    // Restricted to US, Canada, and Mexico as per requirements
+    setCountries([
+      { code: "US", name: "United States", flag: "🇺🇸" },
+      { code: "CA", name: "Canada", flag: "🇨🇦" },
+      { code: "MX", name: "Mexico", flag: "🇲🇽" }
+    ]);
   };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
-    
+
+    // Custom handling for EIN to format as XX-XXXXXXX
+    if (name === 'ein') {
+      // Remove non-digits
+      const digits = value.replace(/\D/g, '');
+      let formattedEin = digits;
+
+      if (digits.length > 2) {
+        formattedEin = `${digits.slice(0, 2)}-${digits.slice(2, 9)}`;
+      }
+
+      setForm(prev => ({ ...prev, [name]: formattedEin }));
+    } else {
+      setForm(prev => ({ ...prev, [name]: value }));
+    }
+
     // Clear specific field error when user starts typing
     if (errors[name]) {
       setErrors(prev => ({ ...prev, [name]: '' }));
     }
-    
+
     // Clear general error message when user starts typing
     if (errorMsg) {
       setErrorMsg('');
@@ -106,65 +109,72 @@ export default function OrganizationSignupPage() {
 
   const validateStep = (step) => {
     const newErrors = {};
-    
+
     if (step === 1) {
       // Basic Information
+
+      if (!form.firstName.trim()) {
+        newErrors.firstName = 'First name is required.';
+      }
+      if (!form.lastName.trim()) {
+        newErrors.lastName = 'Last name is required.';
+      }
       if (!form.name.trim()) {
-        newErrors.name = 'Organization name is required';
+        newErrors.name = 'Organization name is required.';
       }
       if (!form.email.trim()) {
-        newErrors.email = 'Email is required';
+        newErrors.email = 'Email is required.';
       } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-        newErrors.email = 'Please enter a valid email address';
+        newErrors.email = 'Please enter a valid email address.';
       }
       if (!form.phone.trim()) {
-        newErrors.phone = 'Phone number is required';
+        newErrors.phone = 'Phone number is required.';
+      }
+      if (!form.ein || !form.ein.trim()) {
+        newErrors.ein = 'Organization EIN is required.';
+      } else if (!/^\d{2}-\d{7}$/.test(form.ein.trim())) {
+        newErrors.ein = 'EIN must be in format XX-XXXXXXX (10 characters).';
       }
       // Company name is now optional - no validation needed
     } else if (step === 2) {
       // Address Information
       if (!form.address.trim()) {
-        newErrors.address = 'Address is required';
+        newErrors.address = 'Address is required.';
       }
       if (!form.city.trim()) {
-        newErrors.city = 'City is required';
+        newErrors.city = 'City is required.';
       }
       if (!form.state.trim()) {
-        newErrors.state = 'State is required';
+        newErrors.state = 'State is required.';
       }
       if (!form.postalCode.trim()) {
-        newErrors.postalCode = 'Postal code is required';
+        newErrors.postalCode = 'Postal code is required.';
       }
     } else if (step === 3) {
-      // Stripe Connect Account Information
+      // Stripe Connect Account Information - only country is required
       if (form.createStripeAccount) {
-        if (!form.stripeBusinessType) {
-          newErrors.stripeBusinessType = 'Business type is required';
+        if (!form.country) {
+          newErrors.country = 'Country is required for Stripe account.';
         }
-        // Tax ID is optional but recommended
       }
     } else if (step === 4) {
-      // Stripe Product Prices
-      if (!form.product1Price || parseFloat(form.product1Price) <= 0) {
-        newErrors.product1Price = 'One-time donation price must be greater than 0';
-      }
-      if (!form.product2Price || parseFloat(form.product2Price) <= 0) {
-        newErrors.product2Price = 'Monthly donation price must be greater than 0';
-      }
-      if (!form.product3Price || parseFloat(form.product3Price) <= 0) {
-        newErrors.product3Price = 'Round-up minimum price must be greater than 0';
-      }
-    } else if (step === 5) {
       // Organization Login Details
+      if (!form.logo && !form.logoUrl) {
+        newErrors.logo = 'Organization logo is required.';
+      }
+
       if (!form.orgPassword) {
-        newErrors.orgPassword = 'Organization password is required';
-      } else if (form.orgPassword.length < 6) {
-        newErrors.orgPassword = 'Organization password must be at least 6 characters long';
+        newErrors.orgPassword = 'Organization password is required.';
+      } else {
+        const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+        if (!passwordRegex.test(form.orgPassword)) {
+          newErrors.orgPassword = 'Password must be at least 8 characters and include uppercase, lowercase, number, and special character.';
+        }
       }
       if (!form.confirmOrgPassword) {
-        newErrors.confirmOrgPassword = 'Please confirm your organization password';
+        newErrors.confirmOrgPassword = 'Please confirm your organization password.';
       } else if (form.orgPassword !== form.confirmOrgPassword) {
-        newErrors.confirmOrgPassword = 'Organization passwords do not match';
+        newErrors.confirmOrgPassword = 'Organization passwords do not match.';
       }
     }
 
@@ -195,14 +205,14 @@ export default function OrganizationSignupPage() {
   const uploadLogoToAPI = async (base64Data) => {
     try {
       const apiUrl = process.env.NEXT_PUBLIC_IMAGE_UPLOAD_URL || process.env.IMAGE_UPLOAD_URL;
-      
+
       console.log('Logo upload attempt:', {
         hasApiUrl: !!apiUrl,
         apiUrl: apiUrl,
         hasBase64Data: !!base64Data,
         base64Length: base64Data?.length
       });
-      
+
       if (!apiUrl) {
         console.warn('Image upload API URL not configured, skipping upload');
         return null; // Return null instead of throwing error
@@ -237,37 +247,42 @@ export default function OrganizationSignupPage() {
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      setErrorMsg('Please select a valid image file');
+      setErrorMsg('Please select a valid image file.');
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setErrorMsg('Image size must be less than 5MB');
+      setErrorMsg('Image size must be less than 5MB.');
       return;
     }
 
     setErrorMsg('');
 
     try {
-      // Create preview
+      // Create preview immediately
       const previewUrl = URL.createObjectURL(file);
       setLogoPreview(previewUrl);
 
-      // Convert to base64 and store for later upload
+      // Convert to base64
       const base64Data = await convertToBase64(file);
-      
-      // Update form with base64 data (will upload on submit)
-      setForm(prev => ({
-        ...prev,
-        logo: base64Data,
-        logoUrl: '' // Will be set during upload on submit
-      }));
 
+      // Store base64 right away and clear stale error
+      setForm(prev => ({ ...prev, logo: base64Data, logoUrl: '' }));
+      setErrors(prev => ({ ...prev, logo: '' }));
+
+      // Upload immediately so logoUrl is ready before the user submits
+      setLogoUploading(true);
+      const uploadedUrl = await uploadLogoToAPI(base64Data);
+      if (uploadedUrl) {
+        setForm(prev => ({ ...prev, logoUrl: uploadedUrl }));
+      }
     } catch (error) {
       console.error('Logo processing error:', error);
       setErrorMsg('Failed to process logo. Please try again.');
       setLogoPreview(null);
+    } finally {
+      setLogoUploading(false);
     }
   };
 
@@ -285,8 +300,9 @@ export default function OrganizationSignupPage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
+
     if (!validateStep(currentStep)) {
+      setShowErrorPopup(true);
       return;
     }
 
@@ -300,37 +316,8 @@ export default function OrganizationSignupPage() {
     setErrorMsg('');
 
     try {
-      // Upload logo if present
-      let logoUrl = form.logoUrl;
-      console.log('Submit - Logo check:', {
-        hasLogo: !!form.logo,
-        hasLogoUrl: !!form.logoUrl,
-        logoLength: form.logo?.length
-      });
-      
-      if (form.logo && !form.logoUrl) {
-        console.log('Starting logo upload...');
-        setLogoUploading(true);
-        try {
-          logoUrl = await uploadLogoToAPI(form.logo);
-          if (logoUrl) {
-            console.log('Logo uploaded successfully:', logoUrl);
-          } else {
-            console.warn('Logo upload failed, proceeding without logo URL');
-          }
-        } catch (uploadError) {
-          console.error('Logo upload error:', uploadError);
-          // Continue with registration even if logo upload fails
-        } finally {
-          setLogoUploading(false);
-        }
-      }
-
-      // Prepare form data with logo URL
-      const formData = {
-        ...form,
-        logoUrl: logoUrl || form.logoUrl
-      };
+      // Prepare form data — logo was already uploaded during selection
+      const formData = { ...form };
 
       const res = await fetch('/api/organization', {
         method: 'POST',
@@ -342,15 +329,40 @@ export default function OrganizationSignupPage() {
 
       if (!res.ok) {
         const apiError = data?.error;
-        const normalized = typeof apiError === 'string'
-          ? apiError
-          : (apiError?.message || apiError?.code || apiError?.validation || JSON.stringify(apiError) || 'Registration failed. Please try again.');
+        let normalized = 'Registration failed. Please try again.';
+
+        if (typeof apiError === 'string') {
+          normalized = apiError;
+        } else if (Array.isArray(apiError) && apiError.length > 0) {
+          // Handle Zod error array
+          normalized = apiError.map(e => e.message || e.code).join(', ');
+        } else if (apiError?.message) {
+          normalized = apiError.message;
+        } else if (apiError?.code) {
+          normalized = apiError.code;
+        } else if (apiError?.validation) {
+          normalized = apiError.validation;
+        } else if (apiError) {
+          normalized = JSON.stringify(apiError);
+        }
+        
         setErrorMsg(normalized);
         return;
       }
 
-      // Redirect to login page
-      router.push('/organization/login?message=Registration successful! Please sign in.');
+      // Store signup success data
+      setOrganizationData(data.organization);
+      setOnboardingLink(data.stripeOnboardingLink);
+      setSignupSuccess(true);
+
+      // If there was a warning (e.g. Stripe failed), show it but still keep success state
+      if (data.warning || data.stripeError) {
+        console.warn('Signup warning:', data.warning);
+        // You might want to show this to the user in the success step
+        // For now we'll store it in errorMsg so it can be displayed if needed, 
+        // or add a new state for specific warnings
+        setErrorMsg(data.warning);
+      }
     } catch (err) {
       console.error('Registration error:', err);
       const normalized = typeof err?.message === 'string' ? err.message : 'Network error. Please check your connection and try again.';
@@ -387,8 +399,8 @@ export default function OrganizationSignupPage() {
         return (
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Basic Information</h2>
-              <p className="text-gray-600">Let&apos;s start with your organization details</p>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Basic Information.</h2>
+              <p className="text-gray-600">Let&apos;s start with your organization details.</p>
             </motion.div>
 
             <motion.div variants={itemVariants}>
@@ -403,17 +415,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter organization name"
                   value={form.name}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.name 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.name
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.name && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -426,10 +437,150 @@ export default function OrganizationSignupPage() {
               </AnimatePresence>
             </motion.div>
 
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Organization Website *
+              </label>
+              <div className="relative">
+                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="website"
+                  type="text"
+                  placeholder="https://your-website.com"
+                  value={form.website}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </motion.div>
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address *
+                Organization EIN *
+              </label>
+              <div className="relative">
+                <CreditCard className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="ein"
+                  type="text"
+                  placeholder="XX-XXXXXXX"
+                  value={form.ein}
+                  onChange={handleChange}
+                  maxLength={10}
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.ein
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                  disabled={isSubmitting}
+                />
+              </div>
+              <AnimatePresence>
+                {errors.ein && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.ein}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div variants={itemVariants} className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your First Name *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    name="firstName"
+                    type="text"
+                    placeholder="First Name"
+                    value={form.firstName}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.firstName
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                      }`}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <AnimatePresence>
+                  {errors.firstName && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.firstName}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+
+              <div>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Your Last Name *
+                </label>
+                <div className="relative">
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                  <input
+                    name="lastName"
+                    type="text"
+                    placeholder="Last Name"
+                    value={form.lastName}
+                    onChange={handleChange}
+                    className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.lastName
+                      ? 'border-red-300 bg-red-50'
+                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                      }`}
+                    disabled={isSubmitting}
+                  />
+                </div>
+                <AnimatePresence>
+                  {errors.lastName && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.lastName}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Your Title or Role *
+              </label>
+              <div className="relative">
+                <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="title"
+                  type="text"
+                  placeholder="e.g. Director, Manager"
+                  value={form.title}
+                  onChange={handleChange}
+                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
+                  disabled={isSubmitting}
+                />
+              </div>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Your Email Address *
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -439,17 +590,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter your email"
                   value={form.email}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.email 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.email
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.email && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -464,7 +614,7 @@ export default function OrganizationSignupPage() {
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Phone Number *
+                Your Phone Number *
               </label>
               <div className="relative">
                 <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -474,17 +624,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter phone number"
                   value={form.phone}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.phone 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.phone
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.phone && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -495,25 +644,6 @@ export default function OrganizationSignupPage() {
                   </motion.p>
                 )}
               </AnimatePresence>
-            </motion.div>
-
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Website (Optional)
-              </label>
-              <div className="relative">
-                <Globe className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="website"
-                  type="url"
-                  placeholder="https://your-website.com"
-                  value={form.website}
-                  onChange={handleChange}
-                  className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={isSubmitting}
-                />
-              </div>
             </motion.div>
           </motion.div>
         );
@@ -538,17 +668,16 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter street address"
                   value={form.address}
                   onChange={handleChange}
-                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.address 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                  className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.address
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
                   disabled={isSubmitting}
                 />
               </div>
               <AnimatePresence>
                 {errors.address && (
-                  <motion.p 
+                  <motion.p
                     initial={{ opacity: 0, y: -5 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -5 }}
@@ -572,16 +701,15 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter city"
                   value={form.city}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.city 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.city
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
                   disabled={isSubmitting}
                 />
                 <AnimatePresence>
                   {errors.city && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -604,16 +732,15 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter state"
                   value={form.state}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.state 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.state
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
                   disabled={isSubmitting}
                 />
                 <AnimatePresence>
                   {errors.state && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -663,16 +790,15 @@ export default function OrganizationSignupPage() {
                   placeholder="Enter postal code"
                   value={form.postalCode}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.postalCode 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.postalCode
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
                   disabled={isSubmitting}
                 />
                 <AnimatePresence>
                   {errors.postalCode && (
-                    <motion.p 
+                    <motion.p
                       initial={{ opacity: 0, y: -5 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, y: -5 }}
@@ -715,71 +841,56 @@ export default function OrganizationSignupPage() {
                     </span>
                   </div>
                   <p className="text-xs text-gray-600 ml-7">
-                    Create a Stripe Connect account to receive payments directly. You&apos;ll complete onboarding after registration.
+                    Create a Stripe Connect account to receive payments directly. You&apos;ll receive an email with a link to complete onboarding after registration.
                   </p>
                 </div>
               </label>
             </motion.div>
 
             {form.createStripeAccount && (
-              <>
-                {/* Business Type */}
-                <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Business Type *
-                  </label>
-                  <select
-                    name="stripeBusinessType"
-                    value={form.stripeBusinessType}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                      errors.stripeBusinessType 
-                        ? 'border-red-300 bg-red-50' 
-                        : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+              <motion.div variants={itemVariants}>
+                <label className="block text-sm font-semibold text-gray-700 mb-2">
+                  Country for Stripe Account *
+                </label>
+                <select
+                  name="country"
+                  value={form.country}
+                  onChange={handleChange}
+                  className={`w-full px-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.country
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                     }`}
-                    disabled={isSubmitting}
-                  >
-                    <option value="nonprofit">Nonprofit Organization</option>
-                    <option value="company">Company</option>
-                    <option value="individual">Individual</option>
-                  </select>
-                  <AnimatePresence>
-                    {errors.stripeBusinessType && (
-                      <motion.p 
-                        initial={{ opacity: 0, y: -5 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -5 }}
-                        className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                      >
-                        <AlertCircle className="w-3 h-3" />
-                        <span>{errors.stripeBusinessType}</span>
-                      </motion.p>
-                    )}
-                  </AnimatePresence>
-                </motion.div>
-
-                {/* Tax ID / EIN */}
-                <motion.div variants={itemVariants}>
-                  <label className="block text-sm font-semibold text-gray-700 mb-2">
-                    Tax ID / EIN (Optional but Recommended)
-                  </label>
-                  <div className="relative">
-                    <Building2 className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                    <input
-                      name="stripeTaxId"
-                      type="text"
-                      placeholder="Enter your Tax ID or EIN"
-                      value={form.stripeTaxId}
-                      onChange={handleChange}
-                      className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                      disabled={isSubmitting}
-                    />
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Required for full account verification. You can add this later during onboarding.
-                  </p>
-                </motion.div>
-              </>
+                  disabled={isSubmitting}
+                >
+                  {countries.map((country) => (
+                    country.code === 'separator' ? (
+                      <option key="separator" disabled className="text-gray-400">
+                        {country.name}
+                      </option>
+                    ) : (
+                      <option key={country.code} value={country.code}>
+                        {country.flag} {country.name}
+                      </option>
+                    )
+                  ))}
+                </select>
+                <AnimatePresence>
+                  {errors.country && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.country}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
+                <p className="text-xs text-gray-500 mt-2">
+                  Select the country where your organization is located. This is required to create your Stripe account.
+                </p>
+              </motion.div>
             )}
           </motion.div>
         );
@@ -788,229 +899,13 @@ export default function OrganizationSignupPage() {
         return (
           <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
             <motion.div variants={itemVariants} className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Stripe Product Prices</h2>
-              <p className="text-gray-600">Set custom prices for your donation products</p>
-            </motion.div>
-
-            {/* Product 1: One-Time Donation */}
-            <motion.div variants={itemVariants} className="p-4 bg-blue-50 border-2 border-blue-200 rounded-xl">
-              <div className="flex items-center space-x-2 mb-3">
-                <CreditCard className="w-5 h-5 text-blue-600" />
-                <h3 className="text-lg font-semibold text-gray-900">One-Time Donation</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">Default price for single, one-time donations</p>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
-                <input
-                  name="product1Price"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="10.00"
-                  value={form.product1Price}
-                  onChange={handleChange}
-                  className={`w-full pl-8 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.product1Price 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <AnimatePresence>
-                {errors.product1Price && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.product1Price}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Product 2: Monthly Recurring */}
-            <motion.div variants={itemVariants} className="p-4 bg-green-50 border-2 border-green-200 rounded-xl">
-              <div className="flex items-center space-x-2 mb-3">
-                <CreditCard className="w-5 h-5 text-green-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Monthly Recurring Donation</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">Default monthly subscription price</p>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
-                <input
-                  name="product2Price"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="25.00"
-                  value={form.product2Price}
-                  onChange={handleChange}
-                  className={`w-full pl-8 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.product2Price 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <AnimatePresence>
-                {errors.product2Price && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.product2Price}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            {/* Product 3: Round-Up Program */}
-            <motion.div variants={itemVariants} className="p-4 bg-purple-50 border-2 border-purple-200 rounded-xl">
-              <div className="flex items-center space-x-2 mb-3">
-                <CreditCard className="w-5 h-5 text-purple-600" />
-                <h3 className="text-lg font-semibold text-gray-900">Round-Up Program</h3>
-              </div>
-              <p className="text-sm text-gray-600 mb-3">Minimum amount for round-up donations</p>
-              <div className="relative">
-                <span className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500 font-semibold">$</span>
-                <input
-                  name="product3Price"
-                  type="number"
-                  step="0.01"
-                  min="0.01"
-                  placeholder="1.00"
-                  value={form.product3Price}
-                  onChange={handleChange}
-                  className={`w-full pl-8 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.product3Price 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-              </div>
-              <AnimatePresence>
-                {errors.product3Price && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.product3Price}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-          </motion.div>
-        );
-
-      case 5:
-        return (
-          <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6">
-            <motion.div variants={itemVariants} className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Organization Login</h2>
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Security Details</h2>
               <p className="text-gray-600">Set up secure login credentials for your organization</p>
             </motion.div>
 
             <motion.div variants={itemVariants}>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Organization Password *
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="orgPassword"
-                  type={showOrgPassword ? 'text' : 'password'}
-                  placeholder="Create organization password"
-                  value={form.orgPassword}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.orgPassword 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowOrgPassword(!showOrgPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={isSubmitting}
-                >
-                  {showOrgPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              <AnimatePresence>
-                {errors.orgPassword && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.orgPassword}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Confirm Organization Password *
-              </label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-                <input
-                  name="confirmOrgPassword"
-                  type={showConfirmOrgPassword ? 'text' : 'password'}
-                  placeholder="Confirm organization password"
-                  value={form.confirmOrgPassword}
-                  onChange={handleChange}
-                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
-                    errors.confirmOrgPassword 
-                      ? 'border-red-300 bg-red-50' 
-                      : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
-                  }`}
-                  disabled={isSubmitting}
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowConfirmOrgPassword(!showConfirmOrgPassword)}
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={isSubmitting}
-                >
-                  {showConfirmOrgPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
-                </button>
-              </div>
-              <AnimatePresence>
-                {errors.confirmOrgPassword && (
-                  <motion.p 
-                    initial={{ opacity: 0, y: -5 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -5 }}
-                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
-                  >
-                    <AlertCircle className="w-3 h-3" />
-                    <span>{errors.confirmOrgPassword}</span>
-                  </motion.p>
-                )}
-              </AnimatePresence>
-            </motion.div>
-
-            <motion.div variants={itemVariants}>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Organization Logo (Optional)
+                Organization Logo
               </label>
               <div className="space-y-4">
                 {logoPreview ? (
@@ -1053,8 +948,106 @@ export default function OrganizationSignupPage() {
                     <span className="text-sm">Uploading logo...</span>
                   </div>
                 )}
+                <AnimatePresence>
+                  {errors.logo && (
+                    <motion.p
+                      initial={{ opacity: 0, y: -5 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, y: -5 }}
+                      className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                    >
+                      <AlertCircle className="w-3 h-3" />
+                      <span>{errors.logo}</span>
+                    </motion.p>
+                  )}
+                </AnimatePresence>
               </div>
             </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Organization Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="orgPassword"
+                  type={showOrgPassword ? 'text' : 'password'}
+                  placeholder="Create organization password"
+                  value={form.orgPassword}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.orgPassword
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowOrgPassword(!showOrgPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  disabled={isSubmitting}
+                >
+                  {showOrgPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <AnimatePresence>
+                {errors.orgPassword && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.orgPassword}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
+            <motion.div variants={itemVariants}>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Confirm Organization Password *
+              </label>
+              <div className="relative">
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  name="confirmOrgPassword"
+                  type={showConfirmOrgPassword ? 'text' : 'password'}
+                  placeholder="Confirm organization password"
+                  value={form.confirmOrgPassword}
+                  onChange={handleChange}
+                  className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${errors.confirmOrgPassword
+                    ? 'border-red-300 bg-red-50'
+                    : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
+                    }`}
+                  disabled={isSubmitting}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowConfirmOrgPassword(!showConfirmOrgPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
+                  disabled={isSubmitting}
+                >
+                  {showConfirmOrgPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                </button>
+              </div>
+              <AnimatePresence>
+                {errors.confirmOrgPassword && (
+                  <motion.p
+                    initial={{ opacity: 0, y: -5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -5 }}
+                    className="text-red-500 text-sm mt-1 flex items-center space-x-1"
+                  >
+                    <AlertCircle className="w-3 h-3" />
+                    <span>{errors.confirmOrgPassword}</span>
+                  </motion.p>
+                )}
+              </AnimatePresence>
+            </motion.div>
+
 
           </motion.div>
         );
@@ -1088,30 +1081,30 @@ export default function OrganizationSignupPage() {
             className="mb-8"
           >
             <Image
-              src="/imgs/changeworks.jpg"
+              src="/imgs/changeworks.png"
               alt="ChangeWorks Logo"
               width={200}
               height={200}
-              className="mx-auto rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              className="mx-auto"
               priority
             />
           </motion.div>
-          
-          <motion.h1 
+
+          <motion.h1
             variants={itemVariants}
-            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4"
+            className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4 pb-1"
           >
             Join ChangeWorks
           </motion.h1>
-          
-          <motion.p 
+
+          <motion.p
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
-            Create your organization account and start making a difference in the world
+            Create your organization’s account. Takes just minutes. 
           </motion.p>
-          
-          <motion.div 
+
+          <motion.div
             variants={itemVariants}
             className="flex items-center justify-center space-x-4 text-sm text-gray-500"
           >
@@ -1148,7 +1141,7 @@ export default function OrganizationSignupPage() {
                 <span className="text-sm font-medium text-gray-600">{Math.round((currentStep / totalSteps) * 100)}%</span>
               </div>
               <div className="w-full bg-gray-200 rounded-full h-2">
-                <div 
+                <div
                   className="bg-[#0E0061] h-2 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${(currentStep / totalSteps) * 100}%` }}
                 ></div>
@@ -1169,48 +1162,165 @@ export default function OrganizationSignupPage() {
               )}
             </AnimatePresence>
 
-            <form onSubmit={handleSubmit}>
-              {renderStepContent()}
-
-              <div className="flex space-x-4 mt-8">
-                {currentStep > 1 && (
-                  <button
-                    type="button"
-                    onClick={handlePrevious}
-                    className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
-                    disabled={isSubmitting}
+            {signupSuccess ? (
+              <motion.div
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                className="space-y-6"
+              >
+                <div className="text-center mb-8">
+                  <motion.div
+                    initial={{ scale: 0 }}
+                    animate={{ scale: 1 }}
+                    transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                    className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4"
                   >
-                    Previous
-                  </button>
-                )}
-                
-                  <button
-                  type="submit"
-                  disabled={isSubmitting || logoUploading}
-                  className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
-                >
-                  {loading || logoUploading ? (
-                    <div className="flex items-center justify-center space-x-2">
-                      <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>{logoUploading ? 'Uploading Logo...' : 'Creating Account...'}</span>
-                    </div>
-                  ) : currentStep === totalSteps ? (
-                    'Create Account'
-                  ) : (
-                    'Next Step'
-                  )}
-                </button>
-              </div>
-            </form>
+                    <CheckCircle className="w-12 h-12 text-green-600" />
+                  </motion.div>
+                  <h2 className="text-3xl font-bold text-gray-900 mb-2">Account Created Successfully!</h2>
+                  <p className="text-gray-600">Your organization’s Stripe account is activated</p>
+                </div>
 
-            <motion.div 
+                {onboardingLink && (
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.3 }}
+                    className="p-6 bg-blue-50 border-2 border-blue-200 rounded-xl"
+                  >
+                    <div className="flex items-center space-x-2 mb-4">
+                      <CreditCard className="w-5 h-5 text-blue-600" />
+                      <h3 className="text-lg font-semibold text-gray-900">Stripe Onboarding Required</h3>
+                    </div>
+                    <p className="text-sm text-gray-700 mb-4">
+                      To start receiving payments, you need to complete your Stripe account setup. Click the link below or copy it to complete the onboarding process.
+                    </p>
+
+                    <div className="bg-white p-4 rounded-lg border-2 border-blue-300 mb-4">
+                      <div className="flex items-center space-x-2 mb-2">
+                        <span className="text-xs font-semibold text-gray-600">Onboarding Link:</span>
+                        <button
+                          onClick={() => {
+                            navigator.clipboard.writeText(onboardingLink);
+                            setLinkCopied(true);
+                            setTimeout(() => setLinkCopied(false), 2000);
+                          }}
+                          className="ml-auto flex items-center space-x-1 text-blue-600 hover:text-blue-700 text-sm"
+                        >
+                          {linkCopied ? (
+                            <>
+                              <Check className="w-4 h-4" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-4 h-4" />
+                              <span>Copy</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                      <a
+                        href={onboardingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-blue-600 hover:text-blue-700 text-sm break-all underline flex items-center space-x-1"
+                      >
+                        <span>{onboardingLink}</span>
+                        <ExternalLink className="w-3 h-3" />
+                      </a>
+                    </div>
+
+                    <div className="flex space-x-3">
+                      <a
+                        href={onboardingLink}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-xl font-semibold hover:bg-blue-700 transition-all duration-200 text-center flex items-center justify-center space-x-2"
+                      >
+                        <span>Complete Stripe Setup</span>
+                        <ExternalLink className="w-4 h-4" />
+                      </a>
+                    </div>
+
+                    <p className="text-xs text-gray-500 mt-4">
+                      This link will expire in 1 hour. If you need a new link, please contact support or use the resend link feature in your dashboard.
+                    </p>
+                  </motion.div>
+                )}
+
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.4 }}
+                  className="p-4 bg-green-50 border-2 border-green-200 rounded-xl"
+                >
+                  <div className="flex items-center space-x-2 mb-2">
+                    <CheckCircle className="w-5 h-5 text-green-600" />
+                    <h3 className="text-sm font-semibold text-gray-900">What&apos;s Next?</h3>
+                  </div>
+                  <ul className="text-sm text-gray-700 space-y-1 ml-7">
+                    {onboardingLink && (
+                      <li>Complete your Stripe account onboarding using the link above</li>
+                    )}
+                    <li>Check your email ({organizationData?.email}) for confirmation and additional information</li>
+                    <li>Sign in to your organization dashboard to get started</li>
+                  </ul>
+                </motion.div>
+
+                <div className="flex space-x-4 mt-8">
+                  <button
+                    onClick={() => router.push('/organization/login')}
+                    className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] transition-all duration-200"
+                  >
+                    Go to Login
+                  </button>
+                </div>
+              </motion.div>
+            ) : (
+              <form onSubmit={handleSubmit}>
+                {renderStepContent()}
+
+                <div className="flex space-x-4 mt-8">
+                  {currentStep > 1 && (
+                    <button
+                      type="button"
+                      onClick={handlePrevious}
+                      className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
+                      disabled={isSubmitting}
+                    >
+                      Previous
+                    </button>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting || logoUploading}
+                    className="flex-1 bg-[#0E0061] text-white py-3 px-4 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl"
+                  >
+                    {loading || logoUploading ? (
+                      <div className="flex items-center justify-center space-x-2">
+                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                        <span>{logoUploading ? 'Uploading Logo...' : 'Creating Account...'}</span>
+                      </div>
+                    ) : currentStep === totalSteps ? (
+                      'Create Account'
+                    ) : (
+                      'Next Step'
+                    )}
+                  </button>
+                </div>
+              </form>
+            )}
+
+            <motion.div
               variants={itemVariants}
               className="mt-8 text-center"
             >
               <p className="text-sm text-gray-600">
                 Already have an account?{' '}
-                <a 
-                  href="/organization/login" 
+                <a
+                  href="/organization/login"
                   className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
                 >
                   Sign in here

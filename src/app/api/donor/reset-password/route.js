@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import { hash } from "bcryptjs";
+import { corsHeaders } from '@/app/lib/cors';
 
 const resetPasswordSchema = z.object({
   token: z.string().min(1, "Reset token is required"),
@@ -101,7 +102,7 @@ export async function POST(request) {
       donor_info: {
         name: donor.name,
         email: donor.email,
-        organization: donor.organization.name
+        organization: donor.organization?.name || null
       },
       security_info: {
         token_deleted: true,
@@ -127,4 +128,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

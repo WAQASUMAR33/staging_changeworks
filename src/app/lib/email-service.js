@@ -1224,28 +1224,9 @@ Address: 5830 E 2nd St. STE 7000 #29896, Casper, WY 82609
         ${(orgName !== 'ChangeWorks' && orgName !== 'ChangeWorks Fund') ? orgName : ''}</p>
       </div>
 
-      <p style="font-size: 12px; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
-
-      <div style="margin-top: 20px; margin-bottom: 20px;">
-        <img src="${this.getChangeWorksLogoUrl()}" alt="ChangeWorks" style="max-height: 40px; height: auto; display: block; margin-bottom: 10px;">
-        <h3 style="color: #302E56; margin: 0; font-size: 18px;">ChangeWorks</h3>
-        <p style="color: #6c757d; margin: 5px 0 0; font-size: 14px;">Your trusted platform partner for charitable giving</p>
-      </div>
-
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
+      ${this.getFooterHtml()}
     `;
 
-    // Note: We're passing false for showOrgName in generateEmailHtml because we handle the header manually in the content
-    // to match the specific layout requested (Org Logo -> Hello!)
-    // We also pass false for showFooter because we handle the footer manually in the content
     const html = this.generateEmailHtml(content, organization, subject, false, false);
 
     const text = `
@@ -1348,27 +1329,9 @@ Unsubscribe
         <strong>The ChangeWorks Team</strong></p>
       </div>
 
-      <p style="font-size: 12px; color: #999; margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">This message was sent to help protect your account. Please do not reply directly to this email.</p>
-
-      <div style="margin-top: 20px; margin-bottom: 20px;">
-        <img src="${this.getChangeWorksLogoUrl()}" alt="ChangeWorks" style="max-height: 40px; height: auto; display: block; margin-bottom: 10px;">
-        <h3 style="color: #302E56; margin: 0; font-size: 18px;">ChangeWorks</h3>
-        <p style="color: #6c757d; margin: 5px 0 0; font-size: 14px;">Your trusted platform partner for charitable giving</p>
-      </div>
-
-      <div style="border-top: 1px solid #eee; padding-top: 20px; margin-top: 30px; color: #6c757d; font-size: 14px; text-align: center;">
-        
-        <p style="margin-bottom: 10px; font-weight: 600; color: #302E56;">Contact Information</p>
-        <p style="margin-bottom: 5px;">Email: <a href="mailto:support@changeworksfund.org" style="color: #6c757d; text-decoration: none;">support@changeworksfund.org</a></p>
-        <p style="margin-bottom: 5px;">5830 E 2nd St. STE 7000 #29896</p>
-        <p style="margin-bottom: 20px;">Casper, WY 82609</p>
-        
-        <p><a href="#" style="color: #999; text-decoration: underline; font-size: 12px;">Unsubscribe</a></p>
-      </div>
+      ${this.getFooterHtml()}
     `;
 
-    // We pass false for showOrgName in generateEmailHtml because we handle the header manually in the content
-    // We also pass false for showFooter because we handle the footer manually in the content
     const html = this.generateEmailHtml(content, brandingOrg, subject, false, false);
 
     const text = `
@@ -1755,6 +1718,68 @@ ${orgName} Team
       to: donor.email,
       subject,
       html: this.generateEmailHtml(content, organization, subject, true, false),
+      text,
+      from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
+    });
+  }
+  // Send Plaid disconnect notification email to donor
+  async sendPlaidDisconnectEmail({ donor, organization, dashboardLink }) {
+    const orgName = organization?.name || 'ChangeWorks Fund';
+    const firstName = donor.name?.split(' ')[0] || donor.name || 'there';
+    const subject = 'Your Round-Up Donations Have Been Paused';
+
+    const content = `
+      <div style="text-align: center; margin-bottom: 30px;">
+        ${organization?.imageUrl
+          ? `<img src="${this.getOrganizationLogoUrl(organization)}" alt="${orgName}" style="max-height: 120px; max-width: 250px; height: auto;">`
+          : `<h2 style="color: #302E56; margin: 0;">${orgName}</h2>`}
+      </div>
+
+      <p style="font-size: 16px; color: #212529; margin-bottom: 20px;">Hi ${firstName},</p>
+
+      <p style="color: #495057; margin-bottom: 20px;">We noticed you've disconnected your round-up account, so your spare-change donations have been paused.</p>
+
+      <p style="color: #495057; margin-bottom: 20px;">If this was intentional, no action is needed. If you'd like to start rounding up purchases again, you can reconnect your account anytime by logging in to your donor dashboard here:</p>
+
+      <div style="margin: 28px 0;">
+        <a href="${dashboardLink}" style="color: #0056b3; font-size: 15px; text-decoration: underline;">${dashboardLink}</a>
+      </div>
+
+      <p style="color: #495057; margin-bottom: 30px;">Thank you for your support and for helping make a difference.</p>
+
+      <p style="color: #495057; margin: 0;">Warmly,<br><strong>The ${orgName} Team</strong></p>
+
+      ${this.getFooterHtml()}
+    `;
+
+    const html = this.generateEmailHtml(content, null, subject, false, false);
+
+    const text = `
+Your Round-Up Donations Have Been Paused
+
+Hi ${firstName},
+
+We noticed you've disconnected your round-up account, so your spare-change donations have been paused.
+
+If this was intentional, no action is needed. If you'd like to start rounding up purchases again, you can reconnect your account anytime by logging in to your donor dashboard here:
+
+${dashboardLink}
+
+Thank you for your support and for helping make a difference.
+
+Warmly,
+The ${orgName} Team
+
+Contact Information
+Email: support@changeworksfund.org
+5830 E 2nd St. STE 7000 #29896
+Casper, WY 82609
+    `.trim();
+
+    return await this.sendEmail({
+      to: donor.email,
+      subject,
+      html,
       text,
       from: `"${orgName}" <${process.env.EMAIL_FROM || 'info@changeworksfund.org'}>`,
     });

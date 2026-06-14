@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 
 // GET: Fetch all transactions for a specific donor_id
@@ -59,4 +60,8 @@ export async function GET(request, { params }) {
   } finally {
     await prisma.$disconnect();
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

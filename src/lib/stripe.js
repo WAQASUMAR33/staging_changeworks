@@ -1,25 +1,24 @@
-import Stripe from "stripe";
+import { createStripeClient, getStripePublishableKey } from '@/app/lib/payment-mode';
 
-// Initialize Stripe with proper error handling
-let stripe = null;
+/**
+ * Returns a mode-aware Stripe instance (sandbox or live depending on DB setting).
+ * All route handlers should call this inside the handler, not at module level.
+ */
+export async function getStripe() {
+  return createStripeClient();
+}
 
-export function getStripe() {
-  if (!stripe) {
-    if (!process.env.STRIPE_SECRET_KEY) {
-      throw new Error('STRIPE_SECRET_KEY environment variable is not set');
-    }
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
-  }
-  return stripe;
+export async function getPublishableKey() {
+  return getStripePublishableKey();
 }
 
 export function isStripeConfigured() {
-  return !!process.env.STRIPE_SECRET_KEY;
+  return !!(process.env.STRIPE_SECRET_KEY_SANDBOX || process.env.STRIPE_SECRET_KEY_LIVE);
 }
 
 export function handleStripeError(error, context = 'Stripe operation') {
   console.error(`${context} error:`, error.message);
-  
+
   if (error.type === 'StripeCardError') {
     return { error: 'Your card was declined.', status: 400 };
   } else if (error.type === 'StripeRateLimitError') {

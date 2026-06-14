@@ -36,7 +36,8 @@ export default function DonorProfilePage() {
     confirm: false
   });
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [errors, setErrors] = useState({});
@@ -48,7 +49,7 @@ export default function DonorProfilePage() {
         const token = localStorage.getItem('token');
         
         if (!token) {
-          setError('No authentication token found');
+          setError('No authentication token found.');
           return;
         }
 
@@ -71,11 +72,11 @@ export default function DonorProfilePage() {
             country: data.donor.country || ''
           });
         } else {
-          setError(data.error || 'Failed to load profile data');
+          setError(data.error || 'Failed to load profile data.');
         }
       } catch (err) {
         console.error('Error fetching profile data:', err);
-        setError('Failed to load profile data');
+        setError('Failed to load profile data.');
       } finally {
         setLoading(false);
       }
@@ -118,13 +119,13 @@ export default function DonorProfilePage() {
     const newErrors = {};
     
     if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = 'Name is required.';
     }
     
     if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Please enter a valid email address.';
     }
 
     setErrors(newErrors);
@@ -135,19 +136,19 @@ export default function DonorProfilePage() {
     const newErrors = {};
     
     if (!passwordData.currentPassword) {
-      newErrors.currentPassword = 'Current password is required';
+      newErrors.currentPassword = 'Current password is required.';
     }
     
     if (!passwordData.newPassword) {
-      newErrors.newPassword = 'New password is required';
+      newErrors.newPassword = 'New password is required.';
     } else if (passwordData.newPassword.length < 6) {
-      newErrors.newPassword = 'Password must be at least 6 characters long';
+      newErrors.newPassword = 'Password must be at least 6 characters long.';
     }
     
     if (!passwordData.confirmPassword) {
-      newErrors.confirmPassword = 'Please confirm your new password';
+      newErrors.confirmPassword = 'Please confirm your new password.';
     } else if (passwordData.newPassword !== passwordData.confirmPassword) {
-      newErrors.confirmPassword = 'Passwords do not match';
+      newErrors.confirmPassword = 'Passwords do not match.';
     }
 
     setErrors(newErrors);
@@ -161,7 +162,7 @@ export default function DonorProfilePage() {
       return;
     }
 
-    setSaving(true);
+    setSavingProfile(true);
     setError('');
     setMessage('');
 
@@ -179,7 +180,7 @@ export default function DonorProfilePage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Profile updated successfully!');
+        setMessage('Profile updated successfully.');
         setUser(data.donor);
         // Update localStorage
         localStorage.setItem('user', JSON.stringify(data.donor));
@@ -190,7 +191,7 @@ export default function DonorProfilePage() {
       console.error('Error updating profile:', err);
       setError('Failed to update profile');
     } finally {
-      setSaving(false);
+      setSavingProfile(false);
     }
   };
 
@@ -201,7 +202,7 @@ export default function DonorProfilePage() {
       return;
     }
 
-    setSaving(true);
+    setSavingPassword(true);
     setError('');
     setMessage('');
 
@@ -226,13 +227,13 @@ export default function DonorProfilePage() {
           confirmPassword: ''
         });
       } else {
-        setError(data.error || 'Failed to change password');
+        setError(data.error || 'Failed to change password.');
       }
     } catch (err) {
       console.error('Error changing password:', err);
-      setError('Failed to change password');
+      setError('Failed to change password.');
     } finally {
-      setSaving(false);
+      setSavingPassword(false);
     }
   };
 
@@ -277,7 +278,7 @@ export default function DonorProfilePage() {
       {/* Header */}
       <motion.div variants={itemVariants}>
         <h1 className="text-3xl font-bold text-gray-900">Profile Settings</h1>
-        <p className="text-gray-600 mt-2">Manage your personal information and account settings</p>
+        <p className="text-gray-600 mt-2">Manage your personal information and account settings.</p>
       </motion.div>
 
       {/* Messages */}
@@ -324,7 +325,7 @@ export default function DonorProfilePage() {
                 <input
                   name="name"
                   type="text"
-                  placeholder="Enter your full name"
+                  placeholder="Enter your full name."
                   value={formData.name}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
@@ -332,7 +333,7 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
               <AnimatePresence>
@@ -352,14 +353,14 @@ export default function DonorProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Email Address
+                Email Address.
               </label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
                 <input
                   name="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Enter your email."
                   value={formData.email}
                   onChange={handleInputChange}
                   className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
@@ -367,7 +368,7 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
               <AnimatePresence>
@@ -394,11 +395,11 @@ export default function DonorProfilePage() {
                 <input
                   name="phone"
                   type="tel"
-                  placeholder="Enter your phone number"
+                  placeholder="Enter your phone number."
                   value={formData.phone}
                   onChange={handleInputChange}
                   className="w-full pl-10 pr-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
             </div>
@@ -413,35 +414,35 @@ export default function DonorProfilePage() {
                 <input
                   name="postal_code"
                   type="text"
-                  placeholder="Enter postal code"
+                  placeholder="Enter postal code."
                   value={formData.postal_code}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Country
+                  Country.
                 </label>
                 <input
                   name="country"
                   type="text"
-                  placeholder="Enter country"
+                  placeholder="Enter country."
                   value={formData.country}
                   onChange={handleInputChange}
                   className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-gray-900"
-                  disabled={saving}
+                  disabled={savingProfile}
                 />
               </div>
             </div>
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={savingProfile}
               className="w-full bg-[#0E0061] text-white py-3 px-6 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
             >
-              {saving ? (
+              {savingProfile ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Saving...</span>
@@ -449,7 +450,7 @@ export default function DonorProfilePage() {
               ) : (
                 <>
                   <Save className="w-5 h-5" />
-                  <span>Save Changes</span>
+                  <span>Save Changes.</span>
                 </>
               )}
             </button>
@@ -463,13 +464,13 @@ export default function DonorProfilePage() {
           <form onSubmit={handleChangePassword} className="space-y-4">
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Current Password
+                Current Password.
               </label>
               <div className="relative">
                 <input
                   name="currentPassword"
                   type={showPasswords.current ? 'text' : 'password'}
-                  placeholder="Enter current password"
+                  placeholder="Enter current password."
                   value={passwordData.currentPassword}
                   onChange={handlePasswordChange}
                   className={`w-full px-4 py-3 pr-12 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
@@ -477,13 +478,13 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingPassword}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasswords(prev => ({ ...prev, current: !prev.current }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={saving}
+                  disabled={savingPassword}
                 >
                   {showPasswords.current ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -505,13 +506,13 @@ export default function DonorProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                New Password
+                New Password.
               </label>
               <div className="relative">
                 <input
                   name="newPassword"
                   type={showPasswords.new ? 'text' : 'password'}
-                  placeholder="Enter new password"
+                  placeholder="Enter new password."
                   value={passwordData.newPassword}
                   onChange={handlePasswordChange}
                   className={`w-full px-4 py-3 pr-12 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
@@ -519,13 +520,13 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingPassword}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasswords(prev => ({ ...prev, new: !prev.new }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={saving}
+                  disabled={savingPassword}
                 >
                   {showPasswords.new ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -547,13 +548,13 @@ export default function DonorProfilePage() {
 
             <div>
               <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Confirm New Password
+                Confirm New Password.
               </label>
               <div className="relative">
                 <input
                   name="confirmPassword"
                   type={showPasswords.confirm ? 'text' : 'password'}
-                  placeholder="Confirm new password"
+                  placeholder="Confirm new password."
                   value={passwordData.confirmPassword}
                   onChange={handlePasswordChange}
                   className={`w-full px-4 py-3 pr-12 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-gray-900 ${
@@ -561,13 +562,13 @@ export default function DonorProfilePage() {
                       ? 'border-red-300 bg-red-50' 
                       : 'border-gray-200 hover:border-gray-300 focus:border-blue-500'
                   }`}
-                  disabled={saving}
+                  disabled={savingPassword}
                 />
                 <button
                   type="button"
                   onClick={() => setShowPasswords(prev => ({ ...prev, confirm: !prev.confirm }))}
                   className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors duration-200"
-                  disabled={saving}
+                  disabled={savingPassword}
                 >
                   {showPasswords.confirm ? <EyeOff size={20} /> : <Eye size={20} />}
                 </button>
@@ -589,10 +590,10 @@ export default function DonorProfilePage() {
 
             <button
               type="submit"
-              disabled={saving}
+              disabled={savingPassword}
               className="w-full bg-[#0E0061] text-white py-3 px-6 rounded-xl font-semibold hover:bg-[#0C0055] focus:outline-none focus:ring-2 focus:ring-[#0E0061]/50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl flex items-center justify-center space-x-2"
             >
-              {saving ? (
+              {savingPassword ? (
                 <>
                   <Loader2 className="w-5 h-5 animate-spin" />
                   <span>Updating...</span>

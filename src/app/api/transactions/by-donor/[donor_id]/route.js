@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request, { params }) {
   try {
@@ -27,15 +28,7 @@ export async function GET(request, { params }) {
         id: true, 
         name: true, 
         email: true, 
-        phone: true,
-        organization_id: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            email: true
-          }
-        }
+        phone: true
       }
     });
 
@@ -161,4 +154,8 @@ export async function GET(request, { params }) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,40 +1,43 @@
 'use client';
 import { motion } from 'framer-motion';
 import { useState, useEffect } from 'react';
+import Link from 'next/link';
 import Image from 'next/image';
-import { 
-  DollarSign, 
-  Building2, 
-  TrendingUp, 
-  Activity,
-  Users,
-  Loader2,
-  Calendar,
-  Target,
-  Zap
+import {
+    DollarSign,
+    Building2,
+    TrendingUp,
+    Activity,
+    Users,
+    Loader2,
+    Calendar,
+    Target,
+    Zap,
+    CheckCircle,
+    AlertCircle
 } from 'lucide-react';
 
 // Helper function to build organization logo URL
 const buildOrgLogoUrl = (imageUrl) => {
-  if (!imageUrl) return null;
-  
-  // If it's already a full URL, return as-is
-  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
-    return imageUrl;
-  }
-  
-  // Use the environment variable for the base URL
-  const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
-  if (!baseUrl) {
-    console.warn('NEXT_PUBLIC_IMAGE_BACK_URL is not set. Cannot build image URL.');
-    return imageUrl; // Fallback to original imageUrl if base URL is not configured
-  }
-  
-  // Ensure the base URL ends with a slash and the image URL doesn't start with one
-  const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
-  const cleanedImageUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
-  
-  return `${cleanedBaseUrl}${cleanedImageUrl}`;
+    if (!imageUrl) return null;
+
+    // If it's already a full URL, return as-is
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+        return imageUrl;
+    }
+
+    // Use the environment variable for the base URL
+    const baseUrl = process.env.NEXT_PUBLIC_IMAGE_BACK_URL;
+    if (!baseUrl) {
+        console.warn('NEXT_PUBLIC_IMAGE_BACK_URL is not set. Cannot build image URL.');
+        return imageUrl; // Fallback to original imageUrl if base URL is not configured
+    }
+
+    // Ensure the base URL ends with a slash and the image URL doesn't start with one
+    const cleanedBaseUrl = baseUrl.endsWith('/') ? baseUrl : `${baseUrl}/`;
+    const cleanedImageUrl = imageUrl.startsWith('/') ? imageUrl.substring(1) : imageUrl;
+
+    return `${cleanedBaseUrl}${cleanedImageUrl}`;
 };
 
 const getColorClasses = (color) => {
@@ -44,28 +47,32 @@ const getColorClasses = (color) => {
             icon: 'text-blue-600',
             border: 'border-blue-200',
             hover: 'hover:bg-blue-100',
-            gradient: 'from-blue-500 to-blue-600'
+            gradient: 'from-blue-500 to-blue-600',
+            shadow: 'shadow-blue-500/30'
         },
         green: {
             bg: 'bg-green-50',
             icon: 'text-green-600',
             border: 'border-green-200',
             hover: 'hover:bg-green-100',
-            gradient: 'from-green-500 to-green-600'
+            gradient: 'from-green-500 to-green-600',
+            shadow: 'shadow-green-500/30'
         },
         purple: {
             bg: 'bg-purple-50',
             icon: 'text-purple-600',
             border: 'border-purple-200',
             hover: 'hover:bg-purple-100',
-            gradient: 'from-purple-500 to-purple-600'
+            gradient: 'from-purple-500 to-purple-600',
+            shadow: 'shadow-purple-500/30'
         },
         orange: {
             bg: 'bg-orange-50',
             icon: 'text-orange-600',
             border: 'border-orange-200',
             hover: 'hover:bg-orange-100',
-            gradient: 'from-orange-500 to-orange-600'
+            gradient: 'from-orange-500 to-orange-600',
+            shadow: 'shadow-orange-500/30'
         }
     };
     return colors[color] || colors.blue;
@@ -78,17 +85,47 @@ export default function OrganizationDashboard() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(null);
 
+    const [onboardingLoading, setOnboardingLoading] = useState(false);
+
     // Store organization data in sessionStorage for header access
     useEffect(() => {
         if (organization) {
             const orgUser = JSON.parse(sessionStorage.getItem('orgUser') || '{}');
-            const updatedOrgUser = { ...orgUser, imageUrl: organization.imageUrl };
+            const updatedOrgUser = { ...orgUser, imageUrl: organization.imageUrl, stripeAccountId: organization.stripeAccountId ?? orgUser.stripeAccountId };
             sessionStorage.setItem('orgUser', JSON.stringify(updatedOrgUser));
-            
+
             // Dispatch custom event to notify header of update
             window.dispatchEvent(new CustomEvent('orgUserUpdated'));
         }
     }, [organization]);
+
+    const handleGenerateOnboardingLink = async () => {
+        if (!organization?.stripeAccountId) return;
+        
+        try {
+            setOnboardingLoading(true);
+            const response = await fetch('/api/organization/stripe-onboarding-link', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ stripeAccountId: organization.stripeAccountId }),
+            });
+            
+            const data = await response.json();
+            
+            if (data.success && data.url) {
+                window.location.href = data.url;
+            } else {
+                alert('Failed to generate onboarding link. Please try again.');
+            }
+        } catch (error) {
+            console.error('Error generating onboarding link:', error);
+            alert('An error occurred. Please try again.');
+        } finally {
+            setOnboardingLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetchDashboardData();
@@ -97,20 +134,20 @@ export default function OrganizationDashboard() {
     const fetchDashboardData = async () => {
         try {
             setLoading(true);
-            
+
             // Get organization ID from sessionStorage
             const orgUser = sessionStorage.getItem('orgUser');
             if (!orgUser) {
                 setError('Organization not found');
                 return;
             }
-            
+
             const userData = JSON.parse(orgUser);
             const organizationId = userData.id;
-            
+
             const response = await fetch(`/api/organization/dashboard-stats?organizationId=${organizationId}`);
             const data = await response.json();
-            
+
             if (data.success) {
                 // Transform API data to match component structure
                 const transformedStats = [
@@ -131,7 +168,7 @@ export default function OrganizationDashboard() {
                         color: 'orange'
                     }
                 ];
-                
+
                 setStats(transformedStats);
                 setRecentActivity(data.recentActivity || []);
                 setOrganization(data.organization);
@@ -176,40 +213,119 @@ export default function OrganizationDashboard() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, ease: 'easeOut' }}
-            className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-indigo-100"
+            className="min-h-screen bg-white"
         >
             <div className="space-y-8 p-6">
                 {/* Modern Header Section */}
-                <motion.div 
+                <motion.div
                     initial={{ opacity: 0, y: -20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: 0.1, duration: 0.6 }}
                     className="text-center"
                 >
-                    <div className="inline-flex items-center justify-center w-20 h-20 bg-[#0E0061] rounded-2xl mb-4 shadow-lg overflow-hidden">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl mb-4 shadow-lg overflow-hidden">
                         {organization?.imageUrl ? (
                             <Image
                                 src={buildOrgLogoUrl(organization.imageUrl)}
                                 alt={`${organization.name} logo`}
                                 width={80}
                                 height={80}
-                                className="w-full h-full object-cover"
-                                onError={(e) => {
-                                    e.target.style.display = 'none';
-                                    e.target.nextSibling.style.display = 'flex';
-                                }}
+                                className="w-full h-full object-contain"
                             />
-                        ) : null}
-                        <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center ${organization?.imageUrl ? 'hidden' : 'flex'}`}>
-                            <Building2 className="w-8 h-8 text-white" />
-                        </div>
+                        ) : (
+                            <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 rounded-2xl flex items-center justify-center">
+                                <Building2 className="w-8 h-8 text-white" />
+                            </div>
+                        )}
                     </div>
                     <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 to-gray-600 bg-clip-text text-transparent mb-3">
                         {organization?.name || 'Organization'} Dashboard
                     </h1>
-                    <p className="text-gray-600 max-w-2xl mx-auto text-lg">
+                    <p className="text-gray-600 max-w-2xl mx-auto text-lg mb-4">
                         Welcome to your ChangeWorks organization Dashboard. Manage your donors, and track donations.
                     </p>
+                    {/* Stripe Status Section */}
+                    <div className="w-full max-w-2xl mx-auto mb-10">
+                        {!organization?.stripeAccountId ? (
+                            <motion.div 
+                                initial={{ opacity: 0, scale: 0.95 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="bg-white p-6 rounded-2xl shadow-lg border border-red-100 flex flex-col items-center text-center space-y-3 relative overflow-hidden group"
+                            >
+                                <div className="absolute top-0 left-0 w-1 h-full bg-red-500" />
+                                <div className="p-3 bg-red-50 rounded-full text-red-600 group-hover:scale-110 transition-transform duration-300">
+                                    <AlertCircle className="w-6 h-6" />
+                                </div>
+                                <div>
+                                    <h3 className="text-lg font-semibold text-gray-900">Stripe Not Connected</h3>
+                                    <p className="text-gray-500 text-sm mt-1">Connect your Stripe account to start accepting donations securely.</p>
+                                </div>
+                            </motion.div>
+                        ) : (
+                            <>
+                                {/* 1. Account Created but Onboarding Not Done */}
+                                {!organization.stripeStatus?.details_submitted ? (
+                                    <motion.div 
+                                        initial={{ opacity: 0, scale: 0.95 }}
+                                        animate={{ opacity: 1, scale: 1 }}
+                                        className="bg-white p-6 rounded-2xl shadow-lg border border-yellow-100 flex flex-col items-center text-center space-y-4 relative overflow-hidden"
+                                    >
+                                        <div className="absolute top-0 left-0 w-1 h-full bg-yellow-500" />
+                                        <div className="p-3 bg-yellow-50 rounded-full text-yellow-600">
+                                            <AlertCircle className="w-6 h-6" />
+                                        </div>
+                                        <div>
+                                            <h3 className="text-lg font-semibold text-gray-900">Complete Setup Required</h3>
+                                            <p className="text-gray-500 text-sm mt-1">Finish your Stripe onboarding to activate payments.</p>
+                                        </div>
+                                        <button
+                                            onClick={handleGenerateOnboardingLink}
+                                            disabled={onboardingLoading}
+                                            className="px-6 py-2.5 bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg hover:from-yellow-600 hover:to-yellow-700 transition-all duration-300 transform hover:-translate-y-0.5 disabled:opacity-50 disabled:cursor-not-allowed"
+                                        >
+                                            {onboardingLoading ? 'Generating Link...' : 'Complete Onboarding'}
+                                        </button>
+                                    </motion.div>
+                                ) : (
+                                    /* 2. Onboarding Done but Products Not Created */
+                                    !(organization.stripeProductId1 || organization.stripeProductId2 || organization.stripeProductId3) ? (
+                                        <motion.div 
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="bg-white p-6 rounded-2xl shadow-lg border border-blue-100 flex flex-col items-center text-center space-y-4 relative overflow-hidden"
+                                        >
+                                            <div className="absolute top-0 left-0 w-1 h-full bg-blue-500" />
+                                            <div className="p-3 bg-blue-50 rounded-full text-blue-600">
+                                                <AlertCircle className="w-6 h-6" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-lg font-semibold text-gray-900">Setup Donation Options</h3>
+                                                <p className="text-gray-500 text-sm mt-1">Your account is ready. Create donation tiers to start fundraising.</p>
+                                            </div>
+                                            <Link 
+                                                href="/organization/dashboard/stripe-products"
+                                                className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-sm font-semibold shadow-md hover:shadow-lg hover:from-blue-700 hover:to-blue-800 transition-all duration-300 transform hover:-translate-y-0.5"
+                                            >
+                                                Create Donation Options
+                                            </Link>
+                                        </motion.div>
+                                    ) : (
+                                        /* 3. All Complete */
+                                        <motion.div 
+                                            initial={{ opacity: 0, scale: 0.95 }}
+                                            animate={{ opacity: 1, scale: 1 }}
+                                            className="bg-white/60 backdrop-blur-md p-4 rounded-2xl border border-green-100 flex items-center justify-center space-x-3 text-green-700 shadow-sm"
+                                        >
+                                            <div className="p-1.5 bg-green-100 rounded-full">
+                                                <CheckCircle className="w-5 h-5" />
+                                            </div>
+                                            <span className="font-medium">Stripe payments are fully configured and active</span>
+                                        </motion.div>
+                                    )
+                                )}
+                            </>
+                        )}
+                    </div>
                 </motion.div>
 
                 {/* Modern Stats Cards */}
@@ -221,92 +337,25 @@ export default function OrganizationDashboard() {
                                 key={stat.title}
                                 initial={{ opacity: 0, y: 20 }}
                                 animate={{ opacity: 1, y: 0 }}
-                                transition={{ delay: index * 0.1, duration: 0.5 }}
-                                className="bg-white/80 backdrop-blur-xl rounded-3xl p-6 shadow-xl border border-white/20 hover:shadow-2xl transition-all duration-300 group"
+                                transition={{ delay: index * 0.1 + 0.2, duration: 0.5 }}
+                                className="bg-white rounded-3xl p-8 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1 group relative overflow-hidden"
                             >
-                                <div className="flex items-center justify-between mb-4">
-                                    <div className={`p-4 rounded-2xl bg-gradient-to-r ${colors.gradient} shadow-lg`}>
-                                        <stat.icon className="w-6 h-6 text-white" />
-                                    </div>
-                                    <div className={`flex items-center space-x-1 text-sm font-medium px-2 py-1 rounded-full ${
-                                        stat.changeType === 'increase' 
-                                            ? 'bg-green-100 text-green-700' 
-                                            : 'bg-red-100 text-red-700'
-                                    }`}>
-                                        <TrendingUp className="w-3 h-3" />
-                                        <span>{stat.change}</span>
+                                <div className={`absolute top-0 right-0 w-32 h-32 bg-gradient-to-br ${colors.gradient} opacity-[0.03] rounded-bl-full -mr-10 -mt-10 transition-opacity group-hover:opacity-[0.08]`} />
+                                
+                                <div className="flex items-center justify-between mb-6 relative z-10">
+                                    <div className={`p-4 rounded-2xl bg-gradient-to-br ${colors.gradient} shadow-lg ${colors.shadow} group-hover:scale-110 transition-transform duration-300`}>
+                                        <stat.icon className="w-7 h-7 text-white" />
                                     </div>
                                 </div>
-                                <h3 className="text-3xl font-bold text-gray-900 mb-2">{stat.value}</h3>
-                                <p className="text-gray-600 font-medium">{stat.title}</p>
+                                
+                                <div className="relative z-10">
+                                    <h3 className="text-4xl font-bold text-gray-900 mb-2 tracking-tight">{stat.value}</h3>
+                                    <p className="text-gray-500 font-medium text-lg">{stat.title}</p>
+                                </div>
                             </motion.div>
                         );
                     })}
                 </div>
-
-
-                {/* Modern Recent Activity */}
-                <motion.div
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: 0.4, duration: 0.6 }}
-                    className="max-w-6xl mx-auto"
-                >
-                    <h2 className="text-2xl font-bold text-gray-900 mb-6 text-center">Recent Activity</h2>
-                    <div className="bg-white/80 backdrop-blur-xl rounded-3xl shadow-xl border border-white/20 p-8">
-                        {recentActivity.length > 0 ? (
-                            <div className="space-y-4">
-                                {recentActivity.map((activity, index) => {
-                                    const getActivityIcon = (type) => {
-                                        switch (type) {
-                                            case 'donation': return DollarSign;
-                                            case 'ghl': return Building2;
-                                            default: return Users;
-                                        }
-                                    };
-                                    
-                                    const getActivityColor = (color) => {
-                                        switch (color) {
-                                            case 'green': return { bg: 'bg-green-50', icon: 'bg-green-500' };
-                                            case 'blue': return { bg: 'bg-blue-50', icon: 'bg-blue-500' };
-                                            default: return { bg: 'bg-purple-50', icon: 'bg-purple-500' };
-                                        }
-                                    };
-                                    
-                                    const ActivityIcon = getActivityIcon(activity.type);
-                                    const colors = getActivityColor(activity.color);
-                                    
-                                    return (
-                                        <motion.div 
-                                            key={activity.id || index} 
-                                            initial={{ opacity: 0, x: -20 }}
-                                            animate={{ opacity: 1, x: 0 }}
-                                            transition={{ delay: index * 0.1 }}
-                                            className={`flex items-center space-x-4 p-4 ${colors.bg} rounded-2xl hover:shadow-md transition-all duration-200`}
-                                        >
-                                            <div className={`w-12 h-12 ${colors.icon} rounded-2xl flex items-center justify-center shadow-lg`}>
-                                                <ActivityIcon className="w-6 h-6 text-white" />
-                                            </div>
-                                            <div className="flex-1">
-                                                <p className="font-semibold text-gray-900">{activity.title}</p>
-                                                <p className="text-sm text-gray-600">{activity.description}</p>
-                                            </div>
-                                            <span className="text-sm text-gray-500 bg-white px-3 py-1 rounded-full">{activity.time}</span>
-                                        </motion.div>
-                                    );
-                                })}
-                            </div>
-                        ) : (
-                            <div className="text-center py-12">
-                                <div className="w-20 h-20 bg-gradient-to-r from-gray-100 to-gray-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                                    <Activity className="w-10 h-10 text-gray-400" />
-                                </div>
-                                <h3 className="text-lg font-semibold text-gray-900 mb-2">No recent activity</h3>
-                                <p className="text-gray-500">Activity will appear here as you use the platform</p>
-                            </div>
-                        )}
-                    </div>
-                </motion.div>
             </div>
         </motion.div>
     );

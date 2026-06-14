@@ -5,7 +5,6 @@
  */
 
 import { prisma } from '@/app/lib/prisma';
-import Stripe from 'stripe';
 
 // ─── In-memory cache ──────────────────────────────────────────────────────────
 let _mode = null;          // null = not yet loaded
@@ -81,6 +80,9 @@ export async function createStripeClient(forceLivemode = null) {
     ? (process.env.STRIPE_SECRET_KEY_LIVE ?? '')
     : (process.env.STRIPE_SECRET_KEY_SANDBOX ?? '');
 
+  // Dynamic import keeps Stripe out of the module-level evaluation
+  // which prevents build errors when env vars are not set at build time
+  const { default: Stripe } = await import('stripe');
   _stripeInstances[mode] = new Stripe(key || 'sk_test_placeholder', { apiVersion: '2024-06-20' });
   return _stripeInstances[mode];
 }

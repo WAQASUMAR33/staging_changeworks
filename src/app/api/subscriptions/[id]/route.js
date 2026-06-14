@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { getStripe, isStripeConfigured, handleStripeError } from "@/lib/stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/subscriptions/[id] - Get specific subscription
 export async function GET(request, { params }) {
@@ -12,7 +13,7 @@ export async function GET(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const subscriptionId = params.id;
 
     const subscription = await prisma.subscription.findUnique({
@@ -108,7 +109,7 @@ export async function PUT(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const subscriptionId = params.id;
     const body = await request.json();
     const { action, ...updateData } = body;
@@ -287,7 +288,7 @@ export async function DELETE(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
     const subscriptionId = params.id;
     const { searchParams } = new URL(request.url);
     const cancelImmediately = searchParams.get('immediate') === 'true';
@@ -383,4 +384,8 @@ export async function DELETE(request, { params }) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

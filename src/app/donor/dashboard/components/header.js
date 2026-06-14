@@ -1,10 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Search, User } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { User, LogOut, ChevronDown } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 const DonorHeader = () => {
   const [user, setUser] = useState(null);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const router = useRouter();
 
   useEffect(() => {
     const userData = localStorage.getItem('user');
@@ -12,6 +17,23 @@ const DonorHeader = () => {
       setUser(JSON.parse(userData));
     }
   }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    localStorage.removeItem('rememberMe');
+    router.push('/donor/login');
+  };
 
   return (
     <header className="bg-white shadow-sm border-b border-gray-200 px-3 sm:px-6 py-4">
@@ -28,35 +50,42 @@ const DonorHeader = () => {
           </div>
         </div>
 
-        {/* Right side - Actions */}
-        <div className="flex items-center space-x-2 sm:space-x-4">
-          {/* Search - Hidden on mobile */}
-          <div className="relative hidden md:block">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Search..."
-              className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-64"
-            />
-          </div>
-
-          {/* Mobile search button */}
-          <button className="md:hidden p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200">
-            <Search className="w-5 h-5" />
-          </button>
-
-          {/* Notifications removed */}
-
-          {/* User Profile */}
-          <div className="flex items-center space-x-3">
-            <div className="w-8 h-8 bg-[#0E0061] rounded-full flex items-center justify-center">
+        {/* Right side - User profile dropdown */}
+        <div className="relative" ref={dropdownRef}>
+          <button
+            onClick={() => setDropdownOpen(!dropdownOpen)}
+            className="flex items-center space-x-2 sm:space-x-3 p-1 rounded-lg hover:bg-gray-100 transition-colors duration-200"
+          >
+            <div className="w-8 h-8 bg-[#0E0061] rounded-full flex items-center justify-center flex-shrink-0">
               <User className="w-4 h-4 text-white" />
             </div>
-            <div className="hidden md:block">
+            <div className="hidden md:block text-left">
               <p className="text-sm font-medium text-gray-800">{user?.name || 'Donor'}</p>
               <p className="text-xs text-gray-500">{user?.email || 'donor@example.com'}</p>
             </div>
-          </div>
+            <ChevronDown className="w-4 h-4 text-gray-500 hidden md:block" />
+          </button>
+
+          {dropdownOpen && (
+            <div className="absolute right-0 mt-2 w-48 bg-white rounded-xl shadow-lg border border-gray-200 py-1 z-50">
+              <Link
+                href="/donor/dashboard/profile"
+                onClick={() => setDropdownOpen(false)}
+                className="flex items-center space-x-3 px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors duration-200"
+              >
+                <User className="w-4 h-4 text-gray-500" />
+                <span>Profile</span>
+              </Link>
+              <hr className="my-1 border-gray-200" />
+              <button
+                onClick={handleLogout}
+                className="w-full flex items-center space-x-3 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors duration-200"
+              >
+                <LogOut className="w-4 h-4 text-red-500" />
+                <span>Logout</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

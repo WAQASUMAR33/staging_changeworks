@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../../../lib/prisma";
 import jwt from "jsonwebtoken";
 import { getStripe, isStripeConfigured, handleStripeError } from "@/lib/stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
 // POST /api/donor/subscriptions/[id]/[action] - Handle subscription actions (pause, resume, cancel)
 export async function POST(request, { params }) {
@@ -13,7 +14,7 @@ export async function POST(request, { params }) {
       }, { status: 503 });
     }
 
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     // Get token from Authorization header
     const authHeader = request.headers.get('authorization');
@@ -89,71 +90,129 @@ export async function POST(request, { params }) {
           }, { status: 400 });
         }
 
-        // Cancel at period end in Stripe
-        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
-          cancel_at_period_end: true,
-        });
+        let effectiveCancelImmediate = false;
 
-        // Update database
-        updatedSubscription = await prisma.subscription.update({
-          where: { id: subscriptionId },
-          data: {
+        // Cancel at period end in Stripe
+        try {
+          await stripe.subscriptions.update(subscription.stripe_subscription_id, {
             cancel_at_period_end: true,
-            status: 'ACTIVE', // Keep as ACTIVE when cancel_at_period_end is true
-            updated_at: new Date()
-          },
-          include: {
-            donor: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
+          });
+        } catch (stripeError) {
+          if (stripeError.code === 'resource_missing') {
+            console.warn(`Subscription ${subscription.stripe_subscription_id} missing in Stripe. Marking as canceled locally.`);
+            effectiveCancelImmediate = true;
+          } else {
+            throw stripeError;
+          }
+        }
+
+        if (effectiveCancelImmediate) {
+           // Update database - force cancel because it's missing in Stripe
+           updatedSubscription = await prisma.subscription.update({
+            where: { id: subscriptionId },
+            data: {
+              status: 'CANCELED',
+              canceled_at: new Date(),
+              updated_at: new Date()
             },
-            organization: {
-              select: {
-                id: true,
-                name: true,
-                email: true
-              }
-            },
-            package: {
-              select: {
-                id: true,
-                name: true,
-                description: true,
-                price: true,
-                currency: true,
-                features: true
+            include: {
+              donor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              package: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  currency: true,
+                  features: true
+                }
               }
             }
-          }
-        });
+          });
 
-        result = {
-          success: true,
-          message: 'Subscription scheduled for cancellation at period end',
-          subscription: updatedSubscription
-        };
+          result = {
+            success: true,
+            message: 'Subscription missing in Stripe, marked as canceled locally',
+            subscription: updatedSubscription
+          };
+        } else {
+          // Update database - standard cancel at period end
+          updatedSubscription = await prisma.subscription.update({
+            where: { id: subscriptionId },
+            data: {
+              cancel_at_period_end: true,
+              status: 'ACTIVE', // Keep as ACTIVE when cancel_at_period_end is true
+              updated_at: new Date()
+            },
+            include: {
+              donor: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              organization: {
+                select: {
+                  id: true,
+                  name: true,
+                  email: true
+                }
+              },
+              package: {
+                select: {
+                  id: true,
+                  name: true,
+                  description: true,
+                  price: true,
+                  currency: true,
+                  features: true
+                }
+              }
+            }
+          });
+
+          result = {
+            success: true,
+            message: 'Subscription scheduled for cancellation at period end',
+            subscription: updatedSubscription
+          };
+        }
         break;
 
       case 'pause':
-        // Pause the subscription (cancel immediately)
+        // Pause the subscription (pause collection)
         if (subscription.status === 'CANCELED') {
           return NextResponse.json({ 
             error: "Subscription is already canceled" 
           }, { status: 400 });
         }
 
-        // Cancel immediately in Stripe
-        await stripe.subscriptions.cancel(subscription.stripe_subscription_id);
+        // Pause collection in Stripe
+        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+          pause_collection: {
+            behavior: 'void',
+          },
+        });
 
         // Update database
         updatedSubscription = await prisma.subscription.update({
           where: { id: subscriptionId },
           data: {
-            status: 'CANCELED',
-            canceled_at: new Date(),
+            status: 'PAUSED',
             updated_at: new Date()
           },
           include: {
@@ -186,24 +245,70 @@ export async function POST(request, { params }) {
 
         result = {
           success: true,
-          message: 'Subscription paused (canceled immediately)',
+          message: 'Subscription paused successfully',
           subscription: updatedSubscription
         };
         break;
 
       case 'resume':
-        // Resume the subscription (create a new subscription)
+        // Resume the subscription
         if (subscription.status === 'ACTIVE') {
           return NextResponse.json({ 
             error: "Subscription is already active" 
           }, { status: 400 });
         }
 
-        // For resume, we would need to create a new subscription
-        // This is complex as it requires customer, price, and payment method
-        return NextResponse.json({ 
-          error: "Resume functionality requires creating a new subscription. Please create a new subscription instead." 
-        }, { status: 400 });
+        if (subscription.status === 'CANCELED') {
+          return NextResponse.json({ 
+            error: "Cannot resume a canceled subscription. Please create a new one." 
+          }, { status: 400 });
+        }
+
+        // Resume collection in Stripe
+        await stripe.subscriptions.update(subscription.stripe_subscription_id, {
+          pause_collection: '',
+        });
+
+        // Update database
+        updatedSubscription = await prisma.subscription.update({
+          where: { id: subscriptionId },
+          data: {
+            status: 'ACTIVE',
+            updated_at: new Date()
+          },
+          include: {
+            donor: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
+            organization: {
+              select: {
+                id: true,
+                name: true,
+                email: true
+              }
+            },
+            package: {
+              select: {
+                id: true,
+                name: true,
+                description: true,
+                price: true,
+                currency: true,
+                features: true
+              }
+            }
+          }
+        });
+
+        result = {
+          success: true,
+          message: 'Subscription resumed successfully',
+          subscription: updatedSubscription
+        };
         break;
 
       default:
@@ -232,4 +337,8 @@ export async function POST(request, { params }) {
       details: error.message 
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

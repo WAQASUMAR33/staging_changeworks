@@ -117,7 +117,7 @@ export default function PlaidConnectPage() {
                         <span>Connecting to Plaid...</span>
                       </div>
                     ) : (
-                      'Connect Bank Account with Plaid'
+                      'Donate your spare change from every day purchases'
                     )}
                   </button>
                 </div>

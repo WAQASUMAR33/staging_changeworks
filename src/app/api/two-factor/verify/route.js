@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import { verifyTwoFactorToken } from '../../../lib/two-factor';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * Verify 2FA code during login
@@ -41,6 +42,6 @@ export async function POST(request) {
   }
 }
 
-
-
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

@@ -10,12 +10,12 @@ import { getStripe } from '../../lib/stripe';
  */
 export async function createOrganizationStripeProducts(organization) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
-    // Product 1: One-Time Donation Product
+    // Product 1: Package 1
     const product1 = await stripe.products.create({
-      name: `${organization.name} - One-Time Donation`,
-      description: `One-time donation product for ${organization.name}`,
+      name: `${organization.name} - Donation Option 1`,
+      description: `Donation Option 1 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -26,12 +26,12 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`✅ Created Stripe Product 1 (One-Time): ${product1.id}`);
+    console.log(`Created Donation Option 1 (Option 1): ${product1.id}`);
 
-    // Product 2: Monthly Recurring Donation Product
+    // Product 2: Package 2
     const product2 = await stripe.products.create({
-      name: `${organization.name} - Monthly Donation`,
-      description: `Monthly recurring donation product for ${organization.name}`,
+      name: `${organization.name} - Donation Option 2`,
+      description: `Donation Option 2 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -42,12 +42,12 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`✅ Created Stripe Product 2 (Monthly): ${product2.id}`);
+     console.log(`Created Donation Option 2 (Option 2): ${product2.id}`);
 
-    // Product 3: Round-Up Donation Product (for Plaid integration)
+    // Product 3: Package 3
     const product3 = await stripe.products.create({
-      name: `${organization.name} - Round-Up Program`,
-      description: `Round-up donation product for ${organization.name}`,
+      name: `${organization.name} - Donation Option 3`,
+      description: `Donation Option 3 for ${organization.name}`,
       active: true,
       type: 'service',
       metadata: {
@@ -58,7 +58,7 @@ export async function createOrganizationStripeProducts(organization) {
       },
     });
 
-    console.log(`✅ Created Stripe Product 3 (Round-Up): ${product3.id}`);
+ console.log(`Created Donation Option 3 (Option 3): ${product3.id}`);
 
     return {
       product1,
@@ -66,8 +66,8 @@ export async function createOrganizationStripeProducts(organization) {
       product3,
     };
   } catch (error) {
-    console.error('❌ Error creating Stripe products:', error);
-    throw new Error(`Failed to create Stripe products: ${error.message}`);
+    console.error('❌ Error creating Donation Options:', error);
+    throw new Error(`Failed to create Stripe Donation Options: ${error.message}`);
   }
 }
 
@@ -80,7 +80,7 @@ export async function createOrganizationStripeProducts(organization) {
  */
 export async function createDefaultPricesForProducts(products, organization, customPrices = null) {
   try {
-    const stripe = getStripe();
+    const stripe = await getStripe();
 
     // Use custom prices if provided, otherwise use defaults
     const product1PriceCents = customPrices?.product1Price || 1000; // Default $10.00
@@ -100,9 +100,9 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`✅ Created Price for Product 1: ${price1.id} ($${(product1PriceCents / 100).toFixed(2)})`);
+    console.log(`✅ Created Price for Donation Option 1: ${price1.id} ($${(product1PriceCents / 100).toFixed(2)})`);
 
-    // Price 2: Monthly Recurring Donation
+    // Price 2: Monthly Recurring
     const price2 = await stripe.prices.create({
       product: products.product2.id,
       currency: 'usd',
@@ -118,9 +118,9 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`✅ Created Price for Product 2: ${price2.id} ($${(product2PriceCents / 100).toFixed(2)}/month)`);
+    console.log(`✅ Created Price for Donation Option 2: ${price2.id} ($${(product2PriceCents / 100).toFixed(2)}/month)`);
 
-    // Price 3: Round-Up Program
+    // Price 3: Round Up (represented as a small base amount, actual round up logic handled elsewhere)
     const price3 = await stripe.prices.create({
       product: products.product3.id,
       currency: 'usd',
@@ -133,7 +133,7 @@ export async function createDefaultPricesForProducts(products, organization, cus
       },
     });
 
-    console.log(`✅ Created Price for Product 3: ${price3.id} ($${(product3PriceCents / 100).toFixed(2)})`);
+    console.log(`✅ Created Price for Donation Option 3: ${price3.id} ($${(product3PriceCents / 100).toFixed(2)})`);
 
     return {
       price1,
@@ -141,7 +141,7 @@ export async function createDefaultPricesForProducts(products, organization, cus
       price3,
     };
   } catch (error) {
-    console.error('❌ Error creating default prices:', error);
+    console.error('âŒ Error creating default prices:', error);
     throw new Error(`Failed to create default prices: ${error.message}`);
   }
 }

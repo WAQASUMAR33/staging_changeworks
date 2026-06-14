@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 // POST /api/subscriptions/create-complete - Create customer, subscription, and complete payment in one step
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       donor_id,
@@ -46,7 +47,7 @@ export async function POST(request) {
       }),
       prisma.organization.findUnique({
         where: { id: organization_id },
-        select: { id: true, name: true, email: true }
+        select: { id: true, name: true, email: true, stripeAccountId: true }
       })
     ]);
 
@@ -126,6 +127,10 @@ export async function POST(request) {
     try {
       const subscriptionData = {
         customer: customer.id,
+        transfer_data: organization.stripeAccountId ? {
+          destination: organization.stripeAccountId,
+          amount_percent: 93.2, // 93.2% to org (6.8% platform fee)
+        } : undefined,
         items: [{
           price_data: {
             currency: packageData.currency.toLowerCase(),
@@ -271,7 +276,7 @@ export async function POST(request) {
         currency: paymentIntent.currency
       },
       stripe_subscription_id: stripeSubscription.id,
-      message: 'Subscription created and payment completed successfully'
+      message: 'Donation created and payment completed successfully'
     });
 
   } catch (error) {
@@ -281,4 +286,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

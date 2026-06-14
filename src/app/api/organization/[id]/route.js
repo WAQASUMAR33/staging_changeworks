@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema for PUT requests
 const updateOrganizationSchema = z.object({
@@ -10,7 +11,7 @@ const updateOrganizationSchema = z.object({
   phone: z.string().optional(),
   company: z.string().optional(),
   address: z.string().optional(),
-  website: z.string().url().optional(),
+  website: z.string().optional(),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
@@ -35,7 +36,8 @@ export async function GET(req, { params }) {
     }
 
     const organization = await prisma.organization.findUnique({
-      where: { id: parsedId }});
+      where: { id: parsedId }
+    });
 
     if (!organization) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
@@ -147,13 +149,111 @@ export async function DELETE(req, { params }) {
       return NextResponse.json({ error: "Organization not found" }, { status: 404 });
     }
 
-    await prisma.organization.delete({
-      where: { id: parsedId },
+
+    console.log(`🗑️ Deleting organization ${parsedId} and all related records...`);
+
+    // Delete organization and all related records in a transaction
+    const result = await prisma.$transaction(async (tx) => {
+      let deletedCounts = {
+        subscriptionTransactions: 0,
+        subscriptions: 0,
+        plaidConnections: 0,
+        donorTransactions: 0,
+        saveTrRecords: 0,
+        fundTransfers: 0,
+        ghlAccounts: 0,
+        donors: 0
+      };
+
+      // 1. Delete subscription transactions
+      const subscriptionTxResult = await tx.subscriptionTransaction.deleteMany({
+        where: {
+          subscription: {
+            organization_id: parsedId
+          }
+        }
+      });
+      deletedCounts.subscriptionTransactions = subscriptionTxResult.count;
+
+      // 2. Delete subscriptions
+      const subscriptionsResult = await tx.subscription.deleteMany({
+        where: {
+          organization_id: parsedId
+        }
+      });
+      deletedCounts.subscriptions = subscriptionsResult.count;
+
+      // 3. Delete Plaid connections
+      const plaidResult = await tx.plaidConnection.deleteMany({
+        where: {
+          organization_id: parsedId
+        }
+      });
+      deletedCounts.plaidConnections = plaidResult.count;
+
+      // 4. Delete donor transactions
+      const donorTxResult = await tx.donorTransaction.deleteMany({
+        where: {
+          organization_id: parsedId
+        }
+      });
+      deletedCounts.donorTransactions = donorTxResult.count;
+
+      // 5. Delete save transaction records
+      const saveTrResult = await tx.saveTrRecord.deleteMany({
+        where: {
+          trx_organization_id: parsedId
+        }
+      });
+      deletedCounts.saveTrRecords = saveTrResult.count;
+
+      // 6. Delete fund transfers
+      const fundTransfersResult = await tx.fundTransfer.deleteMany({
+        where: {
+          organization_id: parsedId
+        }
+      });
+      deletedCounts.fundTransfers = fundTransfersResult.count;
+
+      // 7. Delete GHL accounts
+      const ghlResult = await tx.gHLAccount.deleteMany({
+        where: {
+          organization_id: parsedId
+        }
+      });
+      deletedCounts.ghlAccounts = ghlResult.count;
+
+      // 8. Delete donors
+      const donorsResult = await tx.donor.deleteMany({
+        where: {
+          organization_id: parsedId
+        }
+      });
+      deletedCounts.donors = donorsResult.count;
+
+      // 9. Finally, delete the organization
+      await tx.organization.delete({
+        where: { id: parsedId },
+      });
+
+      return deletedCounts;
     });
 
-    return NextResponse.json({ message: "Organization deleted successfully" }, { status: 200 });
+    console.log(`✅ Successfully deleted organization ${parsedId} and related records:`, result);
+
+    return NextResponse.json({
+      message: "Organization deleted successfully",
+      deletedCounts: result
+    }, { status: 200 });
   } catch (error) {
     console.error("Delete error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return NextResponse.json({
+      error: "Internal server error",
+      details: error.message
+    }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET() {
   return NextResponse.json({
@@ -31,4 +32,8 @@ export async function POST(request) {
       message: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

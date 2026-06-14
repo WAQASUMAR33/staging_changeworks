@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET() {
   try {
@@ -147,4 +148,8 @@ export async function GET() {
       ]
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

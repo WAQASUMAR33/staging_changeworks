@@ -1,11 +1,12 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import OrgSidebar from './components/sidebar';
 import OrgHeader from './components/header';
 
 export default function OrganizationLayout({ children }) {
   const router = useRouter();
+  const pathname = usePathname();
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -45,7 +46,7 @@ export default function OrganizationLayout({ children }) {
       <div className="flex flex-col flex-1 overflow-hidden">
         <OrgHeader />
         <main className="flex-1 overflow-y-auto">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className={`${['/organization/dashboard/transactions', '/organization/dashboard/subscriptions'].includes(pathname) ? 'w-full' : 'max-w-7xl'} mx-auto px-4 sm:px-6 lg:px-8 py-8`}>
             {children}
           </div>
         </main>

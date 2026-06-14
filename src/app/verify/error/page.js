@@ -7,6 +7,7 @@ const reasonMessages = {
   invalid_or_expired: 'This verification link is invalid or has already been used.',
   expired: 'This verification link has expired. Please request a new one.',
   donor_not_found: 'We could not find your account. Please contact support.',
+  user_not_found: 'We could not find your account. Please contact support.',
   server_error: 'Something went wrong on our end. Please try again later.'
 };
 
@@ -27,7 +28,7 @@ export default function VerifyErrorPage() {
 
           <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
             <a
-              href="/login"
+              href="/changeworksadmin/login"
               className="inline-flex items-center px-6 py-3 bg-gray-800 hover:bg-black text-white font-medium rounded-lg shadow-sm transition"
             >
               Go to Login
@@ -41,7 +42,7 @@ export default function VerifyErrorPage() {
           </div>
 
           <div className="mt-6 text-sm text-gray-500">
-            Need help? Contact support at <a href="mailto:info@rapidtechpro.com" className="text-red-700 underline">info@rapidtechpro.com</a>
+            Need help? Contact support at <a href="mailto:support@changeworksfund.org" className="text-red-700 underline">support@changeworksfund.org</a>
           </div>
         </div>
       </div>

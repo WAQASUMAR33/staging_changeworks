@@ -1,13 +1,14 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
-import emailService from "../../../lib/email-service.jsx";
+import emailService from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 // POST /api/subscriptions/setup-payment - Setup payment for subscription
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
     const {
       donor_id,
@@ -49,7 +50,7 @@ export async function POST(request) {
       }),
       prisma.organization.findUnique({
         where: { id: organization_id },
-        select: { id: true, name: true, email: true, imageUrl: true }
+        select: { id: true, name: true, email: true, imageUrl: true, stripeAccountId: true }
       })
     ]);
 
@@ -141,6 +142,10 @@ export async function POST(request) {
         // Create subscription directly
         const subscriptionData = {
           customer: customer.id,
+          transfer_data: organization.stripeAccountId ? {
+            destination: organization.stripeAccountId,
+            amount_percent: 90,
+          } : undefined,
           items: [{
             price_data: {
               currency: packageData.currency.toLowerCase(),
@@ -221,9 +226,13 @@ export async function POST(request) {
 
         // Send welcome email and monthly impact email for auto-created subscription
         try {
-          const dashboardLink = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+          let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+          if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+          const dashboardLink = `${appBase}/donor/login`;
           
           // Send welcome email
+          /* 
+          // Removed as per requirement: Only send Round-Up Welcome email when connecting Plaid
           const welcomeResult = await emailService.sendWelcomeEmail({
             donor: {
               name: donor.name,
@@ -238,6 +247,7 @@ export async function POST(request) {
           } else {
             console.error(`❌ Failed to send welcome email to ${donor.email}:`, welcomeResult.error);
           }
+          */
 
           // Send monthly impact email for the subscription
           const currentMonth = new Date().toLocaleString('default', { month: 'long', year: 'numeric' });
@@ -279,7 +289,7 @@ export async function POST(request) {
             price: packageData.price,
             currency: packageData.currency
           },
-          message: 'Subscription created successfully. Complete payment to activate.'
+          message: 'Donation created successfully. Complete payment to activate.'
         });
 
       } catch (stripeError) {
@@ -334,6 +344,10 @@ export async function POST(request) {
             package_id: package_id.toString()
           },
           subscription_data: {
+            transfer_data: organization.stripeAccountId ? {
+              destination: organization.stripeAccountId,
+              amount_percent: 90,
+            } : undefined,
             metadata: {
               donor_id: donor_id.toString(),
               organization_id: organization_id.toString(),
@@ -437,4 +451,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

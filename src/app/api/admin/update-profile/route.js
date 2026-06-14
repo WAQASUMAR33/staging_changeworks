@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
 import { prisma } from '../../../lib/prisma';
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema for profile update
 const updateProfileSchema = z.object({
@@ -86,4 +87,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

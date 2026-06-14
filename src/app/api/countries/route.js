@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Function to get flag emoji from country code
 const getFlagEmoji = (countryCode) => {
@@ -324,4 +325,8 @@ export async function GET(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

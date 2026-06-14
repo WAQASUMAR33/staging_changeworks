@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
-import emailService from "../../../lib/email-service.jsx";
+import emailService from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/email/send-monthly-impact - Check email configuration
 export async function GET() {
@@ -52,7 +53,8 @@ export async function POST(request) {
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        imageUrl: true
       }
     });
 
@@ -69,7 +71,8 @@ export async function POST(request) {
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        imageUrl: true
       }
     });
 
@@ -80,8 +83,11 @@ export async function POST(request) {
       );
     }
 
-    // Generate dashboard link if not provided
-    const dashboardLink = dashboard_link || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+    // Generate dashboard link - FORCE login URL as per requirements
+    let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+    // Force login URL, ignoring provided dashboard_link to ensure consistency
+    const dashboardLink = `${appBase}/donor/login`;
 
     // Send monthly impact email
     const emailResult = await emailService.sendMonthlyImpactEmail({
@@ -124,4 +130,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

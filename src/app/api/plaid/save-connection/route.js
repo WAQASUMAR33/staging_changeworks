@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 const MAX_VARCHAR = 255;
 const schema = z.object({
@@ -70,4 +71,6 @@ export async function POST(request) {
   }
 }
 
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

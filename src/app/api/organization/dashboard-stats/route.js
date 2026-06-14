@@ -1,12 +1,16 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { getStripeConnectAccount } from "../../../lib/stripe-connect";
+import { getStripe } from "../../../../lib/stripe";
+import { getStripeAccount } from "../../../lib/payment-provider/tokenStore";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
     // Get organization ID from query params or headers
     const { searchParams } = new URL(request.url);
     const organizationId = searchParams.get('organizationId');
-    
+
     if (!organizationId) {
       return NextResponse.json({
         success: false,
@@ -15,7 +19,7 @@ export async function GET(request) {
     }
 
     const orgId = parseInt(organizationId);
-    
+
     // Get current date for filtering
     const today = new Date();
     const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
@@ -23,9 +27,19 @@ export async function GET(request) {
     const endOfLastMonth = new Date(today.getFullYear(), today.getMonth(), 0);
 
     // Get organization data
-    const organization = await prisma.organization.findUnique({
+    let organization = await prisma.organization.findUnique({
       where: { id: orgId },
-      select: { id: true, name: true, email: true, imageUrl: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        imageUrl: true,
+        ghlId: true,
+        stripeAccountId: true,
+        stripeProductId1: true,
+        stripeProductId2: true,
+        stripeProductId3: true
+      }
     });
 
     if (!organization) {
@@ -35,144 +49,95 @@ export async function GET(request) {
       }, { status: 404 });
     }
 
-    // Get organization-specific statistics
-    const [
-      totalDonors,
-      totalDonations,
-      ghlAccountsCount,
-      thisMonthDonations,
-      lastMonthDonations,
-      lastMonthDonors,
-      thisMonthDonors,
-      lastMonthGhlAccounts,
-      thisMonthGhlAccounts
-    ] = await Promise.all([
-      // Total donors for this organization
-      prisma.donor.count({
-        where: {
-          organization_id: orgId,
-          status: true
-        }
-      }),
-      
-      // Total donations amount for this organization
-      prisma.saveTrRecord.aggregate({
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed'
-        },
-        _sum: { trx_amount: true }
-      }),
-      
-      // Total GHL accounts for this organization
-      prisma.gHLAccount.count({
-        where: {
-          organization_id: orgId,
-          status: 'active'
-        }
-      }),
-      
-      // This month donations
-      prisma.saveTrRecord.aggregate({
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed',
-          trx_date: {
-            gte: startOfMonth
-          }
-        },
-        _sum: { trx_amount: true }
-      }),
-      
-      // Last month donations for comparison
-      prisma.saveTrRecord.aggregate({
-        where: {
-          trx_organization_id: orgId,
-          pay_status: 'completed',
-          trx_date: {
-            gte: startOfLastMonth,
-            lt: endOfLastMonth
-          }
-        },
-        _sum: { trx_amount: true }
-      }),
-      
-      // Donor growth comparison
-      prisma.donor.count({
-        where: {
-          organization_id: orgId,
-          status: true,
-          created_at: {
-            gte: startOfLastMonth,
-            lt: endOfLastMonth
+    // Resolve Stripe account ID — prefer org.stripeAccountId, fall back to ghlStripeConnection.
+    let resolvedStripeAccountId = organization.stripeAccountId || null;
+    if (!resolvedStripeAccountId) {
+      try {
+        // Look up the GHL location for this org and check ghlStripeConnection.
+        const ghlLocation = await prisma.gHLAccount.findFirst({
+          where: { organization_id: orgId, status: 'active' },
+          select: { ghl_location_id: true },
+          orderBy: { created_at: 'desc' },
+        });
+        const locationId = ghlLocation?.ghl_location_id || organization.ghlId || null;
+        if (locationId) {
+          const conn = await getStripeAccount(locationId);
+          if (conn?.stripeAccountId) {
+            resolvedStripeAccountId = conn.stripeAccountId;
+            // Back-fill the missing stripeAccountId on the org so future loads are fast.
+            await prisma.organization.update({
+              where: { id: orgId },
+              data:  { stripeAccountId: resolvedStripeAccountId },
+            });
+            console.log(`[dashboard-stats] Back-filled stripeAccountId ${resolvedStripeAccountId} → org ${orgId}`);
           }
         }
-      }),
-      
-      prisma.donor.count({
-        where: {
-          organization_id: orgId,
-          status: true,
-          created_at: {
-            gte: startOfMonth
-          }
-        }
-      }),
-      
-      // GHL accounts growth comparison
-      prisma.gHLAccount.count({
-        where: {
-          organization_id: orgId,
-          status: 'active',
-          created_at: {
-            gte: startOfLastMonth,
-            lt: endOfLastMonth
-          }
-        }
-      }),
-      
-      prisma.gHLAccount.count({
-        where: {
-          organization_id: orgId,
-          status: 'active',
-          created_at: {
-            gte: startOfMonth
-          }
-        }
-      })
-    ]);
+      } catch (e) {
+        console.error('[dashboard-stats] ghlStripeConnection fallback failed:', e.message);
+      }
+    }
 
-    // Calculate percentage changes
-    const calculateChange = (current, previous) => {
-      if (previous === 0) return current > 0 ? '+100%' : '0%';
-      const change = ((current - previous) / previous) * 100;
-      return `${change >= 0 ? '+' : ''}${change.toFixed(1)}%`;
+    // Check Stripe Status
+    let stripeStatus = {
+        details_submitted: false,
+        charges_enabled: false,
+        api_error: false,   // true when Stripe responded but with an error (key mismatch etc.)
     };
 
-    const totalDonationsAmount = totalDonations._sum.trx_amount || 0;
-    const thisMonthAmount = thisMonthDonations._sum.trx_amount || 0;
-    const lastMonthAmount = lastMonthDonations._sum.trx_amount || 0;
+    if (resolvedStripeAccountId) {
+        try {
+            const account = await getStripeConnectAccount(resolvedStripeAccountId);
+            stripeStatus.details_submitted = account.details_submitted;
+            stripeStatus.charges_enabled = account.charges_enabled;
+        } catch (e) {
+            console.error('Failed to fetch stripe account status', e);
+            // Mark as api_error so the UI doesn't incorrectly show "Complete Setup Required"
+            // when the account IS set up but the API call failed (e.g. wrong key mode).
+            stripeStatus.api_error = true;
+            stripeStatus.details_submitted = true;   // assume complete — don't block the user
+            stripeStatus.charges_enabled = true;
+        }
+    }
+
+    // Expose the resolved ID (may differ from organization.stripeAccountId if back-filled above)
+    organization = { ...organization, stripeAccountId: resolvedStripeAccountId ?? organization.stripeAccountId };
+
+    // Fetch live totals from Stripe if connected
+    let totalDonationsAmount = 0;
+    let thisMonthAmount = 0;
+    let lastMonthAmount = 0;
+
+    if (resolvedStripeAccountId) {
+      try {
+        const stripe = await getStripe();
+        const paymentIntents = await stripe.paymentIntents.list(
+          { limit: 100, expand: ['data.latest_charge'] },
+          { stripeAccount: resolvedStripeAccountId }
+        );
+
+        for (const pi of paymentIntents.data) {
+          if (pi.status !== 'succeeded') continue;
+          const amount = pi.amount / 100;
+          const created = new Date(pi.created * 1000);
+          totalDonationsAmount += amount;
+          if (created >= startOfMonth) thisMonthAmount += amount;
+          if (created >= startOfLastMonth && created < endOfLastMonth) lastMonthAmount += amount;
+        }
+      } catch (e) {
+        console.error('[dashboard-stats] Stripe fetch failed:', e.message);
+      }
+    }
 
     const stats = {
-      totalDonors: {
-        value: totalDonors.toLocaleString(),
-        change: calculateChange(thisMonthDonors, lastMonthDonors),
-        changeType: thisMonthDonors >= lastMonthDonors ? 'increase' : 'decrease'
-      },
       totalDonations: {
-        value: `$${totalDonationsAmount.toLocaleString()}`,
-        change: calculateChange(totalDonationsAmount, lastMonthAmount),
-        changeType: totalDonationsAmount >= lastMonthAmount ? 'increase' : 'decrease'
-      },
-      ghlAccounts: {
-        value: ghlAccountsCount.toLocaleString(),
-        change: calculateChange(thisMonthGhlAccounts, lastMonthGhlAccounts),
-        changeType: thisMonthGhlAccounts >= lastMonthGhlAccounts ? 'increase' : 'decrease'
+        value: `$${totalDonationsAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: '0%',
+        changeType: 'increase'
       },
       thisMonth: {
-        value: `$${thisMonthAmount.toLocaleString()}`,
-        change: calculateChange(thisMonthAmount, lastMonthAmount),
-        changeType: thisMonthAmount >= lastMonthAmount ? 'increase' : 'decrease'
+        value: `$${thisMonthAmount.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: '0%',
+        changeType: 'increase'
       }
     };
 
@@ -224,7 +189,10 @@ export async function GET(request) {
 
     return NextResponse.json({
       success: true,
-      organization,
+      organization: {
+        ...organization,
+        stripeStatus
+      },
       stats,
       recentActivity: formattedActivity.slice(0, 3)
     });
@@ -241,11 +209,11 @@ export async function GET(request) {
 function formatTimeAgo(date) {
   const now = new Date();
   const diff = now - new Date(date);
-  
+
   const minutes = Math.floor(diff / (1000 * 60));
   const hours = Math.floor(diff / (1000 * 60 * 60));
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-  
+
   if (minutes < 60) {
     return `${minutes} min ago`;
   } else if (hours < 24) {
@@ -253,4 +221,8 @@ function formatTimeAgo(date) {
   } else {
     return `${days} day${days > 1 ? 's' : ''} ago`;
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

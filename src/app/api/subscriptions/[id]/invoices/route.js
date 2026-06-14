@@ -1,23 +1,11 @@
 import { NextResponse } from "next/server";
-import Stripe from 'stripe';
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../../lib/prisma";
-
-// Initialize Stripe with proper error handling
-let stripe;
-try {
-  if (!process.env.STRIPE_SECRET_KEY) {
-    console.warn('STRIPE_SECRET_KEY environment variable is not set');
-  } else {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder', {
-      apiVersion: '2023-10-16',
-    });
-  }
-} catch (error) {
-  console.error('Failed to initialize Stripe:', error);
-}
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET - Get subscription invoices
 export async function GET(request, { params }) {
+  const stripe = await createStripeClient();
   try {
     const subscriptionId = parseInt(params.id);
     const { searchParams } = new URL(request.url);
@@ -129,6 +117,7 @@ export async function GET(request, { params }) {
 
 // POST - Create upcoming invoice preview
 export async function POST(request, { params }) {
+  const stripe = await createStripeClient();
   try {
     const subscriptionId = parseInt(params.id);
 
@@ -198,4 +187,8 @@ export async function POST(request, { params }) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

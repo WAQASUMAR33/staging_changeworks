@@ -1,7 +1,9 @@
-import { NextResponse } from 'next/server';
+﻿import { NextResponse } from 'next/server';
 import { PrismaClient } from '@prisma/client';
+import { corsHeaders } from '@/app/lib/cors';
 
 const prisma = new PrismaClient();
+// Last updated: 2026-01-20T20:54:27
 
 // Helper function to retry database operations
 async function retryDatabaseOperation(operation, maxRetries = 3, delay = 1000) {
@@ -10,11 +12,11 @@ async function retryDatabaseOperation(operation, maxRetries = 3, delay = 1000) {
       return await operation();
     } catch (error) {
       console.error(`Database operation attempt ${attempt} failed:`, error.message);
-      
+
       if (attempt === maxRetries) {
         throw error;
       }
-      
+
       // Wait before retrying
       await new Promise(resolve => setTimeout(resolve, delay * attempt));
     }
@@ -24,8 +26,8 @@ async function retryDatabaseOperation(operation, maxRetries = 3, delay = 1000) {
 // GET - Fetch all organizations for dropdown
 export async function GET() {
   try {
-    console.log('🔄 Fetching organizations...');
-    
+    console.log('ðŸ”„ Fetching organizations...');
+
     const organizations = await retryDatabaseOperation(async () => {
       return await prisma.organization.findMany({
         select: {
@@ -33,10 +35,15 @@ export async function GET() {
           name: true,
           email: true,
           imageUrl: true,
-          status: true
+          status: true,
+          stripeAccountId: true,
+          stripeProductId1: true,
+          stripeProductId2: true,
+          stripeProductId3: true
         },
         where: {
-          status: true
+          status: true,
+          stripeAccountId: { not: null }
         },
         orderBy: {
           name: 'asc'
@@ -44,20 +51,20 @@ export async function GET() {
       });
     });
 
-    console.log(`✅ Successfully fetched ${organizations.length} organizations`);
-    
+    console.log(`âœ… Successfully fetched ${organizations.length} organizations`);
+
     return NextResponse.json({
       success: true,
       organizations: organizations,
       count: organizations.length
     });
-    
+
   } catch (error) {
-    console.error('❌ Error fetching organizations after retries:', error);
-    
+    console.error('âŒ Error fetching organizations after retries:', error);
+
     // Return a more detailed error response
     return NextResponse.json(
-      { 
+      {
         success: false,
         error: 'Failed to fetch organizations',
         details: error.message,
@@ -67,4 +74,8 @@ export async function GET() {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

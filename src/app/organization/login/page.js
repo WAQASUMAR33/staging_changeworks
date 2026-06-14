@@ -59,16 +59,16 @@ function OrganizationLoginContent() {
     
     // Email validation
     if (!form.email.trim()) {
-      newErrors.email = 'Email is required';
+      newErrors.email = 'Email is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) {
-      newErrors.email = 'Please enter a valid email address';
+      newErrors.email = 'Please enter a valid email address.';
     }
 
     // Password validation
     if (!form.password) {
-      newErrors.password = 'Password is required';
+      newErrors.password = 'Password is required.';
     } else if (form.password.length < 6) {
-      newErrors.password = 'Password must be at least 6 characters long';
+      newErrors.password = 'Password must be at least 6 characters long.';
     }
 
     setErrors(newErrors);
@@ -94,6 +94,7 @@ function OrganizationLoginContent() {
       });
 
       const data = await res.json();
+      console.log('Forgot password response:', data);
 
       if (!res.ok) {
         setErrorMsg(data.error || 'Login failed. Please check your credentials.');
@@ -145,7 +146,7 @@ function OrganizationLoginContent() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Invalid two-factor authentication code');
+        throw new Error(data.error || 'Invalid two-factor authentication code.');
       }
 
       // Store user data in sessionStorage (expires when browser closes)
@@ -172,12 +173,12 @@ function OrganizationLoginContent() {
     e.preventDefault();
     
     if (!forgotPasswordEmail.trim()) {
-      setForgotPasswordError('Please enter your email address');
+      setForgotPasswordError('Please enter your email address.');
       return;
     }
 
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(forgotPasswordEmail.trim())) {
-      setForgotPasswordError('Please enter a valid email address');
+      setForgotPasswordError('Please enter a valid email address.');
       return;
     }
 
@@ -201,13 +202,10 @@ function OrganizationLoginContent() {
 
       // Check if we got a reset URL (for development when email sending fails)
       if (data.resetUrl) {
+        console.log('Development Reset URL:', data.resetUrl);
         setForgotPasswordSuccess(
-          `Password reset link generated! ${data.note || ''} Click the link below to reset your password:`
+          `Password reset link generated! ${data.note || ''} Check your email for instructions.`
         );
-        // Store the URL temporarily for display
-        setTimeout(() => {
-          window.open(data.resetUrl, '_blank');
-        }, 1000);
       } else {
         setForgotPasswordSuccess('Password reset link sent! Check your email for further instructions.');
       }
@@ -271,11 +269,11 @@ function OrganizationLoginContent() {
             className="mb-8"
           >
             <Image
-              src="/imgs/changeworks.jpg"
+              src="/imgs/changeworks.png"
               alt="ChangeWorks Logo"
               width={200}
               height={200}
-              className="mx-auto rounded-2xl shadow-2xl border-4 border-white/20 backdrop-blur-sm"
+              className="mx-auto"
               priority
             />
           </motion.div>
@@ -284,14 +282,14 @@ function OrganizationLoginContent() {
             variants={itemVariants}
             className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-gray-800 to-gray-600 bg-clip-text text-transparent mb-4"
           >
-            Welcome Back
+            Welcome Back.
           </motion.h1>
           
           <motion.p 
             variants={itemVariants}
             className="text-lg text-gray-600 mb-8 leading-relaxed"
           >
-            Sign in to your organization account to continue making a difference
+           Sign in to your organization’s account.
           </motion.p>
           
           <motion.div 
@@ -300,11 +298,11 @@ function OrganizationLoginContent() {
           >
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>Secure Login</span>
+              <span>Secure Login.</span>
             </div>
             <div className="flex items-center space-x-2">
               <CheckCircle className="w-4 h-4 text-green-500" />
-              <span>24/7 Support</span>
+              <span>24/7 Support.</span>
             </div>
           </motion.div>
         </div>
@@ -334,10 +332,10 @@ function OrganizationLoginContent() {
                   <Building2 className="w-8 h-8 text-white" />
                 </div>
                 <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                  Organization Login
+                  Organization Login.
                 </h2>
                 <p className="text-gray-600">
-                  Enter your credentials to access your organization dashboard
+                  Enter your credentials to access your organization dashboard.
                 </p>
               </motion.div>
 
@@ -379,7 +377,7 @@ function OrganizationLoginContent() {
                     <input
                       name="email"
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder="Enter your email."
                       value={form.email}
                       onChange={handleChange}
                       className={`w-full pl-10 pr-4 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-black ${
@@ -414,7 +412,7 @@ function OrganizationLoginContent() {
                     <input
                       name="password"
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="Enter your password"
+                      placeholder="Enter your password."
                       value={form.password}
                       onChange={handleChange}
                       className={`w-full pl-10 pr-12 py-3 border-2 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 text-black ${
@@ -472,7 +470,7 @@ function OrganizationLoginContent() {
                       <span>Signing in...</span>
                     </div>
                   ) : (
-                    'Sign In'
+                    'Sign In.'
                   )}
                 </motion.button>
               </form>
@@ -487,7 +485,7 @@ function OrganizationLoginContent() {
                     href="/organization/signup" 
                     className="text-blue-600 hover:text-blue-700 font-semibold hover:underline transition-colors duration-200"
                   >
-                    Sign up now
+                    Sign up now.
                   </a>
                 </p>
               </motion.div>
@@ -515,7 +513,7 @@ function OrganizationLoginContent() {
               onClick={(e) => e.stopPropagation()}
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-gray-800">Forgot Password</h3>
+                <h3 className="text-xl font-bold text-gray-800">Forgot Password.</h3>
                 <button
                   onClick={() => setShowForgotPassword(false)}
                   className="text-gray-400 hover:text-gray-600 transition-colors duration-200"
@@ -552,11 +550,7 @@ function OrganizationLoginContent() {
                       <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="text-green-700 text-sm">{forgotPasswordSuccess}</p>
-                        {forgotPasswordSuccess.includes('Click the link below') && (
-                          <p className="text-green-600 text-xs mt-1">
-                            A new tab will open with the password reset page.
-                          </p>
-                        )}
+
                       </div>
                     </div>
                   </motion.div>
@@ -588,7 +582,7 @@ function OrganizationLoginContent() {
                     className="flex-1 py-3 px-4 border-2 border-gray-200 text-gray-700 rounded-xl font-semibold hover:border-gray-300 transition-all duration-200"
                     disabled={forgotPasswordLoading}
                   >
-                    Cancel
+                    Cancel.
                   </button>
                   <button
                     type="submit"
@@ -601,7 +595,7 @@ function OrganizationLoginContent() {
                         <span>Sending...</span>
                       </div>
                     ) : (
-                      'Send Reset Link'
+                      'Send Reset Link.'
                     )}
                   </button>
                 </div>

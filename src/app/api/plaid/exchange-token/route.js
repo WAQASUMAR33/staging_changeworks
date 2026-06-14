@@ -1,13 +1,22 @@
 import { NextResponse } from "next/server";
+import { getPlaidConfig } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
 import jwt from "jsonwebtoken";
-
+import { emailService } from "@/app/lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 // Plaid configuration
-const PLAID_CLIENT_ID = process.env.PLAID_CLIENT_ID;
-const PLAID_SECRET_KEY = process.env.PLAID_SECRET_KEY;
-const PLAID_ENV = process.env.NEXT_PUBLIC_PLAID_ENV || 'sandbox';
+
+function getPlaidBaseUrl(env) {
+  switch (env) {
+    case 'production': return 'https://production.plaid.com';
+    case 'development': return 'https://development.plaid.com';
+    default: return 'https://sandbox.plaid.com';
+  }
+}
+
 
 export async function POST(request) {
+  const plaid = await getPlaidConfig();
   try {
     // Verify JWT token
     const token = request.headers.get('authorization')?.split(' ')[1];
@@ -28,58 +37,62 @@ export async function POST(request) {
     }
 
     // Exchange public token for access token
-    const exchangeResponse = await fetch('https://sandbox.plaid.com/item/public_token/exchange', {
+    const exchangeResponse = await fetch(`${plaid.baseUrl}/item/public_token/exchange`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         public_token: public_token,
       }),
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
+    const exchangeData = await exchangeResponse.json();
+    console.log('Plaid Exchange Response:', JSON.stringify(exchangeData, null, 2));
+
     if (!exchangeResponse.ok) {
-      const errorData = await exchangeResponse.json();
-      console.error('Plaid token exchange failed:', errorData);
+      console.error('Plaid token exchange failed:', exchangeData);
       return NextResponse.json(
-        { success: false, error: 'Failed to exchange token', details: errorData },
+        { success: false, error: 'Failed to exchange token', details: exchangeData },
         { status: 500 }
       );
     }
 
-    const { access_token, item_id } = await exchangeResponse.json();
+    const { access_token, item_id } = exchangeData;
 
     // Get account information
-    const accountsResponse = await fetch('https://sandbox.plaid.com/accounts/get', {
+    const accountsResponse = await fetch(`${plaid.baseUrl}/accounts/get`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'PLAID-CLIENT-ID': PLAID_CLIENT_ID,
-        'PLAID-SECRET': PLAID_SECRET_KEY,
+        'PLAID-CLIENT-ID': plaid.clientId,
+        'PLAID-SECRET': plaid.secretKey,
       },
       body: JSON.stringify({
-        client_id: PLAID_CLIENT_ID,
-        secret: PLAID_SECRET_KEY,
+        client_id: plaid.clientId,
+        secret: plaid.secretKey,
         access_token: access_token,
       }),
       signal: AbortSignal.timeout(30000), // 30 second timeout
     });
 
+    const accountsData = await accountsResponse.json();
+    console.log('Plaid Accounts Response:', JSON.stringify(accountsData, null, 2));
+
     if (!accountsResponse.ok) {
-      const errorData = await accountsResponse.json();
-      console.error('Plaid accounts get failed:', errorData);
+      console.error('Plaid accounts get failed:', accountsData);
       return NextResponse.json(
-        { success: false, error: 'Failed to get account information', details: errorData },
+        { success: false, error: 'Failed to get account information', details: accountsData },
         { status: 500 }
       );
     }
 
-    const { accounts } = await accountsResponse.json();
+    const { accounts } = accountsData;
 
     // Save Plaid connection to database
     // Store organization_id in accounts JSON for now until database migration is complete
@@ -101,24 +114,67 @@ export async function POST(request) {
     };
 
     // Create Plaid connection with proper Prisma relations
-    const plaidConnection = await prisma.plaidConnection.create({
-      data: {
-        donor_id: donorId,
-        organization_id: organization_id,
-        access_token: access_token,
-        item_id: item_id,
-        institution_id: metadata.institution?.institution_id || null,
-        institution_name: metadata.institution?.name || null,
-        accounts: JSON.stringify(accountsWithOrgId),
-        status: 'ACTIVE',
-        donor: {
-          connect: { id: donorId }
-        },
-        organization: {
-          connect: { id: organization_id }
-        }
-      },
-    });
+    // Workaround for broken Prisma Client
+    const createdConnections = await prisma.$queryRaw`
+      INSERT INTO plaid_connections (
+        donor_id, 
+        organization_id, 
+        access_token, 
+        item_id, 
+        institution_id, 
+        institution_name, 
+        accounts, 
+        status, 
+        created_at, 
+        updated_at
+      ) VALUES (
+        ${donorId}, 
+        ${organization_id}, 
+        ${access_token}, 
+        ${item_id}, 
+        ${metadata.institution?.institution_id || null}, 
+        ${metadata.institution?.name || null}, 
+        ${JSON.stringify(accountsWithOrgId)}, 
+        'ACTIVE', 
+        ${new Date()}, 
+        ${new Date()}
+      )
+    `;
+
+    // Fetch the created record since INSERT doesn't return it in MySQL
+    const plaidConnections = await prisma.$queryRaw`
+      SELECT * FROM plaid_connections 
+      WHERE donor_id = ${donorId} AND item_id = ${item_id} 
+      ORDER BY created_at DESC 
+      LIMIT 1
+    `;
+    const plaidConnection = plaidConnections[0];
+
+    // Send Round Up Welcome Email
+    try {
+      // Fetch donor and organization details
+      const donor = await prisma.donor.findUnique({ where: { id: donorId } });
+      const organization = await prisma.organization.findUnique({ where: { id: organization_id } });
+
+      if (donor && organization) {
+        let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+        if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+        const dashboardLink = `${appBase}/donor/login`;
+        
+        console.log('📧 Sending Welcome Round-Up email to:', donor.email);
+        await emailService.sendWelcomeEmail({
+          donor: {
+            name: donor.name,
+            email: donor.email
+          },
+          organization,
+          dashboardLink
+        });
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send Round Up Welcome email:', emailError);
+      // Don't fail the request if email fails
+    }
 
     return NextResponse.json({
       success: true,
@@ -129,6 +185,11 @@ export async function POST(request) {
         accounts_count: accounts.length,
         status: plaidConnection.status,
       },
+      // Debug info to verify Plaid response
+      debug: {
+        exchange_response: exchangeData,
+        accounts_response: accountsData
+      }
     });
 
   } catch (error) {
@@ -186,4 +247,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

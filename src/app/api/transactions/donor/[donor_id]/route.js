@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET - Get transactions by donor ID
 export async function GET(request, { params }) {
@@ -62,4 +63,8 @@ export async function GET(request, { params }) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

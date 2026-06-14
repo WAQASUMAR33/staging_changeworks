@@ -24,11 +24,11 @@
     "flag-icons": "^7.5.0",
     "framer-motion": "^12.23.12",
     "jsonwebtoken": "^9.0.2",
-    "jspdf": "^3.0.3",
+    "jspdf": "^4.2.1",
     "jspdf-autotable": "^5.0.2",
     "lucide-react": "^0.533.0",
     "next": "^16.1.1",
-    "nodemailer": "^7.0.5",
+    "nodemailer": "^8.0.10",
     "prisma": "^6.11.1",
     "qrcode": "^1.5.4",
     "react": "^19.2.3",
@@ -38,7 +38,6 @@
     "selfsigned": "^3.0.1",
     "speakeasy": "^2.0.0",
     "stripe": "^18.5.0",
-    "xlsx": "^0.18.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {

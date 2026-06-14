@@ -8,16 +8,16 @@ datasource db {
 }
 
 model User {
-  id               Int       @id @default(autoincrement())
-  name             String?   @db.VarChar(255)
-  email            String    @unique @db.VarChar(100)
-  emailVerified    DateTime? @map("email_verified")
-  password         String?   @db.VarChar(255)
-  role             Role      @default(DONOR)
-  created_at       DateTime  @default(now())
-  updated_at       DateTime  @updatedAt
-  twoFactorEnabled Boolean   @default(false) @map("two_factor_enabled")
-  twoFactorSecret  String?   @map("two_factor_secret") @db.VarChar(255)
+  id                Int       @id @default(autoincrement())
+  name              String?   @db.VarChar(255)
+  email             String    @unique @db.VarChar(100)
+  emailVerified     DateTime? @map("email_verified")
+  password          String?   @db.VarChar(255)
+  role              Role      @default(DONOR)
+  twoFactorSecret   String?   @db.VarChar(255) @map("two_factor_secret")
+  twoFactorEnabled  Boolean   @default(false) @map("two_factor_enabled")
+  created_at        DateTime  @default(now())
+  updated_at        DateTime  @updatedAt
 
   @@map("users")
 }
@@ -53,71 +53,71 @@ model PasswordResetToken {
 }
 
 model Organization {
-  id               Int                @id @default(autoincrement())
-  name             String             @db.VarChar(255)
-  email            String             @unique @db.VarChar(100)
-  password         String?            @db.VarChar(255)
-  imageUrl         String?            @db.VarChar(500)
-  phone            String?            @db.VarChar(50)
-  company          String?            @db.VarChar(255)
-  address          String?            @db.VarChar(500)
-  website          String?            @db.VarChar(255)
-  city             String?            @db.VarChar(100)
-  state            String?            @db.VarChar(100)
-  country          String?            @db.VarChar(100)
-  postalCode       String?            @db.VarChar(20)
-  ghlId            String?            @db.VarChar(100)
-  balance          Float              @default(0)
-  status           Boolean            @default(true)
-  created_at       DateTime           @default(now())
-  updated_at       DateTime           @updatedAt
-  orgPassword      String?            @db.VarChar(255)
-  ghlApiKey        String?            @db.Text
-  twoFactorEnabled Boolean            @default(false) @map("two_factor_enabled")
-  twoFactorSecret  String?            @map("two_factor_secret") @db.VarChar(255)
-  stripeProductId1 String?            @map("stripe_product_id_1") @db.VarChar(255)
-  stripeProductId2 String?            @map("stripe_product_id_2") @db.VarChar(255)
-  stripeProductId3 String?            @map("stripe_product_id_3") @db.VarChar(255)
-  stripeAccountId  String?            @map("stripe_account_id") @db.VarChar(255)
-  ein              String?            @db.VarChar(20)
-  firstName        String?            @db.VarChar(100)
-  lastName         String?            @db.VarChar(100)
-  title            String?            @db.VarChar(100)
-  transactions     DonorTransaction[] @relation("OrganizationTransactions")
-  donors           Donor[]
-  fundTransfers    FundTransfer[]     @relation("OrganizationFundTransfers")
-  ghlAccounts      GHLAccount[]       @relation("OrganizationGHLAccounts")
-  plaidConnections PlaidConnection[]
-  saveTrRecords    SaveTrRecord[]     @relation("OrganizationTransactions")
-  subscriptions    Subscription[]     @relation("OrganizationSubscriptions")
+  id                Int                @id @default(autoincrement())
+  firstName         String?            @db.VarChar(100)
+  lastName          String?            @db.VarChar(100)
+  title             String?            @db.VarChar(100)
+  name              String             @db.VarChar(255)
+  email             String             @unique @db.VarChar(100)
+  password          String?            @db.VarChar(255)
+  imageUrl          String?            @db.VarChar(500)
+  phone             String?            @db.VarChar(50)
+  company           String?            @db.VarChar(255)
+  address           String?            @db.VarChar(500)
+  website           String?            @db.VarChar(255)
+  city              String?            @db.VarChar(100)
+  state             String?            @db.VarChar(100)
+  country           String?            @db.VarChar(100)
+  postalCode        String?            @db.VarChar(20)
+  ghlId             String?            @db.VarChar(100)
+  ghlApiKey         String?            @db.Text
+  balance           Float              @default(0)
+  status            Boolean            @default(true)
+  ein               String?            @db.VarChar(20)
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+  orgPassword       String?            @db.VarChar(255)
+  twoFactorSecret   String?            @db.VarChar(255) @map("two_factor_secret")
+  twoFactorEnabled  Boolean           @default(false) @map("two_factor_enabled")
+  stripeProductId1  String?            @db.VarChar(255) @map("stripe_product_id_1")
+  stripeProductId2  String?            @db.VarChar(255) @map("stripe_product_id_2")
+  stripeProductId3  String?            @db.VarChar(255) @map("stripe_product_id_3")
+  stripeAccountId   String?            @db.VarChar(255) @map("stripe_account_id")
+  transactions      DonorTransaction[] @relation("OrganizationTransactions")
+  donors            Donor[]
+  fundTransfers     FundTransfer[]     @relation("OrganizationFundTransfers")
+  ghlAccounts       GHLAccount[]       @relation("OrganizationGHLAccounts")
+  saveTrRecords     SaveTrRecord[]     @relation("OrganizationTransactions")
+  subscriptions     Subscription[]     @relation("OrganizationSubscriptions")
+  plaidConnections  PlaidConnection[]
 
   @@map("organizations")
 }
 
 model Donor {
-  id                    Int                     @id @default(autoincrement())
-  email                 String                  @unique @db.VarChar(100)
-  password              String                  @db.VarChar(255)
-  name                  String                  @db.VarChar(255)
-  phone                 String?                 @db.VarChar(50)
-  city                  String?                 @db.VarChar(100)
-  address               String?                 @db.VarChar(500)
-  imageUrl              String?                 @db.VarChar(500)
-  status                Boolean                 @default(true)
-  created_at            DateTime                @default(now())
-  updated_at            DateTime                @updatedAt
-  postal_code           String?                 @db.VarChar(20)
-  country               String?                 @db.VarChar(100)
-  twoFactorEnabled      Boolean                 @default(false) @map("two_factor_enabled")
-  twoFactorSecret       String?                 @map("two_factor_secret") @db.VarChar(255)
-  organization_id       Int
-  must_reset_password   Boolean                 @default(false)
-  donor_payment_methods donor_payment_methods[]
-  transactions          DonorTransaction[]      @relation("DonorTransactions")
-  organization          Organization           @relation(fields: [organization_id], references: [id])
-  plaidConnections      PlaidConnection[]
-  saveTrRecords         SaveTrRecord[]          @relation("DonorTransactions")
-  subscriptions         Subscription[]          @relation("DonorSubscriptions")
+  id                Int                @id @default(autoincrement())
+  email             String             @unique @db.VarChar(100)
+  password          String             @db.VarChar(255)
+  name              String             @db.VarChar(255)
+  phone             String?            @db.VarChar(50)
+  city              String?            @db.VarChar(100)
+  address           String?            @db.VarChar(500)
+  country           String?            @db.VarChar(100)
+  imageUrl          String?            @db.VarChar(500)
+  status            Boolean            @default(true)
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+  organization_id   Int?
+  postal_code       String?            @db.VarChar(20)
+  twoFactorSecret   String?            @db.VarChar(255) @map("two_factor_secret")
+  twoFactorEnabled  Boolean           @default(false) @map("two_factor_enabled")
+  mustResetPassword Boolean           @default(false) @map("must_reset_password")
+  transactions      DonorTransaction[] @relation("DonorTransactions")
+  organization      Organization?      @relation(fields: [organization_id], references: [id])
+  saveTrRecords     SaveTrRecord[]     @relation("DonorTransactions")
+  subscriptions     Subscription[]     @relation("DonorSubscriptions")
+  plaidConnections  PlaidConnection[]
+  paymentMethods    DonorPaymentMethod[]
 
   @@index([organization_id], map: "donors_organization_id_fkey")
   @@map("donors")
@@ -211,46 +211,47 @@ model SaveTrRecord {
 }
 
 model Package {
-  id            Int            @id @default(autoincrement())
-  name          String         @db.VarChar(255)
-  description   String         @db.Text
-  price         Float
-  currency      String         @default("USD") @db.VarChar(10)
-  features      String         @db.Text
-  duration      String?        @db.VarChar(100)
-  isActive      Boolean        @default(true)
-  category      String?        @db.VarChar(100)
-  created_at    DateTime       @default(now())
-  updated_at    DateTime       @updatedAt
+  id          Int      @id @default(autoincrement())
+  name        String   @db.VarChar(255)
+  description String   @db.Text
+  price       Float
+  currency    String   @default("USD") @db.VarChar(10)
+  features    String   @db.Text
+  duration    String?  @db.VarChar(100)
+  isActive    Boolean  @default(true)
+  category    String?  @db.VarChar(100)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
   subscriptions Subscription[]
 
   @@map("packages")
 }
 
 model Subscription {
-  id                        Int                       @id @default(autoincrement())
-  stripe_subscription_id    String                    @unique @db.VarChar(255)
-  donor_id                  Int
-  organization_id           Int
-  status                    SubscriptionStatus        @default(ACTIVE)
-  current_period_start      DateTime
-  current_period_end        DateTime
-  cancel_at_period_end      Boolean                   @default(false)
-  canceled_at               DateTime?
-  trial_start               DateTime?
-  trial_end                 DateTime?
-  amount                    Float
-  currency                  String                    @default("USD") @db.VarChar(3)
-  interval                  String                    @db.VarChar(20)
-  interval_count            Int                       @default(1)
-  metadata                  String?                   @db.Text
-  created_at                DateTime                  @default(now())
-  updated_at                DateTime                  @updatedAt
-  package_id                Int
+  id                Int                @id @default(autoincrement())
+  stripe_subscription_id String         @unique @db.VarChar(255)
+  donor_id          Int
+  organization_id   Int
+  package_id        Int
+  status            SubscriptionStatus @default(ACTIVE)
+  current_period_start DateTime
+  current_period_end   DateTime
+  cancel_at_period_end Boolean          @default(false)
+  canceled_at       DateTime?
+  trial_start       DateTime?
+  trial_end         DateTime?
+  amount            Float
+  currency          String             @default("USD") @db.VarChar(3)
+  interval          String             @db.VarChar(20) // month, year, week, day
+  interval_count    Int                @default(1)
+  metadata          String?            @db.Text
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+  
+  donor             Donor              @relation("DonorSubscriptions", fields: [donor_id], references: [id])
+  organization      Organization       @relation("OrganizationSubscriptions", fields: [organization_id], references: [id])
+  package           Package            @relation(fields: [package_id], references: [id])
   subscription_transactions SubscriptionTransaction[]
-  donor                     Donor                     @relation("DonorSubscriptions", fields: [donor_id], references: [id])
-  organization              Organization              @relation("OrganizationSubscriptions", fields: [organization_id], references: [id])
-  package                   Package                   @relation(fields: [package_id], references: [id])
 
   @@index([donor_id])
   @@index([organization_id])
@@ -260,20 +261,21 @@ model Subscription {
 }
 
 model SubscriptionTransaction {
-  id                 Int          @id @default(autoincrement())
-  subscription_id    Int
-  stripe_invoice_id  String       @unique @db.VarChar(255)
-  amount             Float
-  currency           String       @default("USD") @db.VarChar(3)
-  status             String       @db.VarChar(50)
-  invoice_url        String?      @db.VarChar(500)
-  hosted_invoice_url String?      @db.VarChar(500)
-  pdf_url            String?      @db.VarChar(500)
-  period_start       DateTime
-  period_end         DateTime
-  created_at         DateTime     @default(now())
-  updated_at         DateTime     @updatedAt
-  subscription       Subscription @relation(fields: [subscription_id], references: [id])
+  id                Int                @id @default(autoincrement())
+  subscription_id   Int
+  stripe_invoice_id String             @unique @db.VarChar(255)
+  amount            Float
+  currency          String             @default("USD") @db.VarChar(3)
+  status            String             @db.VarChar(50)
+  invoice_url       String?            @db.VarChar(500)
+  hosted_invoice_url String?           @db.VarChar(500)
+  pdf_url           String?            @db.VarChar(500)
+  period_start      DateTime
+  period_end        DateTime
+  created_at        DateTime           @default(now())
+  updated_at        DateTime           @updatedAt
+  
+  subscription      Subscription       @relation(fields: [subscription_id], references: [id])
 
   @@index([subscription_id])
   @@index([status])
@@ -281,21 +283,22 @@ model SubscriptionTransaction {
 }
 
 model PlaidConnection {
-  id                 Int          @id @default(autoincrement())
-  donor_id           Int
-  organization_id    Int
-  access_token       String       @unique @db.VarChar(255)
-  item_id            String       @unique @db.VarChar(255)
-  institution_id     String?      @db.VarChar(255)
-  institution_name   String?      @db.VarChar(255)
-  accounts           String?      @db.Text
-  status             String       @default("ACTIVE") @db.VarChar(50)
-  error_message      String?      @db.VarChar(500)
-  created_at         DateTime     @default(now())
-  updated_at         DateTime     @updatedAt
-  stripe_customer_id String?      @db.VarChar(255)
-  donor              Donor        @relation(fields: [donor_id], references: [id])
-  organization       Organization @relation(fields: [organization_id], references: [id])
+  id                Int      @id @default(autoincrement())
+  donor_id          Int
+  organization_id   Int
+  access_token      String   @unique @db.VarChar(255)
+  item_id           String   @unique @db.VarChar(255)
+  institution_id    String?  @db.VarChar(255)
+  institution_name  String?  @db.VarChar(255)
+  accounts          String?  @db.Text
+  status            String   @default("ACTIVE") @db.VarChar(50)
+  error_message     String?  @db.VarChar(500)
+  stripe_customer_id String? @db.VarChar(255)
+  created_at        DateTime @default(now())
+  updated_at        DateTime @updatedAt
+  
+  donor             Donor    @relation(fields: [donor_id], references: [id])
+  organization      Organization @relation(fields: [organization_id], references: [id])
 
   @@index([donor_id])
   @@index([organization_id])
@@ -303,37 +306,8 @@ model PlaidConnection {
   @@map("plaid_connections")
 }
 
-model app_settings {
-  id          Int      @id @default(autoincrement())
-  key         String   @unique @db.VarChar(100)
-  value       String   @db.VarChar(500)
-  label       String?  @db.VarChar(255)
-  description String?  @db.VarChar(500)
-  updated_at  DateTime
-  updated_by  String?  @db.VarChar(100)
-}
-
-model donor_payment_methods {
-  id                       Int      @id @default(autoincrement())
-  donor_id                 Int
-  organization_id          Int
-  stripe_customer_id       String   @db.VarChar(255)
-  stripe_payment_method_id String   @unique @db.VarChar(255)
-  label                    String   @db.VarChar(100)
-  card_brand               String?  @db.VarChar(50)
-  card_last4               String?  @db.VarChar(4)
-  card_exp_month           Int?
-  card_exp_year            Int?
-  is_default               Boolean  @default(true)
-  status                   String   @default("active") @db.VarChar(50)
-  created_at               DateTime @default(now())
-  updated_at               DateTime
-  donors                   Donor    @relation(fields: [donor_id], references: [id])
-
-  @@index([donor_id])
-}
-
-model ghl_app_installations {
+// Stores OAuth tokens for each GHL location that installs the marketplace app
+model GHLAppInstallation {
   id            Int      @id @default(autoincrement())
   location_id   String   @unique @db.VarChar(100)
   company_id    String?  @db.VarChar(100)
@@ -348,112 +322,167 @@ model ghl_app_installations {
   type          String?  @db.VarChar(50)
   status        String   @default("active") @db.VarChar(50)
   installed_at  DateTime @default(now())
-  updated_at    DateTime
+  updated_at    DateTime @updatedAt
 
   @@index([company_id])
   @@index([status])
+  @@map("ghl_app_installations")
 }
 
-model ghl_connections {
-  id                     Int                     @id @default(autoincrement())
-  locationId             String                  @unique @db.VarChar(100)
-  companyId              String?                 @db.VarChar(100)
-  userId                 String?                 @db.VarChar(100)
-  accessToken            String                  @db.Text
-  refreshToken           String?                 @db.Text
-  expiresAt              DateTime
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime
-  ghl_payment_events     ghl_payment_events[]
-  ghl_stripe_connections ghl_stripe_connections?
-  ghl_webhook_logs       ghl_webhook_logs[]
+// Stores donor credit/debit card details (funding source for round-up charges)
+model DonorPaymentMethod {
+  id                       Int      @id @default(autoincrement())
+  donor_id                 Int
+  organization_id          Int
+  stripe_customer_id       String   @db.VarChar(255)
+  stripe_payment_method_id String   @unique @db.VarChar(255)
+  label                    String   @db.VarChar(100)  // e.g. "Visa x4242"
+  card_brand               String?  @db.VarChar(50)
+  card_last4               String?  @db.VarChar(4)
+  card_exp_month           Int?
+  card_exp_year            Int?
+  is_default               Boolean  @default(true)
+  status                   String   @default("active") @db.VarChar(50)
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
+  donor                    Donor    @relation(fields: [donor_id], references: [id])
+
+  @@index([donor_id])
+  @@map("donor_payment_methods")
+}
+
+// ─── Payment Provider Models (GHL + Stripe Connect) ──────────────────────────
+
+// GHL OAuth tokens per location (used by payment_provider)
+model GhlConnection {
+  id           Int      @id @default(autoincrement())
+  locationId   String   @unique @db.VarChar(100)
+  companyId    String?  @db.VarChar(100)
+  userId       String?  @db.VarChar(100)
+  accessToken  String   @db.Text
+  refreshToken String?  @db.Text
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  stripeConnection GhlStripeConnection?
+  webhookLogs      GhlWebhookLog[]
+  paymentEvents    GhlPaymentEvent[]
 
   @@index([companyId])
+  @@map("ghl_connections")
 }
 
-model ghl_payment_events {
-  id              Int             @id @default(autoincrement())
-  locationId      String          @db.VarChar(100)
-  stripeAccountId String          @db.VarChar(255)
-  paymentIntentId String          @unique @db.VarChar(255)
-  entityId        String?         @db.VarChar(255)
-  entityType      String?         @db.VarChar(100)
+// Stripe Connect credentials per GHL location
+model GhlStripeConnection {
+  id              Int      @id @default(autoincrement())
+  locationId      String   @unique @db.VarChar(100)
+  stripeAccountId String   @unique @db.VarChar(255)
+  accessToken     String   @db.Text
+  refreshToken    String?  @db.Text
+  publishableKey  String   @db.VarChar(255)
+  livemode        Boolean  @default(false)
+  tokenType       String?  @db.VarChar(50)
+  scope           String?  @db.VarChar(500)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  connection GhlConnection @relation(fields: [locationId], references: [locationId])
+
+  @@index([stripeAccountId])
+  @@map("ghl_stripe_connections")
+}
+
+// Individual payment events (PaymentIntents, subscriptions) per GHL location
+model GhlPaymentEvent {
+  id              Int      @id @default(autoincrement())
+  locationId      String   @db.VarChar(100)
+  stripeAccountId String   @db.VarChar(255)
+  paymentIntentId String   @unique @db.VarChar(255)
+  entityId        String?  @db.VarChar(255)
+  entityType      String?  @db.VarChar(100)
   amount          Int
-  currency        String          @default("usd") @db.VarChar(10)
-  status          String          @db.VarChar(50)
-  failureReason   String?         @db.VarChar(500)
-  refundedAmount  Int             @default(0)
-  customerName    String?         @db.VarChar(255)
-  customerEmail   String?         @db.VarChar(255)
-  customerPhone   String?         @db.VarChar(50)
-  metadata        String?         @db.Text
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime
-  ghl_connections ghl_connections @relation(fields: [locationId], references: [locationId])
+  currency        String   @default("usd") @db.VarChar(10)
+  status          String   @db.VarChar(50)
+  failureReason   String?  @db.VarChar(500)
+  refundedAmount  Int      @default(0)
+  customerName    String?  @db.VarChar(255)
+  customerEmail   String?  @db.VarChar(255)
+  customerPhone   String?  @db.VarChar(50)
+  metadata        String?  @db.Text
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
+  connection GhlConnection @relation(fields: [locationId], references: [locationId])
+
+  @@index([locationId])
   @@index([entityId])
-  @@index([locationId])
   @@index([status])
+  @@map("ghl_payment_events")
 }
 
-model ghl_price_sync {
-  id            Int      @id @default(autoincrement())
-  locationId    String   @db.VarChar(100)
-  ghlPriceId    String   @db.VarChar(255)
-  ghlProductId  String   @db.VarChar(255)
-  stripePriceId String   @db.VarChar(255)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime
-
-  @@unique([locationId, ghlPriceId])
-  @@index([locationId])
-}
-
-model ghl_product_sync {
+// GHL product → Stripe product/price mapping
+model GhlProductSync {
   id              Int      @id @default(autoincrement())
   locationId      String   @db.VarChar(100)
   ghlProductId    String   @db.VarChar(255)
   stripeProductId String   @db.VarChar(255)
   stripePriceId   String?  @db.VarChar(255)
   createdAt       DateTime @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime @updatedAt
 
-  @@unique([locationId, ghlProductId])
+  @@unique([locationId, ghlProductId], name: "locationId_ghlProductId")
   @@index([locationId])
+  @@map("ghl_product_sync")
 }
 
-model ghl_stripe_connections {
-  id              Int             @id @default(autoincrement())
-  locationId      String          @unique @db.VarChar(100)
-  stripeAccountId String          @unique @db.VarChar(255)
-  accessToken     String          @db.Text
-  refreshToken    String?         @db.Text
-  publishableKey  String          @db.VarChar(255)
-  livemode        Boolean         @default(false)
-  tokenType       String?         @db.VarChar(50)
-  scope           String?         @db.VarChar(500)
-  createdAt       DateTime        @default(now())
-  updatedAt       DateTime
-  ghl_connections ghl_connections @relation(fields: [locationId], references: [locationId])
+// GHL price → Stripe price mapping
+model GhlPriceSync {
+  id            Int      @id @default(autoincrement())
+  locationId    String   @db.VarChar(100)
+  ghlPriceId    String   @db.VarChar(255)
+  ghlProductId  String   @db.VarChar(255)
+  stripePriceId String   @db.VarChar(255)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
-  @@index([stripeAccountId])
+  @@unique([locationId, ghlPriceId], name: "locationId_ghlPriceId")
+  @@index([locationId])
+  @@map("ghl_price_sync")
 }
 
-model ghl_webhook_logs {
-  id              Int              @id @default(autoincrement())
-  source          String           @db.VarChar(50)
-  eventId         String           @unique @db.VarChar(255)
-  eventType       String           @db.VarChar(100)
-  locationId      String?          @db.VarChar(100)
-  payload         String           @db.LongText
-  status          String           @default("PENDING") @db.VarChar(20)
-  error           String?          @db.Text
-  processedAt     DateTime?
-  createdAt       DateTime         @default(now())
-  ghl_connections ghl_connections? @relation(fields: [locationId], references: [locationId])
+// Webhook idempotency log (Stripe + GHL webhooks)
+model GhlWebhookLog {
+  id          Int       @id @default(autoincrement())
+  source      String    @db.VarChar(50)  // "stripe" | "ghl"
+  eventId     String    @unique @db.VarChar(255)
+  eventType   String    @db.VarChar(100)
+  locationId  String?   @db.VarChar(100)
+  payload     String    @db.LongText
+  status      String    @default("PENDING") @db.VarChar(20)  // PENDING | PROCESSED | FAILED
+  error       String?   @db.Text
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+
+  connection GhlConnection? @relation(fields: [locationId], references: [locationId])
 
   @@index([locationId])
   @@index([status])
+  @@map("ghl_webhook_logs")
+}
+
+// Generic key-value store for admin-configurable settings
+model AppSetting {
+  id         Int      @id @default(autoincrement())
+  key        String   @unique @db.VarChar(100)
+  value      String   @db.VarChar(500)
+  label      String?  @db.VarChar(255)
+  description String? @db.VarChar(500)
+  updated_at DateTime @updatedAt
+  updated_by String?  @db.VarChar(100)
+
+  @@map("app_settings")
 }
 
 enum Role {

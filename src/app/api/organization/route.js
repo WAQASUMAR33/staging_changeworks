@@ -3,36 +3,36 @@ import { prisma } from "../../lib/prisma";
 import { hash } from "bcryptjs";
 import { z } from "zod";
 import GHLClient from "../../lib/ghl-client";
-import { createOrganizationStripeProducts, createDefaultPricesForProducts } from "../../lib/stripe-products";
-import { isStripeConfigured } from "../../../lib/stripe";
-import { createStripeConnectAccount } from "../../lib/stripe-connect";
+import { createStripeAccountDirect, createStripeAccountLinkDirect } from "../../lib/stripe-direct-api";
+import emailService from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema
 const organizationSchema = z.object({
   name: z.string().min(1, "Name is required"),
+  firstName: z.string().optional(),
+  lastName: z.string().optional(),
+  title: z.string().optional(),
   email: z.string().email("Invalid email").max(100),
   phone: z.string().optional(),
   company: z.string().optional(),
   address: z.string().optional(),
-  website: z.string().url("Invalid url").optional().or(z.literal("")),
+  website: z.string().optional().or(z.literal("")),
   city: z.string().optional(),
   state: z.string().optional(),
   country: z.string().optional(),
   postalCode: z.string().optional(),
   ghlId: z.string().optional(),
+  ein: z.string().min(10, "EIN must be at least 10 characters (including hyphen)"),
   imageUrl: z.string().optional(),
   logo: z.string().optional(), // Base64 encoded logo
-  logoUrl: z.string().optional(), // URL returned from PHP API
+  logoUrl: z.string().optional(), // URL returned from PHP API (optional — logo upload may be skipped)
   // Stripe Connect Account Information
   createStripeAccount: z.boolean().optional().default(false),
-  stripeBusinessType: z.enum(['nonprofit', 'company', 'individual']).optional(),
-  stripeTaxId: z.string().optional(),
-  // Stripe Product Prices
-  product1Price: z.string().optional(),
-  product2Price: z.string().optional(),
-  product3Price: z.string().optional(),
   // Organization Login Details (single password)
-  orgPassword: z.string().min(6, "Organization password must be at least 6 characters"),
+  orgPassword: z.string()
+    .min(8, "Password must be at least 8 characters")
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/, "Password must include uppercase, lowercase, number, and special character"),
   confirmOrgPassword: z.string(),
 });
 
@@ -51,8 +51,8 @@ export async function POST(req) {
 
     // Validate organization password confirmation
     if (input.orgPassword !== input.confirmOrgPassword) {
-      return NextResponse.json({ 
-        error: "Organization passwords do not match" 
+      return NextResponse.json({
+        error: "Organization passwords do not match"
       }, { status: 400 });
     }
 
@@ -62,6 +62,9 @@ export async function POST(req) {
     const organization = await prisma.organization.create({
       data: {
         name: input.name,
+        firstName: input.firstName,
+        lastName: input.lastName,
+        title: input.title,
         email: input.email,
         password: hashedOrgPassword, // Use orgPassword as main password
         phone: input.phone,
@@ -73,10 +76,58 @@ export async function POST(req) {
         country: input.country,
         postalCode: input.postalCode,
         ghlId: input.ghlId,
+        ein: input.ein,
         imageUrl: input.logoUrl || input.imageUrl, // Use logoUrl if available, fallback to imageUrl
         orgPassword: hashedOrgPassword, // Store same password in orgPassword field
       },
     });
+
+    // Send Welcome Email
+    let welcomeEmailStatus = 'not_attempted';
+    console.log('📧 Preparing to send organization welcome email to:', input.email);
+    try {
+      const hasEmailConfig =
+        process.env.EMAIL_SERVER_HOST &&
+        process.env.EMAIL_SERVER_PORT &&
+        process.env.EMAIL_SERVER_USER &&
+        process.env.EMAIL_SERVER_PASSWORD &&
+        process.env.EMAIL_FROM;
+
+      if (!hasEmailConfig) {
+        console.warn('⚠️ Email server not configured. Skipping welcome email.');
+        welcomeEmailStatus = 'skipped - email not configured';
+      } else {
+        const dashboardLink = `${process.env.NEXT_PUBLIC_APP_URL || 'https://changeworkscollective.org'}/organization/login`;
+        
+        console.log('📋 Welcome email details:', {
+          name: input.name,
+          firstName: input.firstName,
+          lastName: input.lastName,
+          dashboardLink
+        });
+
+        const welcomeResult = await emailService.sendOrganizationWelcomeEmail({
+          organization: {
+            ...organization,
+            firstName: input.firstName,
+            lastName: input.lastName,
+            imageUrl: organization.imageUrl
+          },
+          dashboardLink
+        });
+
+        if (welcomeResult.success) {
+          console.log('✅ Organization welcome email sent to:', input.email);
+          welcomeEmailStatus = 'sent';
+        } else {
+          console.error('❌ Failed to send organization welcome email (service error):', welcomeResult.error);
+          welcomeEmailStatus = `failed - ${welcomeResult.error}`;
+        }
+      }
+    } catch (welcomeError) {
+      console.error('❌ Failed to send organization welcome email (exception):', welcomeError);
+      welcomeEmailStatus = `failed - ${welcomeError.message}`;
+    }
 
     let ghlAccount = null;
     let ghlLocationId = null;
@@ -85,15 +136,16 @@ export async function POST(req) {
     // Automatically create GHL account using organization information
     try {
       // Check if we have a valid GHL Agency API key
-      if (!process.env.GHL_AGENCY_API_KEY || process.env.GHL_AGENCY_API_KEY.length < 200) {
+      const ghlAgencyKey = process.env.GHL_AGENCY_API_KEY;
+
+      if (!ghlAgencyKey || ghlAgencyKey.length < 30) {
         console.log('⚠️ GHL Agency API key not configured or too short. Skipping GHL account creation.');
-        console.log('To enable GHL integration, add a valid GHL_AGENCY_API_KEY (250+ characters) to your environment variables.');
-        console.log('Current key appears to be a Location API key, which cannot create sub-accounts.');
+        console.log('To enable GHL integration, add a valid GHL_AGENCY_API_KEY to your environment variables.');
         throw new Error('GHL Agency API key not configured');
       }
-      
-      const ghlClient = new GHLClient(process.env.GHL_AGENCY_API_KEY);
-      
+
+      const ghlClient = new GHLClient(ghlAgencyKey);
+
       const ghlData = {
         businessName: input.name, // Use organization name as business name
         firstName: input.name.split(' ')[0] || input.name,
@@ -116,10 +168,10 @@ export async function POST(req) {
       if (ghlResult.success) {
         ghlLocationId = ghlResult.locationId;
         ghlApiKey = ghlResult.data.apiKey; // Extract the sub-account API key
-        
+
         console.log('GHL Location ID:', ghlLocationId);
         console.log('GHL API Key:', ghlApiKey ? `${ghlApiKey.substring(0, 20)}...` : 'NOT FOUND');
-        
+
         // Save GHL account details to database
         ghlAccount = await prisma.gHLAccount.create({
           data: {
@@ -144,7 +196,7 @@ export async function POST(req) {
         // Update organization with GHL location ID and API key
         await prisma.organization.update({
           where: { id: organization.id },
-          data: { 
+          data: {
             ghlId: ghlLocationId,
             ghlApiKey: ghlApiKey
           }
@@ -152,17 +204,135 @@ export async function POST(req) {
 
         console.log('GHL account created successfully:', ghlLocationId);
 
+        // Create GHL User for the new sub-account
+        try {
+          console.log('Creating GHL User for location:', ghlLocationId);
+          // Use GHL_COMPANY_ID from env, or fallback to the one used for sub-account if needed
+          const companyId = process.env.GHL_COMPANY_ID || 'BWID4bp77xwMfmzh1iud';
+          
+          const ghlLastName = input.lastName || input.name.split(' ').slice(1).join(' ') || 'Admin';
+
+          const userData = {
+             companyId: companyId,
+             firstName: input.firstName || input.name.split(' ')[0] || input.name,
+             lastName: ghlLastName,
+             email: input.email,
+             password: input.orgPassword, 
+             // phone: input.phone || '', // Removed to prevent empty string issues
+             locationId: ghlLocationId,
+             type: 'account',
+             role: 'admin',
+             permissions: {
+                campaignsEnabled: true,
+                campaignsReadOnly: false,
+                contactsEnabled: true,
+                contactsReadOnly: false,
+                funnelsEnabled: true,
+                funnelsReadOnly: false,
+                triggersEnabled: true,
+                triggersReadOnly: false,
+                opportunitiesEnabled: true,
+                opportunitiesReadOnly: false,
+                conversationsEnabled: true,
+                conversationsReadOnly: false,
+                onlineListingsEnabled: true,
+                onlineListingsReadOnly: false,
+                settingsEnabled: true,
+                settingsReadOnly: false,
+                tagsEnabled: true,
+                tagsReadOnly: false,
+                leadValueEnabled: true,
+                leadValueReadOnly: false,
+                marketingEnabled: true,
+                marketingReadOnly: false,
+                agentReportingEnabled: true,
+                agentReportingReadOnly: false,
+                botServiceEnabled: true,
+                botServiceReadOnly: false,
+                socialPlannerEnabled: true,
+                socialPlannerReadOnly: false,
+                bloggingEnabled: true,
+                bloggingReadOnly: false,
+                invoiceEnabled: true,
+                invoiceReadOnly: false,
+                affiliateManagerEnabled: true,
+                affiliateManagerReadOnly: false,
+                contentAiEnabled: true,
+                contentAiReadOnly: false,
+                refundsEnabled: true,
+                refundsReadOnly: false,
+                recordPaymentEnabled: true,
+                recordPaymentReadOnly: false,
+                cancelSubscriptionEnabled: true,
+                cancelSubscriptionReadOnly: false
+             }
+          };
+          
+          // Only add phone if it has a value to avoid GHL validation errors with empty strings
+          if (input.phone) {
+            userData.phone = input.phone;
+          }
+
+          console.log('Creating GHL User with data (password hidden):', { ...userData, password: '***' });
+
+          const userResult = await ghlClient.createUser(userData);
+          if (userResult.success) {
+             console.log('✅ GHL User created successfully:', userResult.userId);
+          } else {
+             console.error('❌ Failed to create GHL User:', userResult.error);
+             
+             // Check if the user already exists (likely due to reused email)
+             // We can check by error message or status code if provided, but safe to just search by email
+             console.log('🔄 Attempting to find existing user by email to update permissions...');
+             const searchResult = await ghlClient.getUserByEmail(userData.email);
+             
+             if (searchResult.success && searchResult.user && searchResult.user.id) {
+               console.log('✅ Found existing GHL User:', searchResult.user.id);
+               console.log('Current user locations:', searchResult.user.roles?.locationIds || []);
+               
+               // Prepare update data - merge existing locations with new one
+               const existingLocations = searchResult.user.roles?.locationIds || [];
+               const newLocationIds = [...new Set([...existingLocations, ghlLocationId])];
+               
+               const updateData = {
+                 ...userData,
+                 locationIds: newLocationIds
+                 // Note: We are using the password provided in signup. 
+                 // If the user already exists, this will update their password.
+                 // This is generally acceptable for a "Signup" flow where the user expects to set these credentials.
+               };
+               
+               console.log('Updating user with new location list:', newLocationIds);
+               const updateResult = await ghlClient.updateUser(searchResult.user.id, updateData);
+               
+               if (updateResult.success) {
+                 console.log('✅ GHL User updated successfully with new location:', updateResult.userId);
+               } else {
+                 console.error('❌ Failed to update existing GHL User:', updateResult.error);
+               }
+             } else {
+               console.error('❌ Could not find existing user to update. User creation failed permanently.');
+               console.error('User creation details:', JSON.stringify(userResult.details, null, 2));
+               if (userResult.error && userResult.error.toLowerCase().includes('password')) {
+                 console.error('⚠️ Password might not meet GHL complexity requirements (8+ chars, 1 uppercase, 1 lowercase, 1 number, 1 special char).');
+               }
+             }
+          }
+        } catch (userErr) {
+           console.error('❌ Exception creating GHL User:', userErr);
+        }
+
         // Create GHL contact for the organization using ChangeWorks credentials
         try {
           console.log('Creating GHL contact for organization:', organization.id);
           console.log('Using ChangeWorks Location ID:', process.env.CHANGEWORKS_LOCAION_ID);
           console.log('Using ChangeWorks API Key:', process.env.CHANGEWORKS_LOCATION_API_KEY ? `${process.env.CHANGEWORKS_LOCATION_API_KEY.substring(0, 20)}...` : 'NOT SET');
           console.log('Using Contact Create API URL:', process.env.GHL_CONTACT_CREATE_API_URL);
-          
+
           // Prepare contact data for the organization
           const contactData = {
-            firstName: input.name.split(' ')[0] || input.name,
-            lastName: input.name.split(' ').slice(1).join(' ') || 'Organization',
+            firstName: input.firstName || input.name.split(' ')[0] || input.name,
+            lastName: input.lastName || input.name.split(' ').slice(1).join(' ') || 'Organization',
             email: input.email,
             phone: input.phone || '',
             address: input.address || '',
@@ -205,14 +375,14 @@ export async function POST(req) {
           // If GHL client fails, try direct API call as fallback
           if (!contactResult.success) {
             console.log('GHL client failed, trying direct API call...');
-            
+
             try {
               const directApiUrl = process.env.GHL_CONTACT_CREATE_API_URL || 'https://rest.gohighlevel.com/v1/contacts/';
               const directApiKey = process.env.CHANGEWORKS_LOCATION_API_KEY; // Use ChangeWorks API key
-              
+
               console.log('Direct API URL:', directApiUrl);
               console.log('Using ChangeWorks API key:', directApiKey ? `${directApiKey.substring(0, 20)}...` : 'NOT SET');
-              
+
               const directResponse = await fetch(directApiUrl, {
                 method: 'POST',
                 headers: {
@@ -282,102 +452,133 @@ export async function POST(req) {
       // Don't fail the entire signup if GHL creation fails
     }
 
-    // Create 3 Stripe products for the organization
-    let stripeProducts = null;
-    let stripePrices = null;
-    
-    try {
-      // Check if Stripe is configured
-      if (!isStripeConfigured()) {
-        console.log('⚠️ Stripe not configured. Skipping Stripe product creation.');
-        console.log('To enable Stripe integration, add STRIPE_SECRET_KEY to your environment variables.');
-      } else {
-        console.log('🔵 Creating 3 Stripe products for organization:', organization.id);
-        
-        // Create the 3 products
-        stripeProducts = await createOrganizationStripeProducts(organization);
-        
-        // Parse custom prices from form (convert to cents)
-        const product1PriceCents = input.product1Price ? Math.round(parseFloat(input.product1Price) * 100) : 1000; // Default $10.00
-        const product2PriceCents = input.product2Price ? Math.round(parseFloat(input.product2Price) * 100) : 2500; // Default $25.00
-        const product3PriceCents = input.product3Price ? Math.round(parseFloat(input.product3Price) * 100) : 100; // Default $1.00
-        
-        // Create prices with custom amounts
-        stripePrices = await createDefaultPricesForProducts(stripeProducts, organization, {
-          product1Price: product1PriceCents,
-          product2Price: product2PriceCents,
-          product3Price: product3PriceCents,
-        });
-        
-        // Update organization with Stripe product IDs
-        await prisma.organization.update({
-          where: { id: organization.id },
-          data: {
-            stripeProductId1: stripeProducts.product1.id,
-            stripeProductId2: stripeProducts.product2.id,
-            stripeProductId3: stripeProducts.product3.id,
-          }
-        });
-        
-        console.log('✅ Stripe products created and stored successfully');
-        console.log('  - Product 1 (One-Time):', stripeProducts.product1.id);
-        console.log('  - Product 2 (Monthly):', stripeProducts.product2.id);
-        console.log('  - Product 3 (Round-Up):', stripeProducts.product3.id);
-      }
-    } catch (stripeError) {
-      console.error('❌ Stripe product creation error:', stripeError);
-      console.error('Stripe error details:', stripeError.message);
-      // Don't fail the entire signup if Stripe product creation fails
-      // Organization can still be created without Stripe products
-    }
-
     // Create Stripe Connect account if requested
     let stripeAccount = null;
     let stripeAccountLink = null;
-    
+    let emailSentStatus = null; // Track email sending status
+
     if (input.createStripeAccount) {
       try {
-        // Check if Stripe is configured
-        if (!isStripeConfigured()) {
+        const { getStripeSecretKey } = await import('@/app/lib/payment-mode');
+        const stripeSecretKey = await getStripeSecretKey();
+
+        if (!stripeSecretKey) {
           console.log('⚠️ Stripe not configured. Skipping Stripe Connect account creation.');
-          console.log('To enable Stripe integration, add STRIPE_SECRET_KEY to your environment variables.');
         } else {
           console.log('🔵 Creating Stripe Connect account for organization:', organization.id);
-          
-          // Create Stripe Connect Express account
-          const connectResult = await createStripeConnectAccount({
-            id: organization.id,
-            name: organization.name,
-            email: organization.email,
-            country: organization.country || 'US',
-            website: organization.website,
-            phone: organization.phone,
-            businessType: input.stripeBusinessType || 'nonprofit',
-            taxId: input.stripeTaxId,
-          });
-          
-          stripeAccount = connectResult.account;
-          stripeAccountLink = connectResult.accountLink;
-          
-          // Update organization with Stripe Connect account ID
-          await prisma.organization.update({
-            where: { id: organization.id },
-            data: {
-              stripeAccountId: stripeAccount.id,
+
+          // Create Stripe Connect Express account using direct API
+          const accountResult = await createStripeAccountDirect(organization.country || 'US');
+
+          if (!accountResult.success) {
+            console.error('❌ Failed to create Stripe Connect account:', accountResult.error);
+            console.error('Error details:', accountResult.details);
+
+            // Return error to client
+            return NextResponse.json({
+              message: "Organization registered, but Stripe account creation failed",
+              organization: {
+                ...organization,
+                ghlId: ghlLocationId,
+                stripeAccountId: null,
+              },
+              ghlAccount: ghlAccount,
+              warning: `Stripe API Error: ${accountResult.error}`,
+              stripeError: accountResult.error,
+            }, { status: 201 });
+          } else {
+            stripeAccount = accountResult.account;
+
+            // Update organization with Stripe Connect account ID
+            await prisma.organization.update({
+              where: { id: organization.id },
+              data: {
+                stripeAccountId: stripeAccount.id,
+              }
+            });
+
+            console.log('✅ Stripe Connect account created and stored successfully');
+            console.log('  - Account ID:', stripeAccount.id);
+
+            // Generate onboarding link
+            const refreshUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
+            const returnUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
+
+            const linkResult = await createStripeAccountLinkDirect(
+              stripeAccount.id,
+              refreshUrl,
+              returnUrl
+            );
+
+            if (!linkResult.success) {
+              console.error('❌ Failed to create Stripe onboarding link:', linkResult.error);
+              console.error('Error details:', linkResult.details);
+              // Don't fail the entire signup if link creation fails
+            } else {
+              stripeAccountLink = linkResult.accountLink;
+              console.log('✅ Stripe onboarding link created successfully');
+              console.log('  - Onboarding URL:', stripeAccountLink.url);
+
+              // Send onboarding email to organization
+              try {
+                // Check if email is configured before attempting to send
+                const hasEmailConfig =
+                  process.env.EMAIL_SERVER_HOST &&
+                  process.env.EMAIL_SERVER_PORT &&
+                  process.env.EMAIL_SERVER_USER &&
+                  process.env.EMAIL_SERVER_PASSWORD &&
+                  process.env.EMAIL_FROM;
+
+                if (!hasEmailConfig) {
+                  console.warn('⚠️ Email server not configured. Skipping email send.');
+                  console.warn('Missing email configuration. Please set: EMAIL_SERVER_HOST, EMAIL_SERVER_PORT, EMAIL_SERVER_USER, EMAIL_SERVER_PASSWORD, EMAIL_FROM');
+                  emailSentStatus = 'skipped - email not configured';
+                } else {
+                  console.log('📧 Attempting to send Stripe onboarding email to:', organization.email);
+                  const emailResult = await emailService.sendStripeOnboardingEmail({
+                    organization: {
+                      name: organization.name,
+                      email: organization.email
+                    },
+                    onboardingUrl: stripeAccountLink.url
+                  });
+
+                  if (emailResult.success) {
+                    console.log('✅ Stripe onboarding email sent successfully to:', organization.email);
+                    console.log('   Message ID:', emailResult.messageId);
+                    emailSentStatus = 'sent';
+                  } else {
+                    console.error('❌ Failed to send Stripe onboarding email:', emailResult.error);
+                    console.error('   Email error details:', JSON.stringify(emailResult, null, 2));
+                    emailSentStatus = `failed - ${emailResult.error}`;
+                  }
+                }
+              } catch (emailError) {
+                console.error('❌ Error sending Stripe onboarding email:', emailError);
+                console.error('   Error stack:', emailError.stack);
+                emailSentStatus = `failed - ${emailError.message}`;
+                // Don't fail the entire signup if email fails
+              }
             }
-          });
-          
-          console.log('✅ Stripe Connect account created and stored successfully');
-          console.log('  - Account ID:', stripeAccount.id);
-          if (stripeAccountLink) {
-            console.log('  - Onboarding URL:', stripeAccountLink.url);
           }
         }
       } catch (connectError) {
         console.error('❌ Stripe Connect account creation error:', connectError);
         console.error('Stripe Connect error details:', connectError.message);
-        // Don't fail the entire signup if Stripe Connect account creation fails
-        // Organization can still be created without Stripe Connect account
+
+        // Return the error to the client so they know why Stripe is failing
+        return NextResponse.json({
+          message: "Organization registered, but Stripe account creation failed",
+          organization: {
+            ...organization,
+            ghlId: ghlLocationId,
+            stripeAccountId: null,
+          },
+          ghlAccount: ghlAccount,
+          warning: `Stripe account creation failed: ${connectError.message}. Please check your Stripe configuration.`,
+          stripeError: connectError.message,
+          // Still return success status as organization WAS created
+        }, { status: 201 });
       }
     }
 
@@ -386,9 +587,6 @@ export async function POST(req) {
       organization: {
         ...organization,
         ghlId: ghlLocationId,
-        stripeProductId1: stripeProducts?.product1?.id || null,
-        stripeProductId2: stripeProducts?.product2?.id || null,
-        stripeProductId3: stripeProducts?.product3?.id || null,
         stripeAccountId: stripeAccount?.id || null,
       },
       ghlAccount: ghlAccount,
@@ -398,24 +596,12 @@ export async function POST(req) {
         id: stripeAccount.id,
         type: stripeAccount.type,
         onboardingUrl: stripeAccountLink?.url || null,
+        onboardingLinkExpiresAt: stripeAccountLink?.expires_at ? new Date(stripeAccountLink.expires_at * 1000).toISOString() : null,
       } : null,
-      stripeProducts: stripeProducts ? {
-        product1: {
-          id: stripeProducts.product1.id,
-          name: stripeProducts.product1.name,
-          priceId: stripePrices?.price1?.id || null
-        },
-        product2: {
-          id: stripeProducts.product2.id,
-          name: stripeProducts.product2.name,
-          priceId: stripePrices?.price2?.id || null
-        },
-        product3: {
-          id: stripeProducts.product3.id,
-          name: stripeProducts.product3.name,
-          priceId: stripePrices?.price3?.id || null
-        }
-      } : null
+      // Include onboarding link in response so user can access it even if email fails
+      stripeOnboardingLink: stripeAccountLink?.url || null,
+      emailSent: emailSentStatus || (stripeAccountLink ? 'skipped - not requested' : null),
+      welcomeEmailStatus: welcomeEmailStatus,
     }, { status: 201 });
 
   } catch (error) {
@@ -441,4 +627,8 @@ export async function GET() {
     console.error("Error fetching organizations:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

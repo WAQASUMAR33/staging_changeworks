@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { verifyAdminToken } from '../../../lib/admin-auth';
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function GET(request) {
   try {
@@ -43,23 +44,20 @@ export async function GET(request) {
         { status: 403 }
       );
     }
-    const donors = await prisma.donor.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        organization: {
-          select: {
-            id: true,
-            name: true
-          }
-        }
-      },
-      orderBy: {
-        name: 'asc'
-      }
-    });
+    // Workaround for broken Prisma Client - column organization_id missing in DB
+    const donorsRaw = await prisma.$queryRaw`
+      SELECT d.id, d.name, d.email, d.phone
+      FROM donors d 
+      ORDER BY d.name ASC
+    `;
+    
+    const donors = donorsRaw.map(d => ({
+        id: d.id,
+        name: d.name,
+        email: d.email,
+        phone: d.phone,
+        organization: null
+    }));
 
     return NextResponse.json({
       success: true,
@@ -73,4 +71,8 @@ export async function GET(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

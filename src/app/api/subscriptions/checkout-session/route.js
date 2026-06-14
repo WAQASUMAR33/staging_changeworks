@@ -1,30 +1,42 @@
 import { NextResponse } from "next/server";
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-import Stripe from "stripe";
+import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder');
 
 export async function POST(request) {
   try {
+    const stripe = await createStripeClient();
     const body = await request.json();
-    const { session_id } = body;
+    const { session_id, org_id } = body;
 
-    console.log('🔍 Checkout Session API Called');
-    console.log('🔍 Request Body:', body);
-    console.log('🔍 Session ID:', session_id);
+    console.log('ðŸ” Checkout Session API Called');
+    console.log('ðŸ” Session ID:', session_id);
+    console.log('ðŸ” Org ID (optional):', org_id);
 
     if (!session_id) {
-      console.log('❌ No session ID provided');
       return NextResponse.json(
         { success: false, error: 'Session ID is required' },
         { status: 400 }
       );
     }
 
+    let stripeAccount = null;
+    if (org_id) {
+      const org = await prisma.organization.findUnique({
+        where: { id: parseInt(org_id) },
+        select: { stripeAccountId: true }
+      });
+      if (org?.stripeAccountId) {
+        stripeAccount = org.stripeAccountId;
+      }
+    }
+
     // Retrieve the checkout session from Stripe
     const session = await stripe.checkout.sessions.retrieve(session_id, {
       expand: ['subscription']
-    });
+    }, stripeAccount ? { stripeAccount } : undefined);
 
     if (!session) {
       return NextResponse.json(
@@ -51,9 +63,11 @@ export async function POST(request) {
     }
 
     // Get subscription details from Stripe
-    const stripeSubscription = await stripe.subscriptions.retrieve(subscription.id, {
-      expand: ['items.data.price']
-    });
+    const stripeSubscription = await stripe.subscriptions.retrieve(
+      typeof subscription === 'string' ? subscription : subscription.id,
+      { expand: ['items.data.price', 'default_payment_method', 'latest_invoice'] },
+      stripeAccount ? { stripeAccount } : undefined
+    );
 
     console.log('Stripe subscription data:', {
       id: stripeSubscription.id,
@@ -71,6 +85,7 @@ export async function POST(request) {
     const organizationId = parseInt(stripeSubscription.metadata.organization_id);
     const productId = stripeSubscription.metadata.product_id;
     const priceId = stripeSubscription.metadata.price_id;
+    const campaignName = stripeSubscription.metadata.campaign_name || session.metadata?.campaign_name || 'General Campaign';
 
     // Get donor and organization details
     const [donor, organization] = await Promise.all([
@@ -80,7 +95,10 @@ export async function POST(request) {
       }),
       prisma.organization.findUnique({
         where: { id: organizationId },
-        select: { id: true, name: true, email: true }
+        select: { 
+          id: true, name: true, email: true, imageUrl: true, 
+          firstName: true, lastName: true, ein: true, phone: true 
+        }
       })
     ]);
 
@@ -98,12 +116,54 @@ export async function POST(request) {
     const interval = price.recurring?.interval || 'month';
     const intervalCount = price.recurring?.interval_count || 1;
 
-    // Helper function to safely convert timestamps to dates
+    // Help function to safely convert timestamps to dates
     const safeTimestampToDate = (timestamp, defaultValue = null) => {
       if (!timestamp || timestamp === 0) return defaultValue;
       const date = new Date(timestamp * 1000);
       return isNaN(date.getTime()) ? defaultValue : date;
     };
+
+    // Ensure a default package exists (ID: 1)
+    let packageId = 1;
+    const defaultPackage = await prisma.package.findUnique({
+      where: { id: packageId }
+    });
+
+    if (!defaultPackage) {
+      console.log('ðŸ” Default package (ID: 1) not found, creating one...');
+      try {
+        await prisma.package.create({
+          data: {
+            id: packageId,
+            name: 'Default Contribution Package',
+            description: 'Default package for Stripe subscriptions',
+            price: 0,
+            features: 'Access to platform',
+            isActive: true
+          }
+        });
+      } catch (pkgError) {
+        console.error('Error creating default package:', pkgError);
+        // If creation failed (maybe ID 1 is taken but not found by findUnique?), 
+        // try to find any package or use a different ID
+        const anyPackage = await prisma.package.findFirst();
+        if (anyPackage) {
+          packageId = anyPackage.id;
+        } else {
+          // If no packages at all, we really need to create one without specifying ID
+          const newPackage = await prisma.package.create({
+            data: {
+              name: 'Stripe Subscription',
+              description: 'Platform subscription package',
+              price: 0,
+              features: 'Access to platform',
+              isActive: true
+            }
+          });
+          packageId = newPackage.id;
+        }
+      }
+    }
 
     // Get current date for required fields
     const now = new Date();
@@ -114,7 +174,7 @@ export async function POST(request) {
       stripe_subscription_id: stripeSubscription.id,
       donor_id: donorId,
       organization_id: organizationId,
-      package_id: 1, // Default package ID - you may need to create a default package
+      package_id: packageId,
       status: stripeSubscription.status.toUpperCase(),
       current_period_start: safeTimestampToDate(stripeSubscription.current_period_start, now),
       current_period_end: safeTimestampToDate(stripeSubscription.current_period_end, nextMonth),
@@ -193,7 +253,7 @@ export async function POST(request) {
       }
     });
 
-    console.log(`✅ Subscription ${stripeSubscription.id} processed successfully:`);
+    console.log(`âœ… Subscription ${stripeSubscription.id} processed successfully:`);
     console.log(`   - Subscription ID: ${dbSubscription.id}`);
     console.log(`   - Transaction ID: ${transactionRecord.id}`);
     console.log(`   - Donor Transaction ID: ${donorTransaction.id}`);
@@ -202,9 +262,62 @@ export async function POST(request) {
     console.log(`   - Subscription Status: ${dbSubscription.status}`);
     console.log(`   - Amount: ${dbSubscription.amount} ${dbSubscription.currency}`);
 
+    // Send recurring donation email
+    try {
+      console.log('📧 Attempting to send recurring donation email...');
+      const dashboardLink = 'https://app.changeworksfund.org/donor/login';
+      
+      console.log('📧 Email details:', {
+        donorEmail: donor.email,
+        orgName: organization.name,
+        amount,
+        transactionId: donorTransaction.trnx_id
+      });
+
+      // Verify email service connection first
+      const verifyResult = await emailService.verifyConnection();
+      console.log('📧 Email service verification:', verifyResult);
+
+      if (!verifyResult.success) {
+        throw new Error(`Email service verification failed: ${verifyResult.error}`);
+      }
+
+      let paymentMethodText = 'Credit Card';
+      if (stripeSubscription.default_payment_method?.card?.last4) {
+        paymentMethodText = `Card ending in ${stripeSubscription.default_payment_method.card.last4}`;
+      }
+
+      const receiptNumber = stripeSubscription.latest_invoice?.number || donorTransaction.trnx_id;
+
+      const emailResult = await emailService.sendRecurringDonationEmail({
+        donor: {
+          name: donor.name,
+          email: donor.email
+        },
+        organization: organization,
+        amount: amount,
+        startDate: new Date(),
+        transactionId: donorTransaction.trnx_id,
+        dashboardLink: dashboardLink,
+        campaignName: campaignName,
+        paymentMethod: paymentMethodText,
+        receiptNumber: receiptNumber
+      });
+      
+      console.log('📧 Email send result:', emailResult);
+
+      if (emailResult.success) {
+        console.log('✅ Recurring donation email sent successfully');
+      } else {
+        console.error('❌ Failed to send recurring donation email (service returned failure):', emailResult.error);
+      }
+    } catch (emailError) {
+      console.error('❌ Failed to send recurring donation email (exception):', emailError);
+    }
+
     return NextResponse.json({
       success: true,
-      message: 'Subscription created successfully',
+      message: 'Donation created successfully',
       subscription: {
         id: dbSubscription.id,
         status: dbSubscription.status,
@@ -231,4 +344,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

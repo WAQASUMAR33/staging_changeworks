@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
 import crypto from "crypto";
-import emailService from "../../../lib/email-service";
+import { emailService } from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 const forgotPasswordSchema = z.object({
   email: z.string().email("Invalid email format"),
@@ -24,8 +25,27 @@ export async function POST(request) {
         email: true,
         organization: {
           select: {
-            name: true
+            name: true,
+            firstName: true,
+            lastName: true,
+            title: true,
+            imageUrl: true
           }
+        },
+        subscriptions: {
+          select: {
+            organization: {
+              select: {
+                name: true,
+                firstName: true,
+                lastName: true,
+                title: true,
+                imageUrl: true
+              }
+            }
+          },
+          take: 1,
+          orderBy: { created_at: 'desc' }
         }
       }
     });
@@ -65,7 +85,13 @@ export async function POST(request) {
     let emailError = null;
 
     try {
-      const resetUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`;
+      const resetUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`;
+
+      console.log('📧 Sending password reset email via service...');
+      
+      const organization = donor.organization
+        || donor.subscriptions?.[0]?.organization
+        || null;
 
       const emailResult = await emailService.sendPasswordResetEmail({
         donor: {
@@ -74,7 +100,7 @@ export async function POST(request) {
         },
         resetToken,
         resetLink: resetUrl,
-        organization: donor.organization
+        organization,
       });
 
       if (emailResult.success) {
@@ -86,7 +112,7 @@ export async function POST(request) {
       }
     } catch (emailErr) {
       emailError = emailErr.message;
-      console.error('❌ Email sending failed:', emailErr.message);
+      console.error('❌ Email sending failed (exception):', emailErr);
     }
 
     return NextResponse.json({
@@ -94,6 +120,7 @@ export async function POST(request) {
       message: emailSent 
         ? "Password reset link has been sent to your email."
         : "Password reset token generated. Email service not configured.",
+      resetUrl: emailSent ? undefined : `${process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org'}/donor/reset-password?token=${resetToken}`, // Return URL for development/debugging if email fails
       email_status: {
         sent: emailSent,
         error: emailError,
@@ -119,4 +146,8 @@ export async function POST(request) {
       details: error.message
     }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

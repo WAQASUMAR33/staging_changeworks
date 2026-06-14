@@ -1,80 +1,61 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { loadStripe } from '@stripe/stripe-js';
 import { Elements } from '@stripe/react-stripe-js';
 
-// Get the Stripe publishable key from environment variables
-// In client-side code, only NEXT_PUBLIC_ prefixed variables are available
-const stripePublishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY;
+let _cachedPromise = null;
+let _cachedKey = null;
 
-// Debug logging for environment variables
-console.log('Environment check:', {
-  hasStripeKey: !!stripePublishableKey,
-  keyLength: stripePublishableKey?.length || 0,
-  keyPrefix: stripePublishableKey?.substring(0, 10) || 'none',
-  allEnvKeys: Object.keys(process.env).filter(key => key.includes('STRIPE'))
-});
+async function loadStripeForMode(stripeAccount) {
+  const res = await fetch('/api/config/payment-mode');
+  const { stripePublishableKey } = await res.json();
+  if (!stripePublishableKey?.startsWith('pk_')) return null;
 
-// Initialize Stripe with proper error handling
-let stripePromise = null;
-
-if (stripePublishableKey && stripePublishableKey.trim()) {
-  try {
-    // Validate the key format (should start with pk_)
-    if (stripePublishableKey.startsWith('pk_')) {
-      stripePromise = loadStripe(stripePublishableKey);
-      console.log('Stripe initialized successfully');
-    } else {
-      console.error('Invalid Stripe publishable key format. Should start with "pk_"');
-    }
-  } catch (error) {
-    console.error('Error initializing Stripe:', error);
+  if (stripeAccount) {
+    return loadStripe(stripePublishableKey, { stripeAccount });
   }
-} else {
-  console.error('Stripe publishable key is missing or empty');
+  // Reuse platform promise if key hasn't changed
+  if (_cachedKey !== stripePublishableKey) {
+    _cachedKey = stripePublishableKey;
+    _cachedPromise = loadStripe(stripePublishableKey);
+  }
+  return _cachedPromise;
 }
 
-export default function StripeProvider({ children }) {
-  // Check if Stripe publishable key is available
-  if (!stripePublishableKey || !stripePublishableKey.trim()) {
-    console.error('Stripe publishable key not found. Please check NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY environment variable.');
+export default function StripeProvider({ children, stripeAccount }) {
+  const [stripePromise, setStripePromise] = useState(null);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    loadStripeForMode(stripeAccount)
+      .then((p) => {
+        if (!p) setError('Stripe publishable key not configured');
+        else setStripePromise(p);
+      })
+      .catch(() => setError('Failed to load payment configuration'));
+  }, [stripeAccount]);
+
+  if (error) {
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <div className="text-center">
-          <p className="text-red-700 font-semibold mb-2">Payment system not configured</p>
-          <p className="text-red-600 text-sm">
-            Stripe publishable key is missing. Please contact support or check environment configuration.
-          </p>
-          <details className="mt-2 text-xs text-gray-600">
-            <summary className="cursor-pointer">Debug Info</summary>
-            <div className="mt-1 p-2 bg-gray-100 rounded text-left">
-              <p>Environment: {process.env.NODE_ENV}</p>
-              <p>Has Stripe Key: {stripePublishableKey ? 'Yes' : 'No'}</p>
-              <p>Key Length: {stripePublishableKey?.length || 0}</p>
-            </div>
-          </details>
-        </div>
+      <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-center">
+        <p className="text-red-700 font-semibold mb-2">Payment system not configured.</p>
+        <p className="text-red-600 text-sm">{error}</p>
       </div>
     );
   }
 
-  // Check if Stripe was initialized successfully
   if (!stripePromise) {
-    console.error('Failed to initialize Stripe');
     return (
-      <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
-        <div className="text-center">
-          <p className="text-red-700 font-semibold mb-2">Payment system initialization failed</p>
-          <p className="text-red-600 text-sm">
-            There was an error initializing the payment system. Please try again.
-          </p>
-        </div>
+      <div className="p-4 flex flex-col items-center justify-center min-h-[100px]">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mb-2"></div>
+        <p className="text-gray-500 text-sm font-medium">Initializing secure gateway...</p>
       </div>
     );
   }
 
   return (
-    <Elements stripe={stripePromise}>
+    <Elements stripe={stripePromise} key={stripeAccount || 'platform'}>
       {children}
     </Elements>
   );

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   try {
@@ -135,4 +136,8 @@ async function handleAuthWebhook(webhook_code, item_id, error) {
   } catch (error) {
     console.error('Error handling auth webhook:', error);
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Import mock data from the main packages route
 const mockPackages = [
@@ -170,4 +171,8 @@ export async function DELETE(req, { params }) {
     console.error("Error deleting package:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

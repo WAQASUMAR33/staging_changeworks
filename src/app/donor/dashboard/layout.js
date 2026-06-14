@@ -17,20 +17,20 @@ export default function DonorLayout({ children }) {
         const user = localStorage.getItem('user');
         
         if (!token || !user) {
-          router.push('/login');
+          router.push('/donor/login');
           return;
         }
 
         const userData = JSON.parse(user);
         if (userData.role !== 'DONOR') {
-          router.push('/login');
+          router.push('/donor/login');
           return;
         }
 
         setIsDonor(true);
       } catch (error) {
         console.error('Auth check error:', error);
-        router.push('/login');
+        router.push('/donor/login');
       } finally {
         setLoading(false);
       }

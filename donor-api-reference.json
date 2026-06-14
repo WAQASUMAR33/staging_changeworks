@@ -1,0 +1,576 @@
+{
+  "title": "ChangeWorks Donor-Side API Reference",
+  "version": "1.0.0",
+  "apis": [
+    {
+      "category": "Donor Profile & Account",
+      "endpoints": [
+        {
+          "name": "Register Donor",
+          "method": "POST",
+          "path": "/api/donor",
+          "auth": false,
+          "input": {
+            "body": {
+              "name": "string (required)",
+              "email": "string (required)",
+              "password": "string (required, min 6 chars)",
+              "phone": "string (optional)",
+              "postal_code": "string (optional)",
+              "imageUrl": "string (optional)",
+              "organization_id": "number (required)"
+            }
+          },
+          "response": {
+            "message": "string",
+            "donor": {
+              "id": "number",
+              "name": "string",
+              "email": "string",
+              "organization": "object"
+            },
+            "email_status": {
+              "verification_email": { "sent": "boolean" },
+              "welcome_email": { "sent": "boolean" }
+            },
+            "ghl_contact_status": {
+              "created": "boolean",
+              "contact_id": "string",
+              "location_id": "string"
+            }
+          }
+        },
+        {
+          "name": "Get All Donors",
+          "method": "GET",
+          "path": "/api/donor",
+          "auth": false,
+          "input": {
+            "query": {
+              "page": "number (optional, default: 1)",
+              "limit": "number | 'all' (optional, default: 10)"
+            }
+          },
+          "response": {
+            "donors": [
+              {
+                "id": "number",
+                "name": "string",
+                "email": "string",
+                "phone": "string",
+                "city": "string",
+                "address": "string",
+                "postal_code": "string",
+                "imageUrl": "string",
+                "status": "boolean",
+                "created_at": "Date",
+                "updated_at": "Date"
+              }
+            ],
+            "totalCount": "number"
+          }
+        },
+        {
+          "name": "Get Donor Profile",
+          "method": "GET",
+          "path": "/api/donor/profile",
+          "auth": "Bearer JWT",
+          "input": {},
+          "response": {
+            "success": "boolean",
+            "donor": {
+              "id": "number",
+              "name": "string",
+              "email": "string",
+              "phone": "string",
+              "city": "string",
+              "address": "string",
+              "postal_code": "string",
+              "imageUrl": "string",
+              "status": "boolean",
+              "organization": { "id": "number", "name": "string" },
+              "created_at": "Date",
+              "updated_at": "Date"
+            }
+          }
+        },
+        {
+          "name": "Get Donor Dashboard Stats",
+          "method": "GET",
+          "path": "/api/donor/dashboard-stats",
+          "auth": "Bearer JWT",
+          "input": {},
+          "response": {
+            "success": "boolean",
+            "stats": {
+              "totalDonated": { "value": "number", "change": "string", "changeType": "string" },
+              "activeSubscriptions": { "value": "number", "change": "string", "changeType": "string" },
+              "thisMonth": { "value": "number", "change": "string", "changeType": "string" },
+              "organizationsSupported": { "value": "number", "change": "string", "changeType": "string" }
+            },
+            "recentActivity": [
+              {
+                "id": "number",
+                "description": "string",
+                "amount": "number",
+                "date": "Date (ISO)",
+                "organization": "string",
+                "transactionId": "string"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Get Donor Impact",
+          "method": "GET",
+          "path": "/api/donor/impact",
+          "auth": "Bearer JWT (optional)",
+          "input": {},
+          "response": {
+            "success": "boolean",
+            "impact": {
+              "totalDonated": { "value": "number", "change": "string", "changeType": "string" },
+              "livesImpacted": { "value": "number", "change": "string", "changeType": "string" },
+              "organizationsSupported": { "value": "number", "change": "string", "changeType": "string" },
+              "donationStreak": "number",
+              "donationBreakdown": [
+                { "category": "string", "amount": "number", "percentage": "number", "color": "string" }
+              ]
+            }
+          }
+        }
+      ]
+    },
+    {
+      "category": "Donations & One-Time Payments",
+      "endpoints": [
+        {
+          "name": "Create Donation Record",
+          "method": "POST",
+          "path": "/api/donor/donations",
+          "auth": false,
+          "input": {
+            "body": {
+              "donor_id": "number (required)",
+              "organization_id": "number (required)",
+              "amount": "number (required, in dollars)",
+              "currency": "'USD' (optional, default: USD)",
+              "method": "'stripe' | 'plaid' (required)",
+              "status": "'completed' | 'pending' | 'failed' (optional)",
+              "transaction_id": "string (optional)",
+              "receipt_url": "string (optional)",
+              "description": "string (optional)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "donation": {
+              "id": "number",
+              "trx_id": "string",
+              "trx_date": "Date",
+              "trx_amount": "number",
+              "trx_method": "string",
+              "trx_donor_id": "number",
+              "trx_organization_id": "number",
+              "pay_status": "string"
+            }
+          }
+        },
+        {
+          "name": "Create Payment Intent",
+          "method": "POST",
+          "path": "/api/payments/create-intent",
+          "auth": false,
+          "input": {
+            "body": {
+              "amount": "number (required, in CENTS)",
+              "currency": "string (optional, default: USD)",
+              "donor_id": "number (required)",
+              "organization_id": "number (required)",
+              "description": "string (optional)",
+              "metadata": "object (optional)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "clientSecret": "string",
+            "paymentIntentId": "string",
+            "transactionId": "number",
+            "accountId": "string"
+          }
+        },
+        {
+          "name": "Confirm Payment",
+          "method": "POST",
+          "path": "/api/payments/confirm",
+          "auth": false,
+          "input": {
+            "body": {
+              "payment_intent_id": "string (required)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "transaction": "object",
+            "emailResult": {
+              "sent": "boolean",
+              "reason": "string"
+            }
+          }
+        },
+        {
+          "name": "One-Time Payment via GHL",
+          "method": "POST",
+          "path": "/api/payments/one-time-post",
+          "auth": false,
+          "input": {
+            "body": {
+              "ghlid": "string (required)",
+              "amount": "number (required, in CENTS)",
+              "email": "string (required)",
+              "product_id": "string (required)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "clientSecret": "string",
+            "paymentIntentId": "string",
+            "accountId": "string",
+            "organization": { "id": "number", "name": "string" },
+            "amount": {
+              "total_cents": "number",
+              "total_dollars": "number",
+              "platform_fee_cents": "number"
+            }
+          }
+        },
+        {
+          "name": "Get Payment History",
+          "method": "GET",
+          "path": "/api/payments/history/[donor_id]",
+          "auth": false,
+          "input": {
+            "path": {
+              "donor_id": "number (required)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "donor": { "id": "number", "name": "string", "email": "string" },
+            "payments": [
+              {
+                "id": "number",
+                "transaction_id": "string",
+                "amount": "number",
+                "currency": "string",
+                "status": "string",
+                "payment_method": "string",
+                "receipt_url": "string",
+                "transaction_date": "Date",
+                "organization": { "id": "number", "name": "string" }
+              }
+            ],
+            "summary": {
+              "total_payments": "number",
+              "completed_payments": "number",
+              "pending_payments": "number",
+              "failed_payments": "number",
+              "total_donated": "number",
+              "currency": "string"
+            }
+          }
+        }
+      ]
+    },
+    {
+      "category": "Subscriptions (Recurring Donations)",
+      "endpoints": [
+        {
+          "name": "List Donor Subscriptions",
+          "method": "GET",
+          "path": "/api/donor/subscriptions",
+          "auth": "Bearer JWT",
+          "input": {},
+          "response": {
+            "success": "boolean",
+            "subscriptions": [
+              {
+                "id": "number",
+                "amount": "number",
+                "status": "string",
+                "interval": "string",
+                "description": "string",
+                "createdAt": "Date (ISO)",
+                "nextPaymentDate": "Date (ISO)",
+                "organization": { "id": "number", "name": "string", "imageUrl": "string" },
+                "package": { "id": "number", "name": "string", "description": "string" }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Cancel / Pause / Resume Subscription",
+          "method": "POST",
+          "path": "/api/donor/subscriptions/[id]/[action]",
+          "auth": "Bearer JWT",
+          "input": {
+            "path": {
+              "id": "number (subscription ID)",
+              "action": "'cancel' | 'pause' | 'resume'"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "message": "string",
+            "subscription": {
+              "id": "number",
+              "status": "string",
+              "cancel_at_period_end": "boolean",
+              "donor": { "id": "number", "name": "string", "email": "string" },
+              "organization": { "id": "number", "name": "string" },
+              "package": { "id": "number", "name": "string" }
+            }
+          }
+        },
+        {
+          "name": "Create Subscription (Complete)",
+          "method": "POST",
+          "path": "/api/subscriptions/create-complete",
+          "auth": false,
+          "input": {
+            "body": {
+              "donor_id": "number (required)",
+              "organization_id": "number (required)",
+              "package_id": "number (required)",
+              "payment_method_id": "string (required)",
+              "customer_email": "string (optional)",
+              "customer_name": "string (optional)",
+              "trial_period_days": "number (optional, default: 0)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "subscription": {
+              "id": "number",
+              "status": "string",
+              "amount": "number",
+              "currency": "string",
+              "interval": "string"
+            },
+            "stripe_subscription_id": "string",
+            "message": "string"
+          }
+        },
+        {
+          "name": "Create Subscription Checkout Session",
+          "method": "POST",
+          "path": "/api/subscriptions/create-connect-session",
+          "auth": false,
+          "input": {
+            "body": {
+              "donor_id": "number (required)",
+              "product_id": "string (required)",
+              "price_id": "string (required)",
+              "organization_id": "number (required)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "checkout_url": "string",
+            "session_id": "string",
+            "message": "string"
+          }
+        },
+        {
+          "name": "Confirm Subscription Checkout",
+          "method": "POST",
+          "path": "/api/subscriptions/checkout-session",
+          "auth": false,
+          "input": {
+            "body": {
+              "session_id": "string (required)",
+              "org_id": "number (optional)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "message": "string",
+            "subscription": { "id": "number", "status": "string", "amount": "number" },
+            "transaction": { "id": "number", "amount": "number", "status": "string" }
+          }
+        },
+        {
+          "name": "Cancel Subscriptions by Donor",
+          "method": "POST",
+          "path": "/api/subscriptions/cancel-by-donor",
+          "auth": false,
+          "input": {
+            "body": {
+              "donor_id": "number (required)",
+              "subscription_id": "number (optional, omit to cancel all)",
+              "cancel_immediately": "boolean (optional, default: false)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "total_subscriptions": "number",
+            "successful_cancellations": "number",
+            "failed_cancellations": "number",
+            "results": "array",
+            "errors": "array"
+          }
+        },
+        {
+          "name": "Get Donor Subscriptions Status",
+          "method": "GET",
+          "path": "/api/subscriptions/cancel-by-donor",
+          "auth": false,
+          "input": {
+            "query": {
+              "donor_id": "number (required)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "donor_id": "number",
+            "total_subscriptions": "number",
+            "active_subscriptions": "number",
+            "canceled_subscriptions": "number",
+            "scheduled_for_cancellation": "number",
+            "subscriptions": "array"
+          }
+        }
+      ]
+    },
+    {
+      "category": "Round-Up Donations",
+      "endpoints": [
+        {
+          "name": "Get Round-Up Records",
+          "method": "GET",
+          "path": "/api/donor/roundup-records",
+          "auth": "Bearer JWT",
+          "input": {},
+          "response": {
+            "success": "boolean",
+            "records": [
+              {
+                "id": "number",
+                "trx_date": "Date",
+                "trx_amount": "number",
+                "trx_method": "'ach' | 'card'",
+                "pay_status": "string",
+                "organization": { "id": "number", "name": "string" },
+                "card_label": "string (optional)",
+                "start_date": "string (optional)",
+                "end_date": "string (optional)",
+                "transaction_count": "number (optional)"
+              }
+            ]
+          }
+        },
+        {
+          "name": "Charge Round-Up via Plaid",
+          "method": "POST",
+          "path": "/api/plaid/charge-roundup",
+          "auth": "Bearer JWT",
+          "input": {
+            "body": {
+              "account_id": "string (required, Plaid account_id)",
+              "plaid_connection_id": "number (required)",
+              "start_date": "string (required, YYYY-MM-DD)",
+              "end_date": "string (required, YYYY-MM-DD)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "charge_id": "string",
+            "status": "string",
+            "amount_dollars": "number",
+            "transaction_count": "number",
+            "transaction_id": "number",
+            "org_stripe_account": "string",
+            "message": "string",
+            "error_shape": {
+              "success": false,
+              "error": "string",
+              "accumulated_amount": "number",
+              "minimum_required": "number",
+              "below_minimum": true
+            }
+          }
+        }
+      ]
+    },
+    {
+      "category": "Bank Connections (Plaid)",
+      "endpoints": [
+        {
+          "name": "Get Bank Connections",
+          "method": "GET",
+          "path": "/api/donor/bank-connections",
+          "auth": "Bearer JWT",
+          "input": {},
+          "response": {
+            "success": "boolean",
+            "connections": [
+              {
+                "id": "number",
+                "institution_id": "string",
+                "institution_name": "string",
+                "accounts": "object",
+                "status": "string",
+                "created_at": "Date",
+                "organization": { "id": "number", "name": "string" }
+              }
+            ]
+          }
+        },
+        {
+          "name": "Create Plaid Link Token",
+          "method": "POST",
+          "path": "/api/plaid/create-link-token",
+          "auth": "Bearer JWT",
+          "input": {
+            "body": {
+              "organization_id": "number (required)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "link_token": "string"
+          }
+        }
+      ]
+    },
+    {
+      "category": "Payment Methods",
+      "endpoints": [
+        {
+          "name": "Save Payment Method",
+          "method": "POST",
+          "path": "/api/stripe/save-payment-method",
+          "auth": "Bearer JWT",
+          "input": {
+            "body": {
+              "token_id": "string (required, Stripe token)",
+              "organization_id": "number (required)"
+            }
+          },
+          "response": {
+            "success": "boolean",
+            "payment_method": {
+              "stripe_customer_id": "string",
+              "stripe_payment_method_id": "string",
+              "label": "string",
+              "card_brand": "string",
+              "card_last4": "string",
+              "card_exp_month": "number",
+              "card_exp_year": "number"
+            }
+          }
+        }
+      ]
+    }
+  ]
+}

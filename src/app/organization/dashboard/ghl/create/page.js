@@ -128,7 +128,7 @@ export default function CreateGHLAccountPage() {
 
     try {
       // First create GHL account
-      const ghlResponse = await fetch('/api/ghl/subaccount', {
+      const ghlResponse = await fetch('/api/ghl_api/subaccount', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(form),

@@ -5,6 +5,7 @@ import { z } from "zod";
 import crypto from "crypto";
 import GHLClient from "../../lib/ghl-client";
 import emailService from "../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 const donorSchema = z.object({
   name: z.string().min(1, "Name is required"),
@@ -90,7 +91,7 @@ export async function POST(request) {
         
         // Use the specific GHL API configuration provided
         const ghlApiUrl = 'https://rest.gohighlevel.com/v1/contacts/';
-        const ghlApiKey = process.env.GHL_API_KEY;
+        const ghlApiKey = process.env.GHL_AGENCY_API_KEY;
         
         // Prepare contact data according to your GHL API specification
         const contactData = {
@@ -201,7 +202,8 @@ export async function POST(request) {
             email: donor.email
           },
           verificationToken: token,
-          verificationLink: verificationUrl
+          verificationLink: verificationUrl,
+          organization: donor.organization
         });
 
         if (verificationResult.success) {
@@ -298,13 +300,6 @@ export async function GET(request) {
           status: true,
           created_at: true,
           updated_at: true,
-          organization_id: true,
-          organization: {
-            select: {
-              id: true,
-              name: true,
-            },
-          },
         },
       }),
       prisma.donor.count(),
@@ -315,4 +310,8 @@ export async function GET(request) {
     console.error('Error fetching donors:', error);
     return NextResponse.json({ error: 'Failed to fetch donors' }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

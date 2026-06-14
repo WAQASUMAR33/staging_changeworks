@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  CreditCard, 
-  Calendar, 
-  DollarSign, 
-  Building2, 
+import { useRouter } from 'next/navigation';
+import {
+  CreditCard,
+  Calendar,
+  DollarSign,
+  Building2,
   Play,
   Pause,
   Trash2,
@@ -21,6 +22,7 @@ import { buildOrgLogoUrl } from '@/lib/image-utils';
 import StripeSubscriptionModal from '../components/StripeSubscriptionModal';
 
 export default function DonorSubscriptionsPage() {
+  const router = useRouter();
   const [subscriptions, setSubscriptions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
@@ -35,9 +37,9 @@ export default function DonorSubscriptionsPage() {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
-        setError('No authentication token found');
+        setError('No authentication token found.');
         return;
       }
 
@@ -53,15 +55,15 @@ export default function DonorSubscriptionsPage() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
         setSubscriptions(data.subscriptions || []);
       } else {
-        setError(data.error || 'Failed to load subscriptions');
+        setError(data.error || 'Failed to load subscriptions.');
       }
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
-      setError('Failed to load subscriptions');
+      setError('Failed to load subscriptions.');
     } finally {
       setLoading(false);
     }
@@ -75,13 +77,13 @@ export default function DonorSubscriptionsPage() {
     try {
       setActionLoading(subscriptionId);
       const token = localStorage.getItem('token');
-      
+
       // Decode token to get donor ID
       const payload = JSON.parse(atob(token.split('.')[1]));
       const donorId = payload.id;
-      
+
       let response;
-      
+
       if (action === 'cancel') {
         // Use the correct cancel API
         response = await fetch('/api/subscriptions/cancel-by-donor', {
@@ -109,7 +111,7 @@ export default function DonorSubscriptionsPage() {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage(`Subscription ${action}ed successfully!`);
+        setMessage(`Donation ${action}ed successfully!`);
         fetchSubscriptions(); // Refresh the list
         setTimeout(() => setMessage(''), 3000);
       } else {
@@ -134,11 +136,11 @@ export default function DonorSubscriptionsPage() {
       try {
         setActionLoading(subscriptionToCancel.id);
         const token = localStorage.getItem('token');
-        
+
         // Decode token to get donor ID
         const payload = JSON.parse(atob(token.split('.')[1]));
         const donorId = payload.id;
-        
+
         const response = await fetch('/api/subscriptions/cancel-by-donor', {
           method: 'POST',
           headers: {
@@ -147,6 +149,7 @@ export default function DonorSubscriptionsPage() {
           },
           body: JSON.stringify({
             donor_id: donorId,
+            subscription_id: subscriptionToCancel.id,
             cancel_immediately: cancelImmediately
           }),
         });
@@ -154,7 +157,7 @@ export default function DonorSubscriptionsPage() {
         const data = await response.json();
 
         if (response.ok) {
-          setMessage(data.message || 'Subscription canceled successfully!');
+          setMessage(data.message || 'Donation canceled successfully!');
           fetchSubscriptions(); // Refresh the list
           setTimeout(() => setMessage(''), 3000);
         } else {
@@ -166,7 +169,7 @@ export default function DonorSubscriptionsPage() {
       } finally {
         setActionLoading(null);
       }
-      
+
       setShowCancelDialog(false);
       setSubscriptionToCancel(null);
       setCancelImmediately(true);
@@ -180,10 +183,10 @@ export default function DonorSubscriptionsPage() {
   };
 
   const handleSubscriptionSuccess = (subscriptionData) => {
-    console.log('Subscription created successfully:', subscriptionData);
+    console.log('Donation created successfully:', subscriptionData);
     // Refresh subscriptions list
     fetchSubscriptions();
-    setMessage('Subscription created successfully!');
+    setMessage('Donation created successfully!');
     setTimeout(() => setMessage(''), 3000);
   };
 
@@ -278,7 +281,7 @@ export default function DonorSubscriptionsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading subscriptions...</p>
+          <p className="text-gray-600">Loading donations</p>
         </div>
       </div>
     );
@@ -294,16 +297,16 @@ export default function DonorSubscriptionsPage() {
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Recurring Donations</h1>
-          <p className="text-gray-600 mt-2">Manage your recurring donations</p>
+          <h1 className="text-3xl font-bold text-gray-900">My Monthly Donations</h1>
+          <p className="text-gray-600 mt-2">Manage your monthly donations</p>
         </div>
         <div className="mt-4 sm:mt-0">
-          <button 
+          <button
             onClick={() => setShowSubscriptionModal(true)}
             className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
           >
             <Plus className="w-4 h-4" />
-            <span>New Recurring Donation</span>
+            <span>New Monthly Donation</span>
           </button>
         </div>
       </motion.div>
@@ -374,7 +377,7 @@ export default function DonorSubscriptionsPage() {
         <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
           <div className="flex items-center justify-between">
             <div>
-              <p className="text-sm font-medium text-gray-600">Total Recurring Donations</p>
+              <p className="text-sm font-medium text-gray-600">Total Monthly Donations</p>
               <p className="text-2xl font-bold text-gray-900">{subscriptions.length}</p>
             </div>
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
@@ -403,7 +406,7 @@ export default function DonorSubscriptionsPage() {
         {error ? (
           <div className="p-8 text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Subscriptions</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Error Loading Donations</h3>
             <p className="text-gray-600 mb-4">{error}</p>
             <button
               onClick={fetchSubscriptions}
@@ -434,32 +437,27 @@ export default function DonorSubscriptionsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
                           {subscription.organization?.imageUrl ? (
                             <Image
                               src={buildOrgLogoUrl(subscription.organization.imageUrl)}
                               alt={subscription.organization.name || 'Organization'}
                               width={40}
                               height={40}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
+                              className="w-full h-full object-contain"
                             />
-                          ) : null}
-                          <div 
-                            className={`w-full h-full flex items-center justify-center ${subscription.organization?.imageUrl ? 'hidden' : 'flex'}`}
-                          >
-                            <Building2 className="w-5 h-5 text-blue-600" />
-                          </div>
+                          ) : (
+                            <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                              <Building2 className="w-5 h-5 text-blue-600" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">
                             {subscription.organization?.name || 'Unknown Organization'}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {subscription.description || 'Recurring Donation'}
+                            {subscription.description || 'Monthly Donation'}
                           </p>
                         </div>
                       </div>
@@ -487,38 +485,12 @@ export default function DonorSubscriptionsPage() {
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-2">
-                        {subscription.status === 'ACTIVE' ? (
-                          <button
-                            onClick={() => handleSubscriptionAction(subscription.id, 'pause')}
-                            disabled={actionLoading === subscription.id}
-                            className="p-2 text-yellow-600 hover:text-yellow-700 hover:bg-yellow-50 rounded-lg transition-colors duration-200 disabled:opacity-50"
-                            title="Pause Subscription"
-                          >
-                            {actionLoading === subscription.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Pause className="w-4 h-4" />
-                            )}
-                          </button>
-                        ) : subscription.status === 'PAUSED' ? (
-                          <button
-                            onClick={() => handleSubscriptionAction(subscription.id, 'resume')}
-                            disabled={actionLoading === subscription.id}
-                            className="p-2 text-green-600 hover:text-green-700 hover:bg-green-50 rounded-lg transition-colors duration-200 disabled:opacity-50"
-                            title="Resume Subscription"
-                          >
-                            {actionLoading === subscription.id ? (
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Play className="w-4 h-4" />
-                            )}
-                          </button>
-                        ) : subscription.status === 'CANCELED_AT_PERIOD_END' ? (
+                        {subscription.status === 'CANCELED_AT_PERIOD_END' ? (
                           <span className="text-xs text-orange-600 font-medium" title="Subscription will end at period end">
                             Ending Soon
                           </span>
                         ) : null}
-                        
+
                         {subscription.status === 'CANCELED_AT_PERIOD_END' ? (
                           <span className="text-xs text-gray-500 font-medium" title="Already scheduled for cancellation">
                             Already Canceled
@@ -532,7 +504,7 @@ export default function DonorSubscriptionsPage() {
                             onClick={() => handleCancelClick(subscription)}
                             disabled={actionLoading === subscription.id}
                             className="px-3 py-1 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50 border border-red-200"
-                            title="Cancel Subscription"
+                            title="Cancel Donation"
                           >
                             {actionLoading === subscription.id ? (
                               <Loader2 className="w-4 h-4 animate-spin" />
@@ -551,13 +523,13 @@ export default function DonorSubscriptionsPage() {
         ) : (
           <div className="p-8 text-center">
             <CreditCard className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Subscriptions Found</h3>
-            <p className="text-gray-600 mb-4">You don&apos;t have any active subscriptions yet.</p>
-            <button 
-              onClick={() => setShowSubscriptionModal(true)}
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">No Monthly Donations Found</h3>
+            <p className="text-gray-600 mb-4">You don&apos;t have any active monthly donations yet.</p>
+            <button
+              onClick={() => router.push('/donor/dashboard')}
               className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200"
             >
-              Create Your First Subscription
+              Create Your First Donation
             </button>
           </div>
         )}
@@ -593,37 +565,32 @@ export default function DonorSubscriptionsPage() {
                   <AlertCircle className="w-5 h-5 text-red-600" />
                 </div>
                 <div>
-                  <h3 className="text-lg font-semibold text-gray-900">Cancel Subscription</h3>
+                  <h3 className="text-lg font-semibold text-gray-900">Cancel Donation</h3>
                   <p className="text-sm text-gray-600">This action cannot be undone</p>
                 </div>
               </div>
 
               <div className="mb-6">
                 <p className="text-gray-700 mb-3">
-                  Do you really want to cancel the subscription?
+                  Do you really want to cancel the donation?
                 </p>
                 {subscriptionToCancel && (
                   <div className="bg-gray-50 rounded-lg p-3 mb-4">
                     <div className="flex items-center space-x-3 mb-2">
-                      <div className="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                      <div className="w-8 h-8 rounded-lg flex items-center justify-center overflow-hidden">
                         {subscriptionToCancel.organization?.imageUrl ? (
                           <Image
                             src={buildOrgLogoUrl(subscriptionToCancel.organization.imageUrl)}
                             alt={subscriptionToCancel.organization.name || 'Organization'}
                             width={32}
                             height={32}
-                            className="w-full h-full object-cover"
-                            onError={(e) => {
-                              e.target.style.display = 'none';
-                              e.target.nextSibling.style.display = 'flex';
-                            }}
+                            className="w-full h-full object-contain"
                           />
-                        ) : null}
-                        <div 
-                          className={`w-full h-full flex items-center justify-center ${subscriptionToCancel.organization?.imageUrl ? 'hidden' : 'flex'}`}
-                        >
-                          <Building2 className="w-4 h-4 text-blue-600" />
-                        </div>
+                        ) : (
+                          <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                            <Building2 className="w-4 h-4 text-blue-600" />
+                          </div>
+                        )}
                       </div>
                       <p className="text-sm text-gray-600">
                         <strong>Organization:</strong> {subscriptionToCancel.organization?.name || 'Unknown'}
@@ -634,7 +601,7 @@ export default function DonorSubscriptionsPage() {
                     </p>
                   </div>
                 )}
-                
+
                 <div className="space-y-3">
                   <div className="flex items-center space-x-3">
                     <input
@@ -646,7 +613,7 @@ export default function DonorSubscriptionsPage() {
                       className="w-4 h-4 text-red-600 border-gray-300 focus:ring-red-500"
                     />
                     <label htmlFor="cancel-immediately" className="text-sm text-gray-700">
-                      <strong>Cancel immediately</strong> - Stop subscription right now
+                      <strong>Cancel immediately</strong> - Stop donation right now
                     </label>
                   </div>
                 </div>
@@ -657,7 +624,7 @@ export default function DonorSubscriptionsPage() {
                   onClick={handleCancelCancel}
                   className="flex-1 px-4 py-2 text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors duration-200"
                 >
-                  Keep Subscription
+                  Keep Donation
                 </button>
                 <button
                   onClick={handleCancelConfirm}

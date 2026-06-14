@@ -2,10 +2,12 @@
 import { useEffect, useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import { 
+import Link from 'next/link';
+import {
   LogOut,
   ChevronDown,
-  Building2
+  Building2,
+  User,
 } from 'lucide-react';
 
 // Helper function to build organization logo URL
@@ -105,9 +107,9 @@ export default function OrgHeader() {
                 <div className="flex items-center">
                     <div>
                         <h1 className="text-xl font-semibold text-gray-900">
-                            Welcome back, <span className="text-blue-600">{orgName || 'Organization'}</span>
+                            Welcome to your ChangeWorks dashboard
                         </h1>
-                        <p className="text-sm text-gray-500">Manage your organization and track donations</p>
+                        <p className="text-sm text-gray-500">Manage your donors and track their donations.</p>
                     </div>
                 </div>
 
@@ -115,23 +117,20 @@ export default function OrgHeader() {
                 <div className="flex items-center space-x-4">
                     {/* Organization Logo */}
                     <div className="flex items-center">
-                        <div className="w-12 h-12 rounded-lg overflow-hidden bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                        <div className="w-12 h-12 rounded-lg overflow-hidden flex items-center justify-center">
                             {orgImageUrl ? (
                                 <Image
                                     src={buildOrgLogoUrl(orgImageUrl)}
                                     alt={`${orgName} logo`}
                                     width={48}
                                     height={48}
-                                    className="w-full h-full object-cover"
-                                    onError={(e) => {
-                                        e.target.style.display = 'none';
-                                        e.target.nextSibling.style.display = 'flex';
-                                    }}
+                                    className="w-full h-full object-contain"
                                 />
-                            ) : null}
-                            <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center ${orgImageUrl ? 'hidden' : 'flex'}`}>
-                                <Building2 className="w-6 h-6 text-white" />
-                            </div>
+                            ) : (
+                                <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                                    <Building2 className="w-6 h-6 text-white" />
+                                </div>
+                            )}
                         </div>
                     </div>
 
@@ -141,11 +140,6 @@ export default function OrgHeader() {
                             onClick={() => setShowProfile(!showProfile)}
                             className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-100 transition-colors duration-200"
                         >
-                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-blue-500 rounded-lg flex items-center justify-center">
-                                <span className="text-white text-sm font-medium">
-                                    {orgName ? orgName.charAt(0).toUpperCase() : 'O'}
-                                </span>
-                            </div>
                             <div className="hidden md:block text-left">
                                 <p className="text-sm font-medium text-gray-900">{orgName || 'Organization'}</p>
                                 <p className="text-xs text-gray-500">Organization</p>
@@ -164,23 +158,20 @@ export default function OrgHeader() {
                                 >
                                     <div className="p-4 border-b border-gray-100">
                                         <div className="flex items-center space-x-3">
-                                            <div className="w-10 h-10 rounded-lg overflow-hidden bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                                            <div className="w-10 h-10 rounded-lg overflow-hidden flex items-center justify-center">
                                                 {orgImageUrl ? (
                                                     <Image
                                                         src={buildOrgLogoUrl(orgImageUrl)}
                                                         alt={`${orgName} logo`}
                                                         width={40}
                                                         height={40}
-                                                        className="w-full h-full object-cover"
-                                                        onError={(e) => {
-                                                            e.target.style.display = 'none';
-                                                            e.target.nextSibling.style.display = 'flex';
-                                                        }}
+                                                        className="w-full h-full object-contain"
                                                     />
-                                                ) : null}
-                                                <div className={`w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center ${orgImageUrl ? 'hidden' : 'flex'}`}>
-                                                    <Building2 className="w-5 h-5 text-white" />
-                                                </div>
+                                                ) : (
+                                                    <div className="w-full h-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                                                        <Building2 className="w-5 h-5 text-white" />
+                                                    </div>
+                                                )}
                                             </div>
                                             <div>
                                                 <p className="font-medium text-gray-900">{orgName || 'Organization'}</p>
@@ -191,6 +182,14 @@ export default function OrgHeader() {
                                     </div>
                                     
                                     <div className="p-2">
+                                        <Link
+                                            href="/organization/dashboard/settings/profile"
+                                            onClick={() => setShowProfile(false)}
+                                            className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+                                        >
+                                            <User className="w-4 h-4" />
+                                            <span>Profile</span>
+                                        </Link>
                                         <button
                                             onClick={handleLogout}
                                             className="w-full flex items-center space-x-3 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors duration-200"

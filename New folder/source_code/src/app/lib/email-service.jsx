@@ -1,4 +1,4 @@
-import nodemailer from 'nodemailer';
+﻿import nodemailer from 'nodemailer';
 
 // Email service that reads configuration from environment variables
 class EmailService {
@@ -1436,8 +1436,8 @@ Address: NY-123 Younkers, New York
             <p class="greeting">Hello ${donor.name},</p>
             
             <div class="alert-box">
-              <h3>⚠️ Card Not Working Alert</h3>
-              <p>We noticed your round-up card on file isn't working right now. It's an easy fix — simply update your card details in your Donor Portal on ChangeWorks, our platform partner.</p>
+              <h3>âš ï¸ Card Not Working Alert</h3>
+              <p>We noticed your round-up card on file isn't working right now. It's an easy fix â€” simply update your card details in your Donor Portal on ChangeWorks, our platform partner.</p>
             </div>
             
             <p>When you update your card, your purchases will keep rounding up automatically, and your ongoing support for <strong>${organization.name}</strong> will keep making a difference in the community.</p>
@@ -1446,7 +1446,7 @@ Address: NY-123 Younkers, New York
               <a href="${dashboardLink}" class="update-button">Update Your Card Now</a>
             </div>
             
-            <p>Thank you for being part of our round-up community. Every swipe, tap, and purchase you make helps carry our mission forward — and we don't want you to miss a single moment of impact.</p>
+            <p>Thank you for being part of our round-up community. Every swipe, tap, and purchase you make helps carry our mission forward â€” and we don't want you to miss a single moment of impact.</p>
             
             <div class="signature">
               <p>With gratitude,<br>
@@ -1481,13 +1481,13 @@ ACTION NEEDED: Please update your ${organization.name} round-up card
 
 Hello ${donor.name},
 
-We noticed your round-up card on file isn't working right now. It's an easy fix — simply update your card details in your Donor Portal on ChangeWorks, our platform partner.
+We noticed your round-up card on file isn't working right now. It's an easy fix â€” simply update your card details in your Donor Portal on ChangeWorks, our platform partner.
 
 When you update your card, your purchases will keep rounding up automatically, and your ongoing support for ${organization.name} will keep making a difference in the community.
 
 Update Your Card: ${dashboardLink}
 
-Thank you for being part of our round-up community. Every swipe, tap, and purchase you make helps carry our mission forward — and we don't want you to miss a single moment of impact.
+Thank you for being part of our round-up community. Every swipe, tap, and purchase you make helps carry our mission forward â€” and we don't want you to miss a single moment of impact.
 
 With gratitude,
 ${organization.name} Team
@@ -1665,8 +1665,8 @@ Address: NY-123 Younkers, New York
             <p class="greeting">Hello ${donor.name},</p>
             
             <div class="urgent-box">
-              <h3>🚨 LAST REMINDER</h3>
-              <p>Right now, your round-up card on file still isn't working, which means your spare change isn't reaching us — and not reaching the people that together we serve.</p>
+              <h3>ðŸš¨ LAST REMINDER</h3>
+              <p>Right now, your round-up card on file still isn't working, which means your spare change isn't reaching us â€” and not reaching the people that together we serve.</p>
             </div>
             
             <p>Please take a moment today to update your card details in your Donor Portal on ChangeWorks, our platform partner.</p>
@@ -1676,7 +1676,7 @@ Address: NY-123 Younkers, New York
             </div>
             
             <div class="impact-message">
-              <p>Your continued support helps us plan ahead and deliver on our mission. Your pennies matter — and when they pause, so does the change you help us make happen.</p>
+              <p>Your continued support helps us plan ahead and deliver on our mission. Your pennies matter â€” and when they pause, so does the change you help us make happen.</p>
             </div>
             
             <p>Thank you for updating your card and for being such an important part of our community.</p>
@@ -1710,13 +1710,13 @@ LAST REMINDER: Please update your ${organization.name} round-up card
 
 Hello ${donor.name},
 
-Right now, your round-up card on file still isn't working, which means your spare change isn't reaching us — and not reaching the people that together we serve.
+Right now, your round-up card on file still isn't working, which means your spare change isn't reaching us â€” and not reaching the people that together we serve.
 
 Please take a moment today to update your card details in your Donor Portal on ChangeWorks, our platform partner.
 
 Update Your Card: ${dashboardLink}
 
-Your continued support helps us plan ahead and deliver on our mission. Your pennies matter — and when they pause, so does the change you help us make happen.
+Your continued support helps us plan ahead and deliver on our mission. Your pennies matter â€” and when they pause, so does the change you help us make happen.
 
 Thank you for updating your card and for being such an important part of our community.
 
@@ -1986,7 +1986,7 @@ Address: NY-123 Younkers, New York
 
   // Send welcome/thank you email to donor
   async sendWelcomeEmail({ donor, organization, dashboardLink }) {
-    console.log('🔍 Welcome email - Organization data:', {
+    console.log('ðŸ” Welcome email - Organization data:', {
       id: organization.id,
       name: organization.name,
       imageUrl: organization.imageUrl
@@ -2143,7 +2143,7 @@ Address: NY-123 Younkers, New York
               const baseUrl = process.env.IMAGE_BACK_URL;
               const fallbackUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org';
               
-              console.log('🔍 Welcome email - Image debug:', {
+              console.log('ðŸ” Welcome email - Image debug:', {
                 organizationId: organization.id,
                 organizationName: organization.name,
                 hasImage: !!hasImage,
@@ -2160,12 +2160,12 @@ Address: NY-123 Younkers, New York
               
               if (hasImage) {
                 const logoUrl = `${baseUrl}/${imageUrl}`;
-                console.log('✅ Using organization logo:', logoUrl);
+                console.log('âœ… Using organization logo:', logoUrl);
                 return `<img src="${logoUrl}" alt="${organization.name} Logo" class="logo" style="max-width: 150px; height: auto; margin-bottom: 20px;">`;
               } else {
                 const logoUrl = `${fallbackUrl}/imgs/changeworks.jpg`;
-                console.log('❌ No organization image found, using ChangeWorks logo:', logoUrl);
-                console.log('🔍 Organization data for debugging:', {
+                console.log('âŒ No organization image found, using ChangeWorks logo:', logoUrl);
+                console.log('ðŸ” Organization data for debugging:', {
                   id: organization.id,
                   name: organization.name,
                   imageUrl: organization.imageUrl,
@@ -2415,6 +2415,102 @@ ${resetLink}
 This link will expire in 1 hour.
 
 If you didn't request this password reset, please ignore this email. Your account remains secure.
+
+Best regards,
+ChangeWorks Fund Team
+Your trusted platform partner for charitable giving
+    `;
+
+    return await this.sendEmail({
+      to: organization.email,
+      subject: subject,
+      html: html,
+      text: text
+    });
+  }
+
+  // Send Stripe onboarding link email to organization
+  async sendStripeOnboardingEmail({ organization, onboardingUrl }) {
+    const subject = `Complete Your Stripe Account Setup - ${organization.name}`;
+    
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Complete Your Stripe Account Setup</title>
+        <style>
+          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; margin: 0; padding: 0; }
+          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+          .header { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+          .content { background: #ffffff; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+          .onboarding-button { background: linear-gradient(135deg, #302E56 0%, #0E0061 100%); color: white; padding: 15px 30px; text-decoration: none; border-radius: 8px; display: inline-block; margin: 20px 0; font-weight: bold; }
+          .onboarding-button:hover { background: linear-gradient(135deg, #0E0061 0%, #302E56 100%); }
+          .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #eee; text-align: center; color: #666; }
+          .logo { max-width: 150px; height: auto; margin-bottom: 20px; }
+          .info-box { background: #f0f7ff; border-left: 4px solid #302E56; padding: 15px; margin: 20px 0; border-radius: 4px; }
+        </style>
+      </head>
+      <body>
+        <div class="container">
+          <div class="header">
+            <img src="${process.env.NEXT_PUBLIC_BASE_URL}/imgs/changeworks.jpg" alt="ChangeWorks Logo" class="logo" />
+            <h1>Complete Your Stripe Account Setup</h1>
+          </div>
+          
+          <div class="content">
+            <h2>Hello ${organization.name} Team,</h2>
+            
+            <p>Your organization account has been successfully created! To start receiving payments, you need to complete your Stripe account onboarding.</p>
+            
+            <div class="info-box">
+              <p><strong>What you'll need:</strong></p>
+              <ul>
+                <li>Business information (name, address, tax ID)</li>
+                <li>Bank account details for payouts</li>
+                <li>Identity verification documents</li>
+              </ul>
+            </div>
+            
+            <p>Click the button below to complete your Stripe account setup:</p>
+            
+            <div style="text-align: center;">
+              <a href="${onboardingUrl}" class="onboarding-button">Complete Stripe Onboarding</a>
+            </div>
+            
+            <p><strong>Important:</strong> This link will expire in 1 hour. If you need a new link, please contact support.</p>
+            
+            <p>If you have any questions or need assistance, please don't hesitate to reach out to our support team.</p>
+            
+            <div class="footer">
+              <p>Best regards,<br><strong>ChangeWorks Fund Team</strong></p>
+              <p>Your trusted platform partner for charitable giving</p>
+            </div>
+          </div>
+        </div>
+      </body>
+      </html>
+    `;
+
+    const text = `
+Complete Your Stripe Account Setup - ${organization.name}
+
+Hello ${organization.name} Team,
+
+Your organization account has been successfully created! To start receiving payments, you need to complete your Stripe account onboarding.
+
+What you'll need:
+- Business information (name, address, tax ID)
+- Bank account details for payouts
+- Identity verification documents
+
+Click the link below to complete your Stripe account setup:
+${onboardingUrl}
+
+Important: This link will expire in 1 hour. If you need a new link, please contact support.
+
+If you have any questions or need assistance, please don't hesitate to reach out to our support team.
 
 Best regards,
 ChangeWorks Fund Team

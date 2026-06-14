@@ -11,8 +11,8 @@ export default function Home() {
     // Clear only organization authentication data on page load
     clearOrgAuthData();
     
-    // Always redirect to organization login page (no auto-login)
-    router.push('/organization/login');
+    // Always redirect to donor login page (no auto-login)
+    router.push('/donor/login');
   }, [router]);
 
   // Show loading while redirecting

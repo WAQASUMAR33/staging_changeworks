@@ -1,22 +1,15 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import Stripe from 'stripe';
+import { createStripeClient } from '@/app/lib/payment-mode';
 import { prisma } from "../../../lib/prisma";
-
-let stripe;
-try {
-  if (process.env.STRIPE_SECRET_KEY) {
-    stripe = new Stripe(process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY_LIVE || 'sk_test_placeholder', { apiVersion: '2023-10-16' });
-  }
-} catch (e) {
-  console.error('Stripe init error:', e);
-}
+import { corsHeaders } from '@/app/lib/cors';
 
 const schema = z.object({
   payment_intent_id: z.string().min(1)
 });
 
 export async function POST(request) {
+  const stripe = await createStripeClient();
   try {
     if (!stripe) {
       return NextResponse.json({ success: false, error: 'Stripe not configured' }, { status: 503 });
@@ -77,4 +70,6 @@ export async function POST(request) {
   }
 }
 
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma.jsx";
-import emailService from "../../../lib/email-service.jsx";
+import emailService from "../../../lib/email-service";
+import { corsHeaders } from '@/app/lib/cors';
 
 // GET /api/email/send-card-failure-final-reminder - Check email configuration
 export async function GET() {
@@ -69,7 +70,8 @@ export async function POST(request) {
       select: {
         id: true,
         name: true,
-        email: true
+        email: true,
+        imageUrl: true
       }
     });
 
@@ -81,7 +83,9 @@ export async function POST(request) {
     }
 
     // Generate dashboard link if not provided
-    const dashboardLink = dashboard_link || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://app.changeworksfund.org'}/donor/dashboard?donor_id=${donor.id}`;
+    let appBase = process.env.NEXT_PUBLIC_APP_URL || 'https://app.changeworksfund.org';
+    if (!/^https?:\/\//i.test(appBase)) appBase = `https://${appBase}`;
+    const dashboardLink = dashboard_link || `${appBase}/donor/login`;
 
     // Send final reminder email
     const emailResult = await emailService.sendCardFailureFinalReminderEmail({
@@ -120,4 +124,8 @@ export async function POST(request) {
       { status: 500 }
     );
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

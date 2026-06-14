@@ -1,12 +1,13 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
-import { createOrganizationStripeProducts, createDefaultPricesForProducts } from "../../../lib/stripe-products";
+import { createStripeProductDirect, createStripePriceDirect } from "../../../lib/stripe-direct-api";
 import { isStripeConfigured } from "../../../../lib/stripe";
+import { corsHeaders } from '@/app/lib/cors';
 
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { organization_id } = body;
+    const { organization_id, products: customProducts, force = false } = body;
 
     if (!organization_id) {
       return NextResponse.json(
@@ -29,6 +30,7 @@ export async function POST(request) {
         id: true,
         name: true,
         email: true,
+        stripeAccountId: true,
         stripeProductId1: true,
         stripeProductId2: true,
         stripeProductId3: true
@@ -42,72 +44,96 @@ export async function POST(request) {
       );
     }
 
-    // Check if products already exist
-    if (organization.stripeProductId1 && organization.stripeProductId2 && organization.stripeProductId3) {
+    if (!organization.stripeAccountId) {
+      return NextResponse.json(
+        { error: 'Organization does not have a connected Stripe account' },
+        { status: 400 }
+      );
+    }
+
+    // Check if products already exist and not forcing
+    if (!force && organization.stripeProductId1 && organization.stripeProductId2 && organization.stripeProductId3) {
       return NextResponse.json({
-        message: 'Stripe products already exist for this organization',
+        message: 'Stripe donation options already exist for this organization',
         stripeProductId1: organization.stripeProductId1,
         stripeProductId2: organization.stripeProductId2,
         stripeProductId3: organization.stripeProductId3
       }, { status: 200 });
     }
 
-    console.log('🔵 Creating Stripe products for organization:', organization.id);
+    console.log('Creating custom Stripe donation options for organization:', organization.id, force ? '(Forced Re-creation)' : '');
 
-    // Create the 3 products
-    const stripeProducts = await createOrganizationStripeProducts(organization);
-    
-    // Create default prices for the products
-    const stripePrices = await createDefaultPricesForProducts(stripeProducts, organization);
-    
+    // Default product data if not provided
+    const productsToCreate = customProducts || [
+      { name: 'Donation Option 1', price: 10, description: 'Donation Option 1' },
+      { name: 'Donation Option 2', price: 25, description: 'Donation Option 2' },
+      { name: 'Donation Option 3', price: 100, description: 'Donation Option 3' }
+    ];
+
+    const results = [];
+
+    for (const p of productsToCreate) {
+      // 1. Create Product
+      const productResult = await createStripeProductDirect(
+        organization.stripeAccountId,
+        p.name,
+        p.description || p.name
+      );
+
+      if (!productResult.success) {
+        throw new Error(`Failed to create donation option "${p.name}": ${productResult.error}`);
+      }
+
+      // 2. Create Price for the Product (Monthly Subscription)
+      const priceResult = await createStripePriceDirect(
+        organization.stripeAccountId,
+        productResult.product.id,
+        p.price * 100, // Convert to cents
+        'usd',
+        'month'
+      );
+
+      if (!priceResult.success) {
+        throw new Error(`Failed to create price for donation option "${p.name}": ${priceResult.error}`);
+      }
+
+      results.push({
+        productId: productResult.product.id,
+        priceId: priceResult.price.id,
+        name: p.name
+      });
+    }
+
     // Update organization with Stripe product IDs
     await prisma.organization.update({
       where: { id: organization.id },
       data: {
-        stripeProductId1: stripeProducts.product1.id,
-        stripeProductId2: stripeProducts.product2.id,
-        stripeProductId3: stripeProducts.product3.id,
+        stripeProductId1: results[0].productId,
+        stripeProductId2: results[1].productId,
+        stripeProductId3: results[2].productId,
       }
     });
-    
-    console.log('✅ Stripe products created and stored successfully');
-    console.log('  - Product 1 (One-Time):', stripeProducts.product1.id);
-    console.log('  - Product 2 (Monthly):', stripeProducts.product2.id);
-    console.log('  - Product 3 (Round-Up):', stripeProducts.product3.id);
+
+    console.log('✅ Custom Stripe donation options created and stored successfully');
 
     return NextResponse.json({
       success: true,
-      message: 'Stripe products created successfully',
-      stripeProductId1: stripeProducts.product1.id,
-      stripeProductId2: stripeProducts.product2.id,
-      stripeProductId3: stripeProducts.product3.id,
-      products: {
-        product1: {
-          id: stripeProducts.product1.id,
-          name: stripeProducts.product1.name,
-          priceId: stripePrices?.price1?.id || null
-        },
-        product2: {
-          id: stripeProducts.product2.id,
-          name: stripeProducts.product2.name,
-          priceId: stripePrices?.price2?.id || null
-        },
-        product3: {
-          id: stripeProducts.product3.id,
-          name: stripeProducts.product3.name,
-          priceId: stripePrices?.price3?.id || null
-        }
-      }
+      message: 'Stripe donation options created successfully',
+      stripeProductId1: results[0].productId,
+      stripeProductId2: results[1].productId,
+      stripeProductId3: results[2].productId,
+      products: results
     }, { status: 201 });
 
   } catch (error) {
-    console.error('❌ Error creating Stripe products:', error);
+    console.error('❌ Error creating custom Stripe donation options:', error);
     return NextResponse.json({
-      error: 'Failed to create Stripe products',
+      error: 'Failed to create Stripe donation options',
       details: error.message
     }, { status: 500 });
   }
 }
 
-
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

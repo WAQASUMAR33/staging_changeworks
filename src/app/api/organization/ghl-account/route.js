@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "../../../lib/prisma";
 import { z } from "zod";
+import { corsHeaders } from '@/app/lib/cors';
 
 // Validation schema for GHL account
 const ghlAccountSchema = z.object({
@@ -171,4 +172,8 @@ export async function DELETE(req) {
     console.error("GHL account deletion error:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
+}
+
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
 }

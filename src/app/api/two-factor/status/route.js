@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
-import { prisma } from '../../../lib/prisma';
+import { prisma } from '@/app/lib/prisma';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
+
+export const dynamic = 'force-dynamic';
 
 /**
  * Get 2FA status for a user
@@ -75,6 +78,6 @@ export async function GET(request) {
   }
 }
 
-
-
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

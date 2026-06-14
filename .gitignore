@@ -5,8 +5,13 @@ yarn-debug.log*
 yarn-error.log*
 
 # Environment variables
-.env*
-
+.env
+.env.backup
+.env.*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
 # Next.js
 .next/
@@ -20,6 +25,7 @@ prisma/dev.db-journal
 # IDE
 .vscode/
 .idea/
+.trae/
 *.swp
 *.swo
 
@@ -42,4 +48,5 @@ coverage/
 
 # Test files (optional - remove if you want to include tests)
 # test-*.js
+
 

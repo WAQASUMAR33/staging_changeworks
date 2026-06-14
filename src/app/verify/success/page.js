@@ -31,7 +31,7 @@ export default function VerifySuccessPage() {
 
           <div className="mt-8">
             <a
-              href="/login"
+              href="/changeworksadmin/login"
               className="inline-flex items-center px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow-sm transition"
             >
               Go to Login
@@ -39,7 +39,7 @@ export default function VerifySuccessPage() {
           </div>
 
           <div className="mt-6 text-sm text-gray-500">
-            Need help? Contact support at <a href="mailto:info@rapidtechpro.com" className="text-green-700 underline">info@rapidtechpro.com</a>
+            Need help? Contact support at <a href="mailto:support@changeworksfund.org" className="text-green-700 underline">support@changeworksfund.org</a>
           </div>
         </div>
       </div>

@@ -96,7 +96,7 @@ function ResetPasswordForm() {
       
       // Redirect to login after 2 seconds
       setTimeout(() => {
-        router.push('/login');
+        router.push('/admin/login');
       }, 2000);
 
     } catch (err) {

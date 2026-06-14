@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '../../../lib/prisma';
 import { verifyTwoFactorSetup } from '../../../lib/two-factor';
 import jwt from 'jsonwebtoken';
+import { corsHeaders } from '@/app/lib/cors';
 
 /**
  * Verify 2FA setup by confirming the code from authenticator app
@@ -126,6 +127,6 @@ export async function POST(request) {
   }
 }
 
-
-
-
+export async function OPTIONS() {
+  return new Response(null, { status: 204, headers: corsHeaders });
+}

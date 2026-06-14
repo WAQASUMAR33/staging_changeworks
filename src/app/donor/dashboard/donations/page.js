@@ -1,21 +1,29 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Heart, 
-  Calendar, 
-  DollarSign, 
-  Building2, 
+import {
+  Heart,
+  Calendar,
+  DollarSign,
+  Building2,
   Search,
   Filter,
-  Download,
   Loader2,
   AlertCircle,
-  Eye
+  Eye,
+  ChevronDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { buildOrgLogoUrl } from '@/lib/image-utils';
+
+const METHOD_OPTIONS = [
+  { label: 'All Methods', value: '' },
+  { label: 'round up', value: 'round up' },
+  { label: 'recurring donation', value: 'recurring donation' },
+  { label: 'one-time donation', value: 'one-time donation' },
+];
+
 
 export default function DonorDonationsPage() {
   const [donations, setDonations] = useState([]);
@@ -25,20 +33,20 @@ export default function DonorDonationsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [selectedMethod, setSelectedMethod] = useState('');
   const [selectedDonation, setSelectedDonation] = useState(null);
-
+  const [methodDropdownOpen, setMethodDropdownOpen] = useState(false);
 
   const fetchDonations = async () => {
     try {
       setLoading(true);
       const token = localStorage.getItem('token');
-      
+
       if (!token) {
         setError('No authentication token found');
         return;
       }
 
-      // Decode token to get donor ID
       const payload = JSON.parse(atob(token.split('.')[1]));
       const donorId = payload.id;
 
@@ -50,10 +58,13 @@ export default function DonorDonationsPage() {
       });
 
       const data = await response.json();
-      
+
       if (data.success) {
-        setDonations(data.transactions || []);
-        setFilteredDonations(data.transactions || []);
+        const completed = (data.transactions || []).filter(d =>
+          ['completed', 'succeeded'].includes(d.status?.toLowerCase())
+        );
+        setDonations(completed);
+        setFilteredDonations(completed);
       } else {
         setError(data.error || 'Failed to load donations');
       }
@@ -72,7 +83,6 @@ export default function DonorDonationsPage() {
   useEffect(() => {
     let filtered = donations;
 
-    // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(donation =>
         donation.organization?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -80,7 +90,6 @@ export default function DonorDonationsPage() {
       );
     }
 
-    // Filter by date range
     if (startDate) {
       const start = new Date(startDate);
       start.setHours(0, 0, 0, 0);
@@ -92,8 +101,14 @@ export default function DonorDonationsPage() {
       filtered = filtered.filter(donation => new Date(donation.created_at) <= end);
     }
 
+    if (selectedMethod) {
+      filtered = filtered.filter(donation =>
+        getTransactionTypeLabel(donation.method) === selectedMethod
+      );
+    }
+
     setFilteredDonations(filtered);
-  }, [donations, searchTerm, startDate, endDate]);
+  }, [donations, searchTerm, startDate, endDate, selectedMethod]);
 
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -128,6 +143,12 @@ export default function DonorDonationsPage() {
 
   const getTransactionTypeColor = (method) => {
     switch (method?.toLowerCase()) {
+      case 'payment':
+        return 'text-green-600 bg-green-100';
+      case 'subscription':
+        return 'text-purple-600 bg-purple-100';
+      case 'one-time':
+        return 'text-blue-600 bg-blue-100';
       case 'stripe':
         return 'text-blue-600 bg-blue-100';
       case 'stripe_subscription':
@@ -147,20 +168,26 @@ export default function DonorDonationsPage() {
 
   const getTransactionTypeLabel = (method) => {
     switch (method?.toLowerCase()) {
+      case 'payment':
+        return 'round up';
+      case 'subscription':
+        return 'recurring donation';
+      case 'one-time':
+        return 'one-time donation';
       case 'stripe':
-        return 'One-time';
+        return 'one-time donation';
       case 'stripe_subscription':
-        return 'Subscription';
+        return 'recurring donation';
       case 'stripe_subscription_recurring':
-        return 'Recurring';
+        return 'recurring donation';
       case 'plaid':
-        return 'Bank Transfer';
+        return 'round up';
       case 'bank_transfer':
-        return 'Bank Transfer';
+        return 'round up';
       case 'cash':
-        return 'Cash';
+        return 'cash';
       default:
-        return 'Payment';
+        return 'round up';
     }
   };
 
@@ -189,7 +216,7 @@ export default function DonorDonationsPage() {
       <div className="flex items-center justify-center min-h-[400px]">
         <div className="text-center">
           <Loader2 className="w-8 h-8 animate-spin text-blue-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading donations...</p>
+          <p className="text-gray-600">Loading donations</p>
         </div>
       </div>
     );
@@ -206,13 +233,7 @@ export default function DonorDonationsPage() {
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Donations</h1>
-          <p className="text-gray-600 mt-2">View and manage your donation history</p>
-        </div>
-        <div className="mt-4 sm:mt-0">
-          <button className="flex items-center space-x-2 px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200">
-            <Download className="w-4 h-4" />
-            <span>Export</span>
-          </button>
+          <p className="text-gray-600 mt-2">View and manage your donation history.</p>
         </div>
       </motion.div>
 
@@ -223,7 +244,9 @@ export default function DonorDonationsPage() {
             <div>
               <p className="text-xs sm:text-sm font-medium text-gray-600">Total Donated</p>
               <p className="text-xl sm:text-2xl font-bold text-gray-900">
-                {formatAmount(donations.reduce((sum, donation) => sum + (donation.amount || 0), 0))}
+                {formatAmount(donations
+                  .filter(donation => ['completed', 'succeeded'].includes(donation.status?.toLowerCase()))
+                  .reduce((sum, donation) => sum + (donation.amount || 0), 0))}
               </p>
             </div>
             <div className="w-10 h-10 sm:w-12 sm:h-12 bg-green-100 rounded-lg flex items-center justify-center">
@@ -254,8 +277,9 @@ export default function DonorDonationsPage() {
                     .filter(donation => {
                       const donationDate = new Date(donation.created_at);
                       const now = new Date();
-                      return donationDate.getMonth() === now.getMonth() && 
-                             donationDate.getFullYear() === now.getFullYear();
+                      return donationDate.getMonth() === now.getMonth() &&
+                             donationDate.getFullYear() === now.getFullYear() &&
+                             ['completed', 'succeeded'].includes(donation.status?.toLowerCase());
                     })
                     .reduce((sum, donation) => sum + (donation.amount || 0), 0)
                 )}
@@ -284,8 +308,9 @@ export default function DonorDonationsPage() {
 
       {/* Filters */}
       <motion.div variants={itemVariants} className="bg-white rounded-xl p-6 shadow-sm border border-gray-200">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between space-y-4 sm:space-y-0">
-          <div className="flex flex-col sm:flex-row sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Search */}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-black" />
               <input
@@ -296,28 +321,51 @@ export default function DonorDonationsPage() {
                 className="pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 w-full sm:w-64 placeholder-gray-800 text-black"
               />
             </div>
+
+            {/* Method filter */}
+            <div className="relative">
+              <button
+                onClick={() => setMethodDropdownOpen(!methodDropdownOpen)}
+                className="flex items-center space-x-2 px-3 py-2 border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all duration-200 bg-white text-black min-w-[150px] justify-between"
+              >
+                <span className="text-sm">{selectedMethod || 'All Methods'}</span>
+                <ChevronDown className="w-4 h-4 text-gray-500" />
+              </button>
+              {methodDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 rounded-lg shadow-lg z-20 py-1">
+                  {METHOD_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.value}
+                      onClick={() => { setSelectedMethod(opt.value); setMethodDropdownOpen(false); }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 transition-colors duration-150 ${selectedMethod === opt.value ? 'font-semibold text-[#0E0061]' : 'text-gray-700'}`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Date range */}
             <div className="flex items-center space-x-2">
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-black" />
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
-                />
-              </div>
+              <Calendar className="w-4 h-4 text-black" />
+              <input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
+              />
               <span className="text-black">to</span>
-              <div className="flex items-center space-x-2">
-                <Calendar className="w-4 h-4 text-black" />
-                <input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
-                />
-              </div>
+              <Calendar className="w-4 h-4 text-black" />
+              <input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+                className="px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 transition-all duration-200 text-black"
+              />
             </div>
           </div>
+
           <div className="text-sm text-black">
             Showing {filteredDonations.length} of {donations.length} donations
           </div>
@@ -345,7 +393,7 @@ export default function DonorDonationsPage() {
                 <tr>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Organization</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Amount</th>
-                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Type</th>
+                  <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Method</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Date</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Status</th>
                   <th className="px-6 py-4 text-left text-sm font-semibold text-gray-900">Actions</th>
@@ -360,25 +408,20 @@ export default function DonorDonationsPage() {
                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                        <div className="w-10 h-10 rounded-lg flex items-center justify-center overflow-hidden">
                           {donation.organization?.imageUrl ? (
                             <Image
                               src={buildOrgLogoUrl(donation.organization.imageUrl)}
                               alt={donation.organization.name || 'Organization'}
                               width={40}
                               height={40}
-                              className="w-full h-full object-cover"
-                              onError={(e) => {
-                                e.target.style.display = 'none';
-                                e.target.nextSibling.style.display = 'flex';
-                              }}
+                              className="w-full h-full object-contain"
                             />
-                          ) : null}
-                          <div 
-                            className={`w-full h-full flex items-center justify-center ${donation.organization?.imageUrl ? 'hidden' : 'flex'}`}
-                          >
-                            <Building2 className="w-5 h-5 text-blue-600" />
-                          </div>
+                          ) : (
+                            <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                              <Building2 className="w-5 h-5 text-blue-600" />
+                            </div>
+                          )}
                         </div>
                         <div>
                           <p className="text-sm font-medium text-gray-900">
@@ -428,15 +471,10 @@ export default function DonorDonationsPage() {
             <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No Donations Found</h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || startDate || endDate
-                ? 'No donations match your current filters.'
-                : 'You haven\'t made any donations yet.'}
+              {searchTerm || startDate || endDate || selectedMethod
+                ? 'No donations match your current filters'
+                : "You haven't made any donations yet"}
             </p>
-            {!searchTerm && !startDate && !endDate && (
-              <button className="px-4 py-2 bg-[#0E0061] text-white rounded-lg hover:bg-[#0C0055] transition-colors duration-200">
-                Make Your First Donation
-              </button>
-            )}
           </div>
         )}
       </motion.div>
@@ -472,47 +510,42 @@ export default function DonorDonationsPage() {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Organization</label>
                   <div className="flex items-center space-x-3">
-                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center overflow-hidden">
+                    <div className="w-12 h-12 rounded-lg flex items-center justify-center overflow-hidden">
                       {selectedDonation.organization?.imageUrl ? (
                         <Image
                           src={buildOrgLogoUrl(selectedDonation.organization.imageUrl)}
                           alt={selectedDonation.organization?.name || 'Organization'}
                           width={48}
                           height={48}
-                          className="w-full h-full object-cover"
-                          onError={(e) => {
-                            e.target.style.display = 'none';
-                            e.target.nextSibling.style.display = 'flex';
-                          }}
+                          className="w-full h-full object-contain"
                         />
-                      ) : null}
-                      <div 
-                        className={`w-full h-full flex items-center justify-center ${selectedDonation.organization?.imageUrl ? 'hidden' : 'flex'}`}
-                      >
-                        <Building2 className="w-6 h-6 text-blue-600" />
-                      </div>
+                      ) : (
+                        <div className="w-full h-full bg-blue-100 flex items-center justify-center">
+                          <Building2 className="w-6 h-6 text-blue-600" />
+                        </div>
+                      )}
                     </div>
                     <p className="text-gray-900 font-medium">{selectedDonation.organization?.name || 'Unknown'}</p>
                   </div>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Amount</label>
                   <p className="text-2xl font-bold text-gray-900">{formatAmount(selectedDonation.amount || 0)}</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
                   <p className="text-gray-900">{formatDate(selectedDonation.created_at)}</p>
                 </div>
-                
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
                   <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${getStatusColor(selectedDonation.status)}`}>
                     {selectedDonation.status || 'Completed'}
                   </span>
                 </div>
-                
+
                 {selectedDonation.description && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>

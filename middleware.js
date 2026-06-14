@@ -1,38 +1,40 @@
 import { NextResponse } from 'next/server';
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, PUT, PATCH, DELETE, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With',
+  'Access-Control-Max-Age': '86400',
+};
+
 export function middleware(request) {
-  console.log('🔍 Middleware executing for:', request.nextUrl.pathname);
-  
-  // Only apply to admin routes (except secure-portal)
-  if (request.nextUrl.pathname.startsWith('/admin') && 
-      !request.nextUrl.pathname.startsWith('/admin/secure-portal')) {
-    
-    console.log('🔍 Admin route detected, checking authentication...');
-    
-    // Check for admin token in cookies or headers
-    const adminToken = request.cookies.get('adminToken')?.value || 
-                      request.headers.get('authorization')?.replace('Bearer ', '');
-    
-    console.log('🔍 Admin token found:', !!adminToken);
-    console.log('🔍 Cookies:', request.cookies.getAll());
-    console.log('🔍 Headers:', request.headers.get('authorization'));
-    
-    // For client-side navigation, let the admin layout handle authentication
-    // Only redirect server-side requests without tokens
-    if (!adminToken && request.headers.get('accept')?.includes('text/html')) {
-      console.log('❌ No admin token found for server-side request, redirecting to login');
-      return NextResponse.redirect(new URL('/admin/secure-portal', request.url));
-    }
-    
-    console.log('✅ Admin token found or client-side navigation, allowing access');
+  const { pathname } = request.nextUrl;
+
+  // Handle CORS preflight — must respond before any other logic
+  if (request.method === 'OPTIONS') {
+    return new NextResponse(null, { status: 204, headers: corsHeaders });
   }
-  
-  return NextResponse.next();
+
+  // Admin route authentication check
+  if (pathname.startsWith('/changeworksadmin') &&
+      !pathname.startsWith('/changeworksadmin/login')) {
+
+    const adminToken = request.cookies.get('adminToken')?.value ||
+                      request.headers.get('authorization')?.replace('Bearer ', '');
+
+    if (!adminToken && request.headers.get('accept')?.includes('text/html')) {
+      return NextResponse.redirect(new URL('/changeworksadmin/login', request.url));
+    }
+  }
+
+  // Attach CORS headers to every response so actual requests also pass
+  const response = NextResponse.next();
+  Object.entries(corsHeaders).forEach(([key, value]) => {
+    response.headers.set(key, value);
+  });
+  return response;
 }
 
 export const config = {
-  matcher: [
-    '/admin',
-    '/admin/((?!secure-portal).)*'
-  ]
+  matcher: ['/(api)(.*)', '/changeworksadmin', '/changeworksadmin/((?!login).)*'],
 };
