@@ -501,8 +501,9 @@ export async function POST(req) {
             console.log('  - Account ID:', stripeAccount.id);
 
             // Generate onboarding link
-            const refreshUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
-            const returnUrl = 'http://localhost:3000/organization/dashboard/stripe-products';
+            const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+            const refreshUrl = `${baseUrl}/organization/dashboard/stripe-products`;
+            const returnUrl = `${baseUrl}/organization/dashboard/stripe-products`;
 
             const linkResult = await createStripeAccountLinkDirect(
               stripeAccount.id,
