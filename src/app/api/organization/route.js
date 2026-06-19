@@ -619,8 +619,15 @@ export async function POST(req) {
 
 export async function GET() {
   try {
+    // Only return organizations that have at least one donor transaction record
     const organizations = await prisma.organization.findMany({
-      orderBy: { created_at: "desc" }
+      where: {
+        OR: [
+          { transactions: { some: {} } },   // has at least one DonorTransaction
+          { saveTrRecords: { some: {} } },   // has at least one SaveTrRecord
+        ],
+      },
+      orderBy: { created_at: "desc" },
     });
 
     return NextResponse.json({ organizations }, { status: 200 });
